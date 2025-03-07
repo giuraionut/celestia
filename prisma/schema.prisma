@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  accounts      Account[]
+  sessions      Session[]
+  posts         Post[]
+  comments      Comment[]
+  votes         Vote[]
+  isDeleted     Boolean   @default(false)
+
+  joinedCommunities  Community[] @relation(name: "CommunityMembers")
+  managedCommunities Community[] @relation(name: "CommunityManager")
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isDeleted         Boolean  @default(false)
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model Community {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  description   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  posts         Post[]
+  image         String
+  authorId      String
+  author        User     @relation(fields: [authorId], references: [id], name: "CommunityManager")
+  isDeleted     Boolean  @default(false)
+  members       User[]   @relation(name: "CommunityMembers")
+  totalMembers  Int      @default(0)
+  totalManagers Int      @default(0)
+
+  @@index([name])
+}
+
+model Post {
+  id               String    @id @default(cuid())
+  title            String
+  content          String
+  plainTextContent String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  communityId      String
+  community        Community @relation(fields: [communityId], references: [id])
+  authorId         String
+  author           User      @relation(fields: [authorId], references: [id])
+  comments         Comment[]
+  votes            Vote[]
+  cover            String
+  isDeleted        Boolean   @default(false)
+  totalComments    Int       @default(0)
+  totalUpvotes     Int       @default(0)
+  totalDownvotes   Int       @default(0)
+
+  @@index([title])
+}
+
+model Comment {
+  id             String    @id @default(cuid())
+  content        String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  postId         String
+  post           Post      @relation(fields: [postId], references: [id])
+  authorId       String
+  author         User      @relation(fields: [authorId], references: [id])
+  parentId       String? // Optional field to reference the parent comment (for replies)
+  parent         Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies        Comment[] @relation("CommentReplies") // To get all replies for a comment
+  votes          Vote[]
+  isDeleted      Boolean   @default(false)
+  totalUpvotes   Int       @default(0)
+  totalDownvotes Int       @default(0)
+
+  @@index([content])
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  type      VoteType
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  postId    String? // Optional because votes can be for posts or comments
+  post      Post?    @relation(fields: [postId], references: [id])
+  commentId String? // Optional because votes can be for comments
+  comment   Comment? @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, postId]) // Prevent multiple votes on a post
+  @@unique([userId, commentId]) // Prevent multiple votes on a comment
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}
