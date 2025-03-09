@@ -1,5 +1,5 @@
+import { CreateCommunityForm } from '@/app/components/forms/CreateCommunityForm';
 import React from 'react';
-import { CreateCommunityForm } from '../../components/forms/createCommunityForm';
 
 const CreateCommunity = () => {
   return (
