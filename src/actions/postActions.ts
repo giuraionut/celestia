@@ -7,6 +7,7 @@ import { fetchRepliesRecursively, readComment } from "./commentActions";
 import { getTotalPostDownvotes, getTotalPostUpvotes } from "./voteUtils";
 import { getSearchSuggestions, searchPosts } from "./postFTS";
 import { PostSuggestion } from "@/types/types";
+import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 
 export const createPost = async (post: Post): Promise<Post | null> => {
     try {
@@ -45,6 +46,7 @@ export const updatePostTotalComments = async (postId: string): Promise<Post | nu
 };
 export const readPost = async (id: string): Promise<ExtendedPost | null> => {
     'use cache'
+    cacheTag(`post-${id}`);
     try {
         const post = await db.post.findUnique({
             where: { id },
@@ -96,6 +98,7 @@ export const readPosts = async (
     limit: number = 5
 ): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
     'use cache'
+    cacheTag('posts')
     try {
         const posts = await db.post.findMany({
             where: communityId ? { communityId } : undefined,

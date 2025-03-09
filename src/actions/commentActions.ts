@@ -22,10 +22,25 @@ export const createComment = async (comment: Comment): Promise<ExtendedComment |
         });
 
         await updatePostTotalComments(comment.postId);
+        revalidateTag(`comments-${comment.postId}`)
+
         return newComment;
     }
     catch (error) {
         handleServerError(error, 'creating new comment.');
+        return null;
+    }
+}
+
+export const addReply = async (reply: Comment, parent: Comment): Promise<ExtendedComment | null> => {
+    try {
+        const newReply = await createComment(reply);
+        revalidateTag(`replies-${parent.id}`)
+
+        return newReply;
+    }
+    catch (error) {
+        handleServerError(error, 'adding reply.');
         return null;
     }
 }
@@ -40,8 +55,8 @@ export const updateComment = async (comment: Comment): Promise<ExtendedComment |
             },
         });
         updatedComment.replies = await fetchRepliesRecursively(updatedComment.id);
-        // revalidatePath(`/community/Animals/post/cm60o46ui0007v7bgaynga8z2`);
-        revalidateTag('comments')
+        revalidateTag(`comments-${comment.postId}`)
+        revalidateTag(`replies-${comment.id}`);
 
         return updatedComment;
     }
@@ -80,7 +95,7 @@ export const readCommentsByPost = async (
     postId: string
 ): Promise<ExtendedComment[] | null> => {
     'use cache'
-    cacheTag('comments');
+    cacheTag(`comments-${postId}`);
     try {
         // Fetch the top-level comments for the post
         const topLevelComments = await db.comment.findMany({
@@ -108,6 +123,7 @@ export const readCommentsByPost = async (
 
 export const fetchRepliesRecursively = async (parentId: string): Promise<ExtendedComment[]> => {
     'use cache'
+    cacheTag(`replies-${parentId}`);
     try {
 
         const replies = await db.comment.findMany({
@@ -134,10 +150,10 @@ export const fetchRepliesRecursively = async (parentId: string): Promise<Extende
 };
 
 
-export const deleteComment = async (commentId: string): Promise<ExtendedComment | null> => {
+export const deleteComment = async (comment: ExtendedComment): Promise<ExtendedComment | null> => {
     try {
         const deleted = await db.comment.update({
-            where: { id: commentId },
+            where: { id: comment.id },
             data: { isDeleted: true },
             include: {
                 author: true,
@@ -145,6 +161,9 @@ export const deleteComment = async (commentId: string): Promise<ExtendedComment 
                 votes: true
             },
         });
+        revalidateTag(`comments-${deleted.postId}`)
+        revalidateTag(`replies-${deleted.id}`);
+
         return deleted;
     }
     catch (error) {
