@@ -6,7 +6,7 @@ import {
   isHigherUp,
   isSelf,
   isParentOf,
-} from './treeFunctions';
+} from './commentTreeUtils';
 
 interface ConnectorProps {
   path: number[];
@@ -16,7 +16,7 @@ interface ConnectorProps {
   hasParent?: boolean;
 }
 
-export const TreeNodeConnector = ({
+export const CommentNodeConnector = ({
   path,
   selectedPath,
   isLastChild = false,
@@ -24,14 +24,14 @@ export const TreeNodeConnector = ({
   hasParent = false,
 }: ConnectorProps) => {
   const beforeClasses = cn(
-    `absolute -top-2 -left-4 w-4 h-6 border-border/20`,
+    `absolute -top-2 -left-4 w-4 h-6 border-border`,
     {
-      'border-l-border':
+      'border-l-primary':
         (isSibling(path, selectedPath) ||
           isAncestor(path, selectedPath) ||
           getUncleDegree(path, selectedPath) != null) &&
         (isHigherUp(path, selectedPath) || isSelf(path, selectedPath)),
-      'border-b-border':
+      'border-b-primary':
         isSelf(path, selectedPath) || isAncestor(path, selectedPath),
       'border-l': path.length !== 1,
       'border-b': isParent || hasParent,
@@ -40,9 +40,9 @@ export const TreeNodeConnector = ({
   );
 
   const afterClasses = cn(
-    `absolute top-[.4rem] -left-4 border-border/20 w-4 h-full`,
+    `absolute top-[.4rem] -left-4 border-border w-4 h-full -z-10`,
     {
-      'border-l-border':
+      'border-l-primary':
         (isSibling(path, selectedPath) ||
           getUncleDegree(path, selectedPath) != null) &&
         isHigherUp(path, selectedPath),

@@ -1,7 +1,7 @@
 import { ExtendedComment } from '@prisma/client';
 import React from 'react';
 
-const CommentComponent = ({ comment }: { comment: ExtendedComment }) => {
+const Comment = ({ comment }: { comment: ExtendedComment }) => {
   return (
     <div className='border'>
       <div>{comment.author?.name}</div>
@@ -11,4 +11,4 @@ const CommentComponent = ({ comment }: { comment: ExtendedComment }) => {
   );
 };
 
-export default CommentComponent;
+export default Comment;

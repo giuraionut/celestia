@@ -16,7 +16,7 @@ export const useTreeContext = (): TreeContextProps => {
   return context;
 };
 
-export const TreeProvider = ({ children }: { children: ReactNode }) => {
+export const CommentTreeProvider = ({ children }: { children: ReactNode }) => {
   const [selectedPath, setSelectedPath] = useState<number[]>([]);
 
   return (

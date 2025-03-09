@@ -3,22 +3,23 @@ import { memo, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ExtendedComment, Comment } from '@prisma/client';
-import { TreeNodeConnector } from './TreeNodeConnector';
 import { cn } from '@/lib/utils';
 import { CommentTree } from './CommentTree';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
-import { useTreeContext } from './TreeContext';
+import { useTreeContext } from './CommentTreeContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MinusCircleIcon, PlusCircleIcon } from 'lucide-react';
 import TiptapEditor from '../tiptap/TiptapEditor';
 import { jsonToHtml } from '../tiptap/utils';
 
 import {
-  createComment,
+  addReply,
   deleteComment,
   updateComment,
 } from '@/actions/commentActions';
+import { CommentNodeConnector } from './CommentNodeConnector';
+import { useSession } from 'next-auth/react';
 
 interface TreeNodeProps {
   comment: ExtendedComment;
@@ -27,15 +28,16 @@ interface TreeNodeProps {
   isParent?: boolean;
   hasParent?: boolean;
   index: number;
+  updateCommentInTree: (updatedComment: ExtendedComment) => void;
 }
 
-export const TreeNode = ({
+export const CommentNode = ({
   comment,
   path,
   isLastChild = false,
   isParent = false,
   hasParent = false,
-  index,
+  updateCommentInTree,
 }: TreeNodeProps) => {
   const { selectedPath, setSelectedPath } = useTreeContext();
   const handleClick = useCallback(
@@ -55,7 +57,7 @@ export const TreeNode = ({
   }, []);
   return (
     <li className={cn(`relative ml-2 mt-2 list-none`)}>
-      <TreeNodeConnector
+      <CommentNodeConnector
         path={path}
         selectedPath={selectedPath}
         isLastChild={isLastChild}
@@ -73,7 +75,7 @@ export const TreeNode = ({
                 <Link href={`${currentPath}/${comment.id}`}>
                   <PlusCircleIcon
                     className={cn(
-                      `w-4 h-4 absolute -left-[1.4rem] top-2 text-border bg-background`
+                      `w-4 h-4 absolute -left-[1.5rem] top-2 text-border bg-background hover:text-primary cursor-pointer`
                     )}
                   />
                 </Link>
@@ -81,7 +83,7 @@ export const TreeNode = ({
                 !isExpanded && (
                   <PlusCircleIcon
                     className={cn(
-                      `w-4 h-4 absolute -left-[1.4rem] top-2 text-border bg-background`
+                      `w-4 h-4 absolute -left-[1.5rem] top-2 text-border bg-background hover:text-primary cursor-pointer`
                     )}
                     onClick={toggleExpand}
                   />
@@ -90,7 +92,7 @@ export const TreeNode = ({
               {isExpanded && (
                 <MinusCircleIcon
                   className={cn(
-                    `w-4 h-4 absolute -left-[1.4rem] top-2 text-border bg-background`
+                    `w-4 h-4 absolute -left-[1.5rem] top-2 text-border bg-background hover:text-primary cursor-pointer`
                   )}
                   onClick={toggleExpand}
                 />
@@ -104,7 +106,10 @@ export const TreeNode = ({
           >
             <Header comment={comment} />
             <Content comment={comment} />
-            <Footer comment={comment} />
+            <Footer
+              comment={comment}
+              updateCommentInTree={updateCommentInTree}
+            />
           </div>
         </div>
         <AnimatePresence>
@@ -116,7 +121,7 @@ export const TreeNode = ({
               exit={{ height: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <CommentTree comments={comment.replies} path={path} />
+              <CommentTree comments={comment.replies} path={path} updateCommentInTree={updateCommentInTree}/>
             </motion.div>
           )}
         </AnimatePresence>
@@ -195,13 +200,17 @@ const Footer = memo(
   ({
     comment,
     className,
+    updateCommentInTree,
   }: {
     comment: ExtendedComment;
     className?: string;
+    updateCommentInTree: (updatedComment: ExtendedComment) => void;
   }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
     const [editorContent, setEditorContent] = useState<string>('');
+    const { data: session } = useSession();
+
     const handleEditComment = useCallback(async () => {
       const editedComment: Comment = {
         id: comment.id,
@@ -218,6 +227,7 @@ const Footer = memo(
 
       try {
         await updateComment(editedComment);
+        updateCommentInTree({ ...comment, content: editorContent });
         toast.success('Comment edited successfully');
         setIsEditing(false);
       } catch (error) {
@@ -228,7 +238,7 @@ const Footer = memo(
     }, [comment, editorContent]);
 
     const handleReplyComment = useCallback(async () => {
-      const newComment: Comment = {
+      const reply: Comment = {
         content: editorContent,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -241,7 +251,7 @@ const Footer = memo(
         totalDownvotes: comment.totalDownvotes,
       };
       try {
-        await createComment(newComment);
+        await addReply(reply, comment);
         toast.success('Reply added successfully');
         setIsReplying(false);
       } catch (error) {
@@ -253,8 +263,8 @@ const Footer = memo(
 
     const handleDeleteComment = useCallback(async () => {
       try {
-        // await dispatch(deleteCommentAsync(comment));
-        await deleteComment(comment.id);
+        await deleteComment(comment);
+        updateCommentInTree({ ...comment, isDeleted: true });
         toast.success('Comment deleted successfully');
       } catch (error) {
         toast.error('Failed to delete comment', {
@@ -266,9 +276,8 @@ const Footer = memo(
     return (
       <div className={cn('ml-12 flex flex-col gap-4', className)}>
         <div className='flex items-center gap-2 rounded-md'>
-          {/* <CommentVoteDisplay comment={comment} /> */}
           {
-            // session?.user.id === comment.authorId &&
+            session?.user.id === comment.authorId &&
             <>
               <button
                 disabled={comment.isDeleted}
