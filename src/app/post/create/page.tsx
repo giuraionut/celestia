@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreatePostForm } from '../../components/forms/createPostForm';
+import { CreatePostForm } from '../../components/forms/CreatePostForm';
 import { readCommunities } from '@/actions/communityActions';
 import { Community } from '@prisma/client';
 

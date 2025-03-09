@@ -1,10 +1,10 @@
 import { readPosts } from '@/actions/postActions';
-import SignOutButton from '@/app/components/client/signOutButton';
 import { Button } from '@/components/ui/button';
 import { authOptions } from '@/lib/auth';
 import { ExtendedPost } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import Link from 'next/link';
+import SignOutButton from './components/client/SignOutButton';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
