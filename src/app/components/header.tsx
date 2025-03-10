@@ -1,5 +1,6 @@
 import React from 'react';
 import { ModeToggle } from './client/ThemeToggle';
+import { SearchBox } from './client/SearchBox';
 
 const Header = () => {
   return (
@@ -8,8 +9,8 @@ const Header = () => {
         <ModeToggle />
         Left
       </div>
-      <div className='flex-1 flex justify-center border-l border-r h-10'>
-        Middle
+      <div className='flex-1 flex justify-center items-center border-l border-r h-10'>
+        <SearchBox className='h-8' options={[]} emptyMessage={''} />
       </div>
       <div className='flex-[.5] flex justify-end h-10'>Right</div>
     </div>

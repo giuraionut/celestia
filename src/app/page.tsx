@@ -25,7 +25,7 @@ export default async function Home() {
             post.community && (
               <Link
                 key={post.id}
-                href={`/community/${post.community.name}/post/${post.id}`}
+                href={`/community/${post.community.name}/post/${post.id}/comments`}
               >
                 <h2>{post.title}</h2>
               </Link>

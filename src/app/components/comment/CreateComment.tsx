@@ -5,6 +5,7 @@ import { ExtendedPost, Comment } from '@prisma/client';
 import TiptapEditor from '../tiptap/TiptapEditor';
 import { cn } from '@/lib/utils';
 import { createComment } from '@/actions/commentActions';
+import { Button } from '@/components/ui/button';
 
 export default function CreateComment({
   className,
@@ -39,19 +40,17 @@ export default function CreateComment({
   };
 
   return (
-    <div className={cn('')}>
-      <TiptapEditor
-        onContentChange={setCommentContent}
-        className={cn('', className)}
+    <TiptapEditor
+      onContentChange={setCommentContent}
+      className={cn('', className)}
+    >
+      <Button
+        className='text-sm font-bold hover:bg-foreground cursor-pointer'
+        onClick={handleSubmit}
+        disabled={!commentContent.trim()}
       >
-        <button
-          className='bg-foreground/80 rounded p-2 text-sm font-bold text-background hover:bg-foreground cursor-pointer'
-          onClick={handleSubmit}
-          disabled={!commentContent.trim()}
-        >
-          Submit
-        </button>
-      </TiptapEditor>
-    </div>
+        Submit
+      </Button>
+    </TiptapEditor>
   );
 }

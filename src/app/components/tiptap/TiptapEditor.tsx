@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, PropsWithChildren } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -14,10 +14,8 @@ export default function TiptapEditor({
   className?: string;
   children?: React.ReactNode;
   initialContent?: string;
-  onContentChange?: (jsonData: string, plainText:string) => void;
+  onContentChange?: (jsonData: string, plainText: string) => void;
 } & PropsWithChildren) {
-  const [isActive, setIsActive] = useState(false);
-
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -43,35 +41,13 @@ export default function TiptapEditor({
     );
   }
 
-  const handleFocusEditor = () => {
-    setIsActive(true);
-    editor.chain().focus();
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
-    if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget as Node)) {
-      return;
-    }
-    setIsActive(false);
-  };
-
   return (
-    <div
-      className='hover:cursor-text border border-border/50 hover:border-border rounded-md'
-      onClick={handleFocusEditor}
-      onBlur={handleBlur}
-      onMouseDown={(e) => e.preventDefault()}
-    >
-      <EditorContent
-        editor={editor}
-        className={`focus:outline-none ${className || ''}`}
-      />
-      {isActive && editor !== undefined && (
-        <div className='p-1 flex justify-between'>
-          <HeadingToolbar editor={editor} />
-          {children}
-        </div>
-      )}
+    <div className='border border-border rounded-md group p-4'>
+      <EditorContent editor={editor} />
+      <div className='group-focus-within:flex hidden justify-between  items-center mt-4'>
+        <HeadingToolbar editor={editor} />
+        {children}
+      </div>
     </div>
   );
 }
