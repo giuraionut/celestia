@@ -95,7 +95,7 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
 export const readPosts = async (
     communityId?: string,
     cursor?: string,
-    limit: number = 5
+    limit: number = 20
 ): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
     'use cache'
     cacheTag('posts')

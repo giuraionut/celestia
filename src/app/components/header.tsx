@@ -10,7 +10,7 @@ const Header = () => {
         Left
       </div>
       <div className='flex-1 flex justify-center items-center border-l border-r h-10'>
-        <SearchBox className='h-8' options={[]} emptyMessage={''} />
+        <SearchBox className='h-8' emptyMessage={''} />
       </div>
       <div className='flex-[.5] flex justify-end h-10'>Right</div>
     </div>
