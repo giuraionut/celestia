@@ -5,12 +5,14 @@ import { ExtendedPost } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import PostVote from '../client/PostVote';
+import { cn } from '@/lib/utils';
 
 interface PostCardProps {
   post: ExtendedPost;
+  className?: string;
 }
 
-const PostCard = async ({ post }: PostCardProps) => {
+const PostCard = async ({ post, className }: PostCardProps) => {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
 
@@ -18,7 +20,7 @@ const PostCard = async ({ post }: PostCardProps) => {
   const userVote = post.votes?.find((vote) => vote.userId === userId) || null;
 
   return (
-    <article className='flex flex-col gap-4'>
+    <article className={cn('flex flex-col gap-4', className)}>
       {/* Header: Title & Author */}
       <header>
         <h1 className='text-lg font-bold'>{post.title}</h1>

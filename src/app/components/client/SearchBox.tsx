@@ -238,11 +238,14 @@ export const SearchBox = ({
         <div className={cn('relative', { hidden: !shouldShowDropdown })}>
           <div
             className={cn(
-              'animate-in fade-in-0 zoom-in-95 absolute top-full left-0 z-10 w-full mt-2 rounded-md bg-background outline-none',
+              'animate-in fade-in-0 zoom-in-95 absolute top-full left-0 z-10 w-full mt-2 rounded-md border bg-background ',
               { hidden: !shouldShowDropdown }
             )}
           >
-            <CommandList className='rounded-md ring-1 ring-slate-200'>
+            <CommandList
+              className='
+              '
+            >
               {isLoading ? (
                 <div className='flex justify-center items-center p-4'>
                   <Loader2 className='w-5 h-5 animate-spin text-gray-400' />

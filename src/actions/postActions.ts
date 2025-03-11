@@ -48,6 +48,8 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
     'use cache'
     cacheTag(`post-${id}`);
     try {
+        await new Promise((resolve) => setTimeout(resolve, 20000));
+
         const post = await db.post.findUnique({
             where: { id },
             include: {
@@ -91,15 +93,19 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
 
 
 
-
+export type ReadPostsParams = {
+    communityId?: string;
+    cursor?: string;
+    limit?: number;
+};
 export const readPosts = async (
-    communityId?: string,
-    cursor?: string,
-    limit: number = 20
+    { communityId, cursor, limit = 20 }: ReadPostsParams = {}
 ): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
     'use cache'
     cacheTag('posts')
     try {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
         const posts = await db.post.findMany({
             where: communityId ? { communityId } : undefined,
             include: { author: true, votes: true, comments: true, community: true },
@@ -147,6 +153,7 @@ export const ftsPosts = async (
 ): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
     'use cache'
     try {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const results = await searchPosts(query, limit, highlightTags, cursor);
         return results;
     } catch (error) {

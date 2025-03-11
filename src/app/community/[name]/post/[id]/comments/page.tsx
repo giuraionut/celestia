@@ -23,9 +23,9 @@ const PostPage = async ({ params }: PostPageParams) => {
     readCommentsByPost(id),
     readCommunityById(post.communityId || ''),
   ]);
-
+  // throw new Promise((reject)=> reject('failed'))
   return (
-    <div className='flex flex-col md:flex-row h-full w-full'>
+    <div className='flex flex-col md:flex-row w-full'>
       {/* Left Sidebar (hidden on mobile) */}
       <aside className='hidden md:flex md:flex-[0.5]'>
         <div className='sticky top-0 w-full p-4'>
@@ -46,7 +46,11 @@ const PostPage = async ({ params }: PostPageParams) => {
           ) : (
             <div>Loading community...</div>
           )}
-          {post ? <PostCard post={post} /> : <div>Loading post...</div>}
+          {post ? (
+            <PostCard post={post} className='max-h-[500px]' />
+          ) : (
+            <div>Loading post...</div>
+          )}
           {comments ? (
             <CommentsSection comments={comments} post={post} />
           ) : (
