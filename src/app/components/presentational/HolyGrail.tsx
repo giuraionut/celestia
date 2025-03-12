@@ -17,7 +17,7 @@ const Left = ({ children }: PropsWithChildren) => {
 };
 const Middle = ({ children }: PropsWithChildren) => {
   return (
-    <main className='flex flex-col justify-center w-full flex-1 border-l border-r overflow-auto h-full'>
+    <main className='flex flex-col w-full flex-1 border-l border-r h-full'>
       {children}
     </main>
   );

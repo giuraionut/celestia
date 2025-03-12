@@ -3,6 +3,7 @@
 import { Community, ExtendedCommunity } from "@prisma/client"
 import { getSessionUserId, handleServerError } from "./actionUtils"
 import db from "@/lib/db";
+import { revalidateTag } from "next/cache";
 
 export const createCommunity = async (community: Community): Promise<ExtendedCommunity | null> => {
     try {
@@ -100,3 +101,68 @@ export const deleteCommunity = async (id: string): Promise<Community | null> => 
         return null;
     }
 }
+
+export const joinCommunity = async (
+    communityId: string
+): Promise<ExtendedCommunity | null> => {
+    try {
+        const userId = await getSessionUserId();
+        // Update the community: connect the current user and increment totalMembers.
+        const res = await db.community.update({
+            where: { id: communityId },
+            data: {
+                members: {
+                    connect: { id: userId },
+                },
+                totalMembers: { increment: 1 },
+            },
+            include: { author: true, posts: true },
+        });
+        revalidateTag(`community-${communityId}`)
+        return res;
+    } catch (error) {
+        handleServerError(error, 'joining community.');
+        return null;
+    }
+};
+
+export const leaveCommunity = async (
+    communityId: string
+): Promise<ExtendedCommunity | null> => {
+    try {
+        const userId = await getSessionUserId();
+        // Update the community: connect the current user and increment totalMembers.
+        const res = await db.community.update({
+            where: { id: communityId },
+            data: {
+                members: {
+                    disconnect: { id: userId },
+                },
+                totalMembers: { decrement: 1 },
+            },
+            include: { author: true, posts: true },
+        });
+        revalidateTag(`community-${communityId}`)
+        return res;
+    } catch (error) {
+        handleServerError(error, 'leaving community.');
+        return null;
+    }
+};
+
+export const isUserMemberOfCommunity = async (
+    communityId: string,
+    userId?: string
+): Promise<boolean> => {
+    if (!userId) userId = await getSessionUserId();
+    const community = await db.community.findFirst({
+        where: {
+            id: communityId,
+            members: {
+                some: { id: userId },
+            },
+        },
+        select: { id: true }, // Only fetch the id, nothing extra
+    });
+    return !!community;
+};

@@ -1,6 +1,9 @@
 import React from 'react';
 import { readCommentsByPost } from '@/actions/commentActions';
-import { readCommunityById } from '@/actions/communityActions';
+import {
+  isUserMemberOfCommunity,
+  readCommunityById,
+} from '@/actions/communityActions';
 import { readPost } from '@/actions/postActions';
 import CommentsSection from '@/app/components/presentational/CommentsSection';
 import CommunityCard from '@/app/components/presentational/CommunityCard';
@@ -37,14 +40,19 @@ const PostPage = async ({ params }: PostPageParams) => {
 
   const userVote = post.votes?.find((vote) => vote.userId === userId) || null;
 
+  const isMemberOfCommunity = community
+    ? await isUserMemberOfCommunity(community.id)
+    : false;
+  console.log('community', community);
   return (
     <HolyGrail>
-      <Left/>
+      <Left />
 
       <Middle>
         <div className='max-w-3xl w-full p-4 flex flex-col gap-4'>
           {community ? (
             <CommunityCard
+              isMemberOfCommunity={isMemberOfCommunity}
               community={community}
               content={false}
               footer={false}
@@ -69,6 +77,7 @@ const PostPage = async ({ params }: PostPageParams) => {
         <div className='w-full h-fit m-4 sticky top-14'>
           {community ? (
             <CommunityCard
+              isMemberOfCommunity={isMemberOfCommunity}
               community={community}
               className='border rounded-lg p-4 w-full h-full'
             />
