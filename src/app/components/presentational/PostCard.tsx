@@ -1,24 +1,17 @@
 import React from 'react';
 import Image from 'next/image';
 import { MessageSquare } from 'lucide-react';
-import { ExtendedPost } from '@prisma/client';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { ExtendedPost, Vote } from '@prisma/client';
 import PostVote from '../client/PostVote';
 import { cn } from '@/lib/utils';
 
 interface PostCardProps {
   post: ExtendedPost;
+  vote: Vote | null;
   className?: string;
 }
 
-const PostCard = async ({ post, className }: PostCardProps) => {
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
-
-  // Find the current user's vote (if any)
-  const userVote = post.votes?.find((vote) => vote.userId === userId) || null;
-
+const PostCard = async ({ post, vote, className }: PostCardProps) => {
   return (
     <article className={cn('flex flex-col gap-4', className)}>
       {/* Header: Title & Author */}
@@ -33,14 +26,17 @@ const PostCard = async ({ post, className }: PostCardProps) => {
         <Image
           src={post.cover}
           alt={post.title}
-          fill
-          className='object-cover blur scale-110'
+          width={100}
+          height={100}
+          className='object-cover blur scale-110 w-full h-full'
         />
         {/* Foreground Image */}
         <Image
           src={post.cover}
           alt={post.title}
           fill
+          priority
+          sizes='768px'
           className='object-contain'
         />
       </div>
@@ -48,7 +44,7 @@ const PostCard = async ({ post, className }: PostCardProps) => {
       {/* Footer: Votes & Comments */}
       <footer className='flex items-center justify-between'>
         {/* Vote Buttons (client component with optimistic update) */}
-        <PostVote post={post} vote={userVote} />
+        <PostVote post={post} vote={vote} />
 
         {/* Comments Section */}
         <div className='flex items-center gap-2'>

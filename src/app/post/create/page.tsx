@@ -1,7 +1,7 @@
 import React from 'react';
-import { CreatePostForm } from '../../components/forms/CreatePostForm';
 import { readCommunities } from '@/actions/communityActions';
 import { Community } from '@prisma/client';
+import { CreatePostForm } from '@/app/components/forms/createPostForm';
 
 const CreatePost = async () => {
   const communities = await readCommunities();

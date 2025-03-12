@@ -8,6 +8,7 @@ import { getTotalPostDownvotes, getTotalPostUpvotes } from "./voteUtils";
 import { getSearchSuggestions, searchPosts } from "./postFTS";
 import { PostSuggestion } from "@/types/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
+import { revalidateTag } from "next/cache";
 
 export const createPost = async (post: Post): Promise<Post | null> => {
     try {
@@ -48,7 +49,7 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
     'use cache'
     cacheTag(`post-${id}`);
     try {
-        await new Promise((resolve) => setTimeout(resolve, 20000));
+        // await new Promise((resolve) => setTimeout(resolve, 20000));
 
         const post = await db.post.findUnique({
             where: { id },
@@ -104,7 +105,7 @@ export const readPosts = async (
     'use cache'
     cacheTag('posts')
     try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        // await new Promise((resolve) => setTimeout(resolve, 20000));
 
         const posts = await db.post.findMany({
             where: communityId ? { communityId } : undefined,
@@ -130,7 +131,7 @@ export const updatePostVotes = async (postId: string): Promise<ExtendedPost | nu
         const totalUpvotes = await getTotalPostUpvotes(postId);
         const totalDownVotes = await getTotalPostDownvotes(postId);
 
-        return await db.post.update({
+        const res = await db.post.update({
             where: { id: postId },
             data: { totalDownvotes: totalDownVotes, totalUpvotes: totalUpvotes },
             include: {
@@ -138,6 +139,8 @@ export const updatePostVotes = async (postId: string): Promise<ExtendedPost | nu
                 votes: true
             }
         });
+        revalidateTag(`post-${postId}`);
+        return res;
     }
     catch (error) {
         handleServerError(error, 'updating post vote.');

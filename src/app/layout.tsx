@@ -5,6 +5,8 @@ import { Toaster } from 'sonner';
 import { ThemeProvider } from 'next-themes';
 import { SessionProvider } from './components/client/SessionProvider';
 import Header from './components/header';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AppSidebar } from './components/client/AppSidebar';
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -28,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionProvider>
           <ThemeProvider
@@ -37,9 +39,13 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Header />
-            {children}
-            <Toaster />
+            <SidebarProvider className='flex flex-col min-h-screen'>
+              <Header />
+              <div className='flex-1 flex '>
+                {children}
+              </div>
+              <Toaster />
+            </SidebarProvider>
           </ThemeProvider>
         </SessionProvider>
       </body>

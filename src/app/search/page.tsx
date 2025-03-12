@@ -1,5 +1,12 @@
 import { ftsPosts } from '@/actions/postActions';
 import { Suspense } from 'react';
+import {
+  HolyGrail,
+  Left,
+  Middle,
+  Right,
+} from '../components/presentational/HolyGrail';
+import { AppSidebar } from '../components/client/AppSidebar';
 
 type Post = {
   id: string;
@@ -75,26 +82,40 @@ export default async function SearchPage({
 
   console.log(posts);
   return (
-    <div className='p-6 max-w-screen-xl mx-auto'>
-      <div className='flex flex-col gap-4'>
-        {posts && posts.length > 0 ? (
-          posts.map((post: Post) => <PostListItem key={post.id} post={post} />)
-        ) : (
-          <p className='py-4 text-center text-gray-500'>
-            No posts found for "{q}".
-          </p>
-        )}
-      </div>
-      {nextCursor && (
-        <div className='mt-6 text-center'>
-          <a
-            href={`/search?q=${q}&cursor=${nextCursor}`}
-            className='inline-block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600'
-          >
-            Load More
-          </a>
+    <HolyGrail>
+      <Left />
+      <Middle>
+        <div className='p-6 w-full mx-auto flex-1 h-full'>
+          <div className='flex flex-col gap-4'>
+            {posts && posts.length > 0 ? (
+              posts.map((post: Post) => (
+                <PostListItem key={post.id} post={post} />
+              ))
+            ) : (
+              <div className='flex-1 h-full'>
+                <p className='py-4 text-center text-gray-500'>
+                  No posts found for "{q}".
+                </p>
+              </div>
+            )}
+          </div>
+          {nextCursor && (
+            <div className='mt-6 text-center'>
+              <a
+                href={`/search?q=${q}&cursor=${nextCursor}`}
+                className='inline-block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600'
+              >
+                Load More
+              </a>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </Middle>
+      <Right>
+        <div className='w-full h-32 rounded border m-4 sticky top-14 p-4 bg-red-300'>
+          Something
+        </div>
+      </Right>
+    </HolyGrail>
   );
 }

@@ -5,6 +5,15 @@ import { readPost } from '@/actions/postActions';
 import CommentsSection from '@/app/components/presentational/CommentsSection';
 import CommunityCard from '@/app/components/presentational/CommunityCard';
 import PostCard from '@/app/components/presentational/PostCard';
+import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
+import {
+  HolyGrail,
+  Left,
+  Middle,
+  Right,
+} from '@/app/components/presentational/HolyGrail';
+import { AppSidebar } from '@/app/components/client/AppSidebar';
 
 interface PostPageParams {
   params: { id: string; name: string };
@@ -23,20 +32,17 @@ const PostPage = async ({ params }: PostPageParams) => {
     readCommentsByPost(id),
     readCommunityById(post.communityId || ''),
   ]);
-  // throw new Promise((reject)=> reject('failed'))
-  return (
-    <div className='flex flex-col md:flex-row w-full'>
-      {/* Left Sidebar (hidden on mobile) */}
-      <aside className='hidden md:flex md:flex-[0.5]'>
-        <div className='sticky top-0 w-full p-4'>
-          {/* Placeholder for left sidebar content */}
-          Column 1
-        </div>
-      </aside>
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
 
-      {/* Main Content */}
-      <main className='flex-1 border-l border-r'>
-        <div className='max-w-3xl w-full mx-auto p-4 flex flex-col gap-4'>
+  const userVote = post.votes?.find((vote) => vote.userId === userId) || null;
+
+  return (
+    <HolyGrail>
+      <Left/>
+
+      <Middle>
+        <div className='max-w-3xl w-full p-4 flex flex-col gap-4'>
           {community ? (
             <CommunityCard
               community={community}
@@ -47,7 +53,7 @@ const PostPage = async ({ params }: PostPageParams) => {
             <div>Loading community...</div>
           )}
           {post ? (
-            <PostCard post={post} className='max-h-[500px]' />
+            <PostCard post={post} vote={userVote} className='max-h-[500px]' />
           ) : (
             <div>Loading post...</div>
           )}
@@ -57,22 +63,21 @@ const PostPage = async ({ params }: PostPageParams) => {
             <div>Loading comments...</div>
           )}
         </div>
-      </main>
+      </Middle>
 
-      {/* Right Sidebar (hidden on mobile) */}
-      <aside className='hidden md:flex md:flex-[0.5]'>
-        <div className='sticky top-0 w-full p-4'>
+      <Right>
+        <div className='w-full h-fit m-4 sticky top-14'>
           {community ? (
             <CommunityCard
               community={community}
-              className='border rounded-lg p-4'
+              className='border rounded-lg p-4 w-full h-full'
             />
           ) : (
             <div>Loading community...</div>
           )}
         </div>
-      </aside>
-    </div>
+      </Right>
+    </HolyGrail>
   );
 };
 

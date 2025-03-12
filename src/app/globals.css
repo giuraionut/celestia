@@ -125,7 +125,6 @@
   }
 }
 
-
 .ProseMirror {
   outline: none !important;
   border: none !important;
@@ -365,8 +364,6 @@
     pointer-events: none;
   }
 }
-
-
 
 /* For Chrome, Safari, and Edge */
 ::-webkit-scrollbar {

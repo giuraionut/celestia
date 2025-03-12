@@ -1,44 +1,63 @@
 import { readPosts } from '@/actions/postActions';
 import { ExtendedPost } from '@prisma/client';
-import Link from 'next/link';
-import PostCard from './components/presentational/PostCard';
+import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
+import LoadMore from './components/client/LoadMore';
+import PostList from './components/client/PostList';
+import { AppSidebar } from './components/client/AppSidebar';
+import {
+  HolyGrail,
+  Left,
+  Middle,
+  Right,
+} from './components/presentational/HolyGrail';
+
+// Define the number of posts to load per batch
+const POSTS_PER_PAGE = 5;
+
+// Server action to load more posts
+// Server action to load more posts
+async function loadMorePosts(cursor?: string) {
+  'use server';
+  console.log('LOAD MORE');
+
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+
+  const result = await readPosts({ cursor, limit: POSTS_PER_PAGE });
+  const posts = result?.posts || [];
+  const nextCursor = result?.nextCursor || null; // Convert undefined to null
+
+  return [
+    <PostList key={cursor || 'initial'} posts={posts} userId={userId} />,
+    nextCursor,
+  ] as const;
+}
 
 export default async function Home() {
-  const result = await readPosts({ limit: 5 });
-  const posts = result?.posts || [];
-  const nextCursor = result?.nextCursor;
   console.log('HOME');
+
+  // Initial load of posts
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+
+  const result = await readPosts({ limit: POSTS_PER_PAGE });
+  const initialPosts = result?.posts || [];
+  const initialCursor = result?.nextCursor;
+
   return (
-    <div className='flex flex-col md:flex-row h-screen w-full '>
-      {/* Left Sidebar (hidden on mobile) */}
-      <aside className='hidden md:flex md:flex-[0.5]'>
-        <div className='text-center'>Something</div>
-      </aside>
-
-      {/* Main Content */}
-      <main className='flex-1 border-l border-r'>
-        <div className='max-w-3xl w-full mx-auto p-4 flex flex-col gap-4'>
-          {posts &&
-            posts.map(
-              (post: ExtendedPost) =>
-                post.community && (
-                  <Link
-                    key={post.id}
-                    href={`/community/${post.community.name}/post/${post.id}/comments`}
-                  >
-                    <PostCard post={post} className=' h-[500px]' />
-                  </Link>
-                )
-            )}
+    <HolyGrail>
+      <Left/>
+      <Middle>
+        <LoadMore loadMoreAction={loadMorePosts} initialCursor={initialCursor}>
+          <PostList posts={initialPosts} userId={userId} />
+        </LoadMore>
+      </Middle>
+      <Right>
+        <div className='w-full h-32 rounded border m-4 sticky top-14 p-4 bg-red-300'>
+          Something
         </div>
-      </main>
-
-      {/* Right Sidebar (hidden on mobile) */}
-      <aside className='hidden md:flex md:flex-[0.5]'>
-        <div className='sticky top-0 w-full p-4'>
-          <div className='text-center'>Something</div>
-        </div>
-      </aside>
-    </div>
+      </Right>
+    </HolyGrail>
   );
 }

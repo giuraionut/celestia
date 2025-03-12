@@ -85,7 +85,7 @@ export const SearchBox = ({
   }, [resetSearchState]);
 
   useEffect(() => {
-    console.log('inputvalue:', inputValue);
+    // console.log('inputvalue:', inputValue);
 
     // Cancel previous request and reset if input is empty
     if (inputValue.trim() === '') {
@@ -103,9 +103,9 @@ export const SearchBox = ({
           '<span class="text-red-400">',
           '</span>',
         ]);
-        console.log('posts', posts);
+        // console.log('posts', posts);
         const communities = await findCommunityByName(inputValue);
-        console.log('communities', communities);
+        // console.log('communities', communities);
 
         if (isMounted) {
           setPostSuggestions(Array.isArray(posts) ? posts : []);
@@ -193,10 +193,10 @@ export const SearchBox = ({
 
   const shouldShowDropdown = isOpen && inputValue.trim() !== '' && hasSearched;
 
-  console.log('hasPosts', hasPosts);
-  console.log('hasCommunities', hasCommunities);
-  console.log('noResults', noResults);
-  console.log('shouldShowDropdown', shouldShowDropdown);
+  // console.log('hasPosts', hasPosts);
+  // console.log('hasCommunities', hasCommunities);
+  // console.log('noResults', noResults);
+  // console.log('shouldShowDropdown', shouldShowDropdown);
   return (
     <div className={cn('flex items-center space-x-2', className)}>
       <CommandPrimitive
