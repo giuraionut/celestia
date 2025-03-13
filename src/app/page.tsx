@@ -50,7 +50,8 @@ export default async function Home() {
       <Left/>
       <Middle>
         <LoadMore loadMoreAction={loadMorePosts} initialCursor={initialCursor}>
-          <PostList posts={initialPosts} userId={userId} />
+
+          <PostList posts={initialPosts} userId={userId}/>
         </LoadMore>
       </Middle>
       <Right>

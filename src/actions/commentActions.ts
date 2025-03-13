@@ -4,7 +4,7 @@ import { getSessionUserId, handleServerError } from "./actionUtils";
 import { Comment, ExtendedComment } from "@prisma/client"
 import { getTotalCommentDownvotes, getTotalCommentUpvotes } from "./voteUtils";
 import { updatePostTotalComments } from "./postActions";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 
 export const createComment = async (comment: Comment): Promise<ExtendedComment | null> => {
@@ -21,9 +21,11 @@ export const createComment = async (comment: Comment): Promise<ExtendedComment |
             },
         });
 
-        await updatePostTotalComments(comment.postId);
-        revalidateTag(`comments-${comment.postId}`)
+        // await updatePostTotalComments(comment.postId);
+        await db.post.update({ where: { id: comment.postId }, data: { totalComments: { increment: 1 } } });
 
+        revalidateTag(`comments-${comment.postId}`)
+        revalidateTag(`post-${comment.postId}`);
         return newComment;
     }
     catch (error) {
@@ -161,8 +163,12 @@ export const deleteComment = async (comment: ExtendedComment): Promise<ExtendedC
                 votes: true
             },
         });
+
+        await db.post.update({ where: { id: comment.postId }, data: { totalComments: { decrement: 1 } } });
+
         revalidateTag(`comments-${deleted.postId}`)
         revalidateTag(`replies-${deleted.id}`);
+        revalidateTag(`post-${comment.postId}`);
 
         return deleted;
     }

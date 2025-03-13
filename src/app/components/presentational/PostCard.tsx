@@ -1,17 +1,15 @@
 import React from 'react';
 import Image from 'next/image';
-import { MessageSquare } from 'lucide-react';
 import { ExtendedPost, Vote } from '@prisma/client';
 import PostVote from '../client/PostVote';
 import { cn } from '@/lib/utils';
 
 interface PostCardProps {
   post: ExtendedPost;
-  vote: Vote | null;
   className?: string;
 }
 
-const PostCard = async ({ post, vote, className }: PostCardProps) => {
+const PostCard = async ({ post, className }: PostCardProps) => {
   return (
     <article className={cn('flex flex-col gap-4', className)}>
       {/* Header: Title & Author */}
@@ -42,16 +40,7 @@ const PostCard = async ({ post, vote, className }: PostCardProps) => {
       </div>
 
       {/* Footer: Votes & Comments */}
-      <footer className='flex items-center justify-between'>
-        {/* Vote Buttons (client component with optimistic update) */}
-        <PostVote post={post} vote={vote} />
-
-        {/* Comments Section */}
-        <div className='flex items-center gap-2'>
-          <span>{post.totalComments}</span>
-          <MessageSquare />
-        </div>
-      </footer>
+      
     </article>
   );
 };

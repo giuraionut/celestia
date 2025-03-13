@@ -16,7 +16,9 @@ import {
   Middle,
   Right,
 } from '@/app/components/presentational/HolyGrail';
-import { AppSidebar } from '@/app/components/client/AppSidebar';
+import PostCommentsCount from '@/app/components/comment/PostCommentsCount';
+import { CommentsProvider } from '@/app/components/comment/CommentsCountContext';
+import PostVote from '@/app/components/client/PostVote';
 
 interface PostPageParams {
   params: { id: string; name: string };
@@ -24,65 +26,60 @@ interface PostPageParams {
 
 const PostPage = async ({ params }: PostPageParams) => {
   const { id } = await params;
-
-  // First, load the post (we need it to get the communityId)
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
   const post = await readPost(id);
   if (!post) {
     return <div>Post not found</div>;
   }
-  // Load comments and community concurrently
   const [comments, community] = await Promise.all([
     readCommentsByPost(id),
-    readCommunityById(post.communityId || ''),
+    readCommunityById(post.communityId),
   ]);
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
 
-  const userVote = post.votes?.find((vote) => vote.userId === userId) || null;
+  const postVotes = post.votes || [];
+  const userVote = postVotes.find((vote) => vote.userId === userId) || null;
+  const totalComments = post.totalComments;
 
   const isMemberOfCommunity = community
     ? await isUserMemberOfCommunity(community.id)
     : false;
-  console.log('community', community);
+
   return (
     <HolyGrail>
       <Left />
-
       <Middle>
-        <div className='max-w-3xl w-full p-4 flex flex-col gap-4'>
-          {community ? (
+        <div className='max-w-3xl w-full p-4 flex flex-col gap-4 mx-auto'>
+          {community && (
             <CommunityCard
               isMemberOfCommunity={isMemberOfCommunity}
               community={community}
               content={false}
               footer={false}
             />
-          ) : (
-            <div>Loading community...</div>
           )}
-          {post ? (
-            <PostCard post={post} vote={userVote} className='max-h-[500px]' />
-          ) : (
-            <div>Loading post...</div>
-          )}
-          {comments ? (
-            <CommentsSection comments={comments} post={post} />
-          ) : (
-            <div>Loading comments...</div>
-          )}
+          <PostCard post={post} className='max-h-[500px]' />
+          <CommentsProvider initialCount={totalComments}>
+            <footer className='flex items-center justify-between'>
+              <PostVote post={post} vote={userVote} />
+              <PostCommentsCount />
+            </footer>
+            {comments && comments.length > 0 ? (
+              <CommentsSection comments={comments} post={post} />
+            ) : (
+              <span>No comments found</span>
+            )}
+          </CommentsProvider>
         </div>
       </Middle>
-
       <Right>
         <div className='w-full h-fit m-4 sticky top-14'>
-          {community ? (
+          {community && (
             <CommunityCard
               isMemberOfCommunity={isMemberOfCommunity}
               community={community}
               className='border rounded-lg p-4 w-full h-full'
             />
-          ) : (
-            <div>Loading community...</div>
           )}
         </div>
       </Right>

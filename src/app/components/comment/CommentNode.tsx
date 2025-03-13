@@ -20,6 +20,7 @@ import {
 } from '@/actions/commentActions';
 import { CommentNodeConnector } from './CommentNodeConnector';
 import { useSession } from 'next-auth/react';
+import { useCommentsCount } from './CommentsCountContext';
 
 interface TreeNodeProps {
   comment: ExtendedComment;
@@ -211,6 +212,7 @@ const Footer = memo(
     const [editorContent, setEditorContent] = useState<string>('');
     const { data: session } = useSession();
 
+    const commentsCount = useCommentsCount();
     const handleEditComment = useCallback(async () => {
       const editedComment: Comment = {
         id: comment.id,
@@ -265,6 +267,7 @@ const Footer = memo(
       try {
         await deleteComment(comment);
         updateCommentInTree({ ...comment, isDeleted: true });
+        commentsCount.decrementCommentCount();
         toast.success('Comment deleted successfully');
       } catch (error) {
         toast.error('Failed to delete comment', {
