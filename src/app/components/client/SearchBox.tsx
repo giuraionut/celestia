@@ -198,10 +198,10 @@ export const SearchBox = ({
   // console.log('noResults', noResults);
   // console.log('shouldShowDropdown', shouldShowDropdown);
   return (
-    <div className={cn('flex items-center space-x-2', className)}>
+    <div className={cn('flex space-x-2 w-full justify-center', className)}>
       <CommandPrimitive
         onKeyDown={handleKeyDown}
-        className={cn('rounded-md border md:min-w-[450px] h-full')}
+        className='rounded-md border h-full w-full'
         shouldFilter={false}
       >
         {/* Input area */}

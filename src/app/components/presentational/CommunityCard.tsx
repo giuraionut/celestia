@@ -12,7 +12,7 @@ const CommunityCard = ({
   className,
 }: {
   community: Community;
-  isMemberOfCommunity: boolean;
+  isMemberOfCommunity?: boolean;
   content?: boolean;
   footer?: boolean;
   className?: string;
@@ -30,7 +30,7 @@ const CommunityCard = ({
         <div>{community.name}</div>
       </div>
       {content && <div>{community.description}</div>}
-      {footer && (
+      {footer && isMemberOfCommunity != null && (
         <JoinCommunityButton
           communityId={community.id}
           isMemberOfCommunity={isMemberOfCommunity}

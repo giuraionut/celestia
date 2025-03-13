@@ -1,28 +1,40 @@
 import React, { PropsWithChildren } from 'react';
 import { AppSidebar } from '../client/AppSidebar';
+import { cn } from '@/lib/utils';
 
-const HolyGrail = ({ children }: PropsWithChildren) => {
+const HolyGrail = ({
+  className,
+  children,
+}: { className?: string } & PropsWithChildren) => {
   return (
-    <div className='flex flex-col md:flex-row min-h-full w-full'>
+    <div
+      className={cn('flex flex-col md:flex-row min-h-full w-full', className)}
+    >
       {children}
     </div>
   );
 };
 
 const Left = ({ children }: PropsWithChildren) => {
-  return <aside className='hidden md:flex md:flex-[0.5]'>
-    <AppSidebar/>
-    {children}
-  </aside>;
+  return (
+    <aside className='hidden lg:flex lg:flex-[0.5] md:border-r'>
+      <AppSidebar />
+      {children}
+    </aside>
+  );
 };
 const Middle = ({ children }: PropsWithChildren) => {
   return (
-    <main className='flex flex-col w-full flex-1 border-l border-r h-full'>
+    <main className='md:px-0 p-4 flex flex-col w-full h-full flex-1 items-center'>
       {children}
     </main>
   );
 };
 const Right = ({ children }: PropsWithChildren) => {
-  return <aside className='hidden md:flex md:flex-[0.5]'>{children}</aside>;
+  return (
+    <aside className='hidden lg:flex lg:flex-[0.5] md:border-l'>
+      {children}
+    </aside>
+  );
 };
 export { HolyGrail, Left, Middle, Right };

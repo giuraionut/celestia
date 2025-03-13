@@ -11,7 +11,12 @@ interface PostCardProps {
 
 const PostCard = async ({ post, className }: PostCardProps) => {
   return (
-    <article className={cn('flex flex-col gap-4', className)}>
+    <article
+      className={cn(
+        'flex flex-col gap-4 container',
+        className
+      )}
+    >
       {/* Header: Title & Author */}
       <header>
         <h1 className='text-lg font-bold'>{post.title}</h1>
@@ -19,7 +24,7 @@ const PostCard = async ({ post, className }: PostCardProps) => {
       </header>
 
       {/* Image Section */}
-      <div className='relative w-full mx-auto aspect-square overflow-hidden rounded-lg'>
+      <div className='relative w-full aspect-square overflow-hidden rounded-lg'>
         {/* Blurred Background Image */}
         <Image
           src={post.cover}
@@ -34,13 +39,12 @@ const PostCard = async ({ post, className }: PostCardProps) => {
           alt={post.title}
           fill
           priority
-          sizes='768px'
+          sizes='600px'
           className='object-contain'
         />
       </div>
 
       {/* Footer: Votes & Comments */}
-      
     </article>
   );
 };

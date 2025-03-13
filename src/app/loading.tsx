@@ -11,13 +11,14 @@ import {
 export default function SearchPageLoading() {
   return (
     <HolyGrail>
-      <Left>
-        <div className='text-center'>Something</div>
-      </Left>
+      <Left/>
 
       <Middle>
         {[...Array(2)].map((_, i) => (
-          <div key={i} className='w-full mx-auto p-4 flex flex-col gap-2'>
+          <div
+            key={i}
+            className='w-full max-w-[600px] mx-auto p-4 flex flex-col gap-2'
+          >
             {/* Community image and name skeleton */}
             <div className='flex items-center gap-2'>
               <Skeleton className='w-8 h-8 rounded-full' />
@@ -39,7 +40,7 @@ export default function SearchPageLoading() {
 
       {/* Right Sidebar (hidden on mobile) */}
       <Right>
-        <Skeleton className='h-96 w-full mx-auto rounded-md' />
+        <Skeleton className='h-48 w-full mx-auto rounded-md m-4 top-14' />
       </Right>
     </HolyGrail>
   );

@@ -1,35 +1,37 @@
 // app/search/loading.tsx
 import { Skeleton } from '@/components/ui/skeleton';
+import { HolyGrail, Left, Right } from '../components/presentational/HolyGrail';
 
 export default function SearchPageLoading() {
   return (
-    <div className="p-6 max-w-screen-xl mx-auto">
-      <div className="flex flex-col gap-4">
+    <HolyGrail>
+      <Left />
+      <div className='flex flex-col gap-4'>
         {[...Array(5)].map((_, i) => (
           <div
             key={i}
-            className="flex justify-between items-center h-30 p-4 border rounded-md shadow-sm"
+            className='flex justify-between items-center h-30 p-4 border rounded-md shadow-sm'
           >
-            <div className="flex-1 flex flex-col gap-2 justify-between">
+            <div className='flex-1 flex flex-col gap-2 justify-between'>
               {/* Community image and name skeleton */}
-              <div className="flex items-center gap-2">
-                <Skeleton className="w-6 h-6 rounded-full" />
-                <Skeleton className="h-4 w-32" />
+              <div className='flex items-center gap-2'>
+                <Skeleton className='w-6 h-6 rounded-full' />
+                <Skeleton className='h-4 w-32' />
               </div>
               {/* Post title skeleton */}
-              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className='h-6 w-3/4' />
               {/* Stats skeleton */}
-              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className='h-4 w-1/2' />
             </div>
             {/* Cover image skeleton */}
-            <Skeleton className="w-32 h-full rounded-md" />
+            <Skeleton className='w-32 h-full rounded-md' />
           </div>
         ))}
       </div>
       {/* Load More button skeleton */}
-      <div className="mt-6 text-center">
-        <Skeleton className="h-8 w-32 mx-auto rounded" />
-      </div>
-    </div>
+      <Right>
+        <Skeleton className='h-48 w-full mx-auto rounded-md m-4 top-14' />
+      </Right>
+    </HolyGrail>
   );
 }

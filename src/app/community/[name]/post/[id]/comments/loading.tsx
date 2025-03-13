@@ -1,19 +1,21 @@
 // app/search/loading.tsx
+import {
+  HolyGrail,
+  Left,
+  Middle,
+  Right,
+} from '@/app/components/presentational/HolyGrail';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SearchPageLoading() {
   return (
-    <div className='flex flex-col md:flex-row h-screen w-full '>
+    <HolyGrail>
       {/* Left Sidebar (hidden on mobile) */}
-      <aside className='hidden md:flex md:flex-[0.5]'>
-        <div className='text-center'>
-          <Skeleton className='h-48 w-full mx-auto rounded-md' />
-        </div>
-      </aside>
+      <Left />
 
       {/* Main Content */}
-      <main className='flex-1 border-l border-r'>
-        <div className='max-w-3xl w-full mx-auto p-4 flex flex-col gap-4'>
+      <Middle>
+        <div className='max-w-[600px] flex flex-col gap-4 w-full'>
           <div className='flex-1 flex flex-col gap-2 justify-between'>
             {/* Community image and name skeleton */}
             <div className='flex items-center gap-2'>
@@ -26,7 +28,7 @@ export default function SearchPageLoading() {
             <Skeleton className='h-2 w-64' />
           </div>
           <div className='text-center'>
-            <Skeleton className='h-72 w-full mx-auto rounded-md' />
+            <Skeleton className='h-96 w-full mx-auto rounded-md' />
           </div>
           <div className='border rounded-md h-32 gap-4 p-4 flex justify-between flex-col'>
             <Skeleton className='h-full w-full' />
@@ -56,16 +58,12 @@ export default function SearchPageLoading() {
             ))}
           </div>
         </div>
-      </main>
+      </Middle>
 
       {/* Right Sidebar (hidden on mobile) */}
-      <aside className='hidden md:flex md:flex-[0.5]'>
-        <div className='sticky top-0 w-full p-4'>
-          <div className='text-center'>
-            <Skeleton className='h-48 w-full mx-auto rounded-md' />
-          </div>
-        </div>
-      </aside>
-    </div>
+      <Right>
+        <Skeleton className='h-48 w-full mx-auto rounded-md m-4 top-14' />
+      </Right>
+    </HolyGrail>
   );
 }

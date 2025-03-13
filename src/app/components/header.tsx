@@ -19,7 +19,7 @@ const Header = async () => {
         <SidebarTrigger className='h-8 w-8'/>
       </div>
       <div className='flex-1 flex justify-center items-center border-l border-r h-10'>
-        <SearchBox className='h-8' emptyMessage={''} />
+        <SearchBox className='h-8 px-4 max-w-[600px]' emptyMessage={''} />
       </div>
       <div className='flex-[.5] flex justify-end h-10 items-center'>
         <Avatar className='h-8 w-8 mr-2'>

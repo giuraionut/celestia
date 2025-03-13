@@ -49,7 +49,7 @@ const PostPage = async ({ params }: PostPageParams) => {
     <HolyGrail>
       <Left />
       <Middle>
-        <div className='max-w-3xl w-full p-4 flex flex-col gap-4 mx-auto'>
+        <div className='max-w-[600px] flex flex-col gap-4 w-full'>
           {community && (
             <CommunityCard
               isMemberOfCommunity={isMemberOfCommunity}
@@ -58,7 +58,7 @@ const PostPage = async ({ params }: PostPageParams) => {
               footer={false}
             />
           )}
-          <PostCard post={post} className='max-h-[500px]' />
+          <PostCard post={post} />
           <CommentsProvider initialCount={totalComments}>
             <footer className='flex items-center justify-between'>
               <PostVote post={post} vote={userVote} />
@@ -72,6 +72,7 @@ const PostPage = async ({ params }: PostPageParams) => {
           </CommentsProvider>
         </div>
       </Middle>
+
       <Right>
         <div className='w-full h-fit m-4 sticky top-14'>
           {community && (
