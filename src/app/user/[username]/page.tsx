@@ -4,6 +4,12 @@ import { readPostsByUserId } from '@/actions/postActions';
 import CommentList from '@/app/components/client/CommentList';
 import LoadMore from '@/app/components/client/LoadMore';
 import PostList from '@/app/components/client/PostList';
+import {
+  HolyGrail,
+  Left,
+  Middle,
+  Right,
+} from '@/app/components/presentational/HolyGrail';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React, { ReactNode } from 'react';
 
@@ -52,33 +58,43 @@ const UserPage = async ({ params }: { params: { username: string } }) => {
     const comments = userComments?.comments || [];
     const nextCursor = userComments?.nextCursor || null;
     return [
-      <CommentList key={cursor || 'initial'} comments={comments} userId={user.id} />,
+      <CommentList
+        key={cursor || 'initial'}
+        comments={comments}
+        userId={user.id}
+      />,
       nextCursor,
     ];
   }
   return (
-    <Tabs defaultValue='posts' className='w-[400px]'>
-      <TabsList className='grid w-full grid-cols-2'>
-        <TabsTrigger value='posts'>Posts</TabsTrigger>
-        <TabsTrigger value='comments'>Comments</TabsTrigger>
-      </TabsList>
-      <TabsContent value='posts'>
-        <LoadMore
-          loadMoreAction={loadMoreUserPosts}
-          initialCursor={postsNextCursor}
-        >
-          <PostList posts={posts} userId={user.id} />
-        </LoadMore>
-      </TabsContent>
-      <TabsContent value='comments'>
-       <LoadMore
-          loadMoreAction={loadMoreUserComments}
-          initialCursor={commentsNextCursor}
-        >
-          <CommentList comments={comments} userId={user.id} />
-        </LoadMore>
-      </TabsContent>
-    </Tabs>
+    <HolyGrail>
+      <Left></Left>
+      <Middle>
+        <Tabs defaultValue='posts' className='w-full p-4'>
+          <TabsList className='grid w-full grid-cols-2'>
+            <TabsTrigger value='posts'>Posts</TabsTrigger>
+            <TabsTrigger value='comments'>Comments</TabsTrigger>
+          </TabsList>
+          <TabsContent value='posts'>
+            <LoadMore
+              loadMoreAction={loadMoreUserPosts}
+              initialCursor={postsNextCursor}
+            >
+              <PostList posts={posts} userId={user.id} />
+            </LoadMore>
+          </TabsContent>
+          <TabsContent value='comments'>
+            <LoadMore
+              loadMoreAction={loadMoreUserComments}
+              initialCursor={commentsNextCursor}
+            >
+              <CommentList comments={comments} userId={user.id} />
+            </LoadMore>
+          </TabsContent>
+        </Tabs>
+      </Middle>
+      <Right></Right>
+    </HolyGrail>
   );
 };
 
