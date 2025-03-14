@@ -9,7 +9,7 @@ datasource db {
 
 model User {
   id            String    @id @default(cuid())
-  name          String?
+  name          String?   @unique
   email         String?   @unique
   emailVerified DateTime?
   image         String?
@@ -19,6 +19,7 @@ model User {
   posts         Post[]
   comments      Comment[]
   votes         Vote[]
+  recentCommunities    RecentlyVisitedCommunity[]
   isDeleted     Boolean   @default(false)
 
   joinedCommunities  Community[] @relation(name: "CommunityMembers")
@@ -69,6 +70,17 @@ model Community {
 
   @@index([name])
 }
+
+model RecentlyVisitedCommunity {
+  id           String    @id @default(cuid())
+  user         User      @relation(fields: [userId], references: [id])
+  userId       String
+  communityId  String
+  visitedAt    DateTime  @default(now())
+
+  @@unique([userId, communityId])
+}
+
 
 model Post {
   id               String    @id @default(cuid())

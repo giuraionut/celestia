@@ -58,7 +58,7 @@ const CommunityPage = async ({ params }: { params: { name: string } }) => {
     <HolyGrail>
       <Left />
       <Middle>
-        <div className='max-w-[600px] w-full px-4'>
+        <div className=' w-full px-4'>
           {/* Community header */}
           <div className='border rounded-lg flex flex-col gap-4 h-fit'>
             <div className='relative flex gap-4 rounded-t-lg p-4 w-full'>

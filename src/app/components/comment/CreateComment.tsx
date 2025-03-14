@@ -6,7 +6,7 @@ import TiptapEditor from '../tiptap/TiptapEditor';
 import { cn } from '@/lib/utils';
 import { createComment } from '@/actions/commentActions';
 import { Button } from '@/components/ui/button';
-import { useCommentsCount } from './CommentsCountContext';
+import { useCommentsContext } from './CommentsCountContext';
 
 export default function CreateComment({
   className,
@@ -19,7 +19,7 @@ export default function CreateComment({
 }) {
   const [commentContent, setCommentContent] = useState('');
 
-  const commentsCount = useCommentsCount();
+  const optimisticTotalComments = useCommentsContext();
   const handleSubmit = async () => {
     if (!commentContent.trim()) return; // Prevent empty submissions
 
@@ -37,7 +37,7 @@ export default function CreateComment({
     };
 
     await createComment(comment);
-    commentsCount.incrementCommentCount();
+    optimisticTotalComments.incrementCommentCount();
     updateTree(comment);
     setCommentContent(''); // Clear after submitting
   };

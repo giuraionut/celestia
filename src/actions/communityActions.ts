@@ -92,7 +92,6 @@ export const readCommunities = async (): Promise<ExtendedCommunity[] | null> => 
 }
 
 export const deleteCommunity = async (id: string): Promise<Community | null> => {
-    'use cache'
     try {
         return await db.community.delete({ where: { id } });
     }

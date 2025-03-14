@@ -1,11 +1,13 @@
-import React from 'react';
-import { readCommentsByPost } from '@/actions/commentActions';
+import React, { ReactNode } from 'react';
+import {
+  fetchCommentsByPost,
+  readCommentsByPost,
+} from '@/actions/commentActions';
 import {
   isUserMemberOfCommunity,
   readCommunityById,
 } from '@/actions/communityActions';
 import { readPost } from '@/actions/postActions';
-import CommentsSection from '@/app/components/presentational/CommentsSection';
 import CommunityCard from '@/app/components/presentational/CommunityCard';
 import PostCard from '@/app/components/presentational/PostCard';
 import { authOptions } from '@/lib/auth';
@@ -19,6 +21,10 @@ import {
 import PostCommentsCount from '@/app/components/comment/PostCommentsCount';
 import { CommentsProvider } from '@/app/components/comment/CommentsCountContext';
 import PostVote from '@/app/components/client/PostVote';
+import LoadMore from '@/app/components/client/LoadMore';
+import CommentsSection from '@/app/components/presentational/CommentsSection';
+import { ExtendedComment } from '@prisma/client';
+import LoadMoreComments from '@/app/components/client/LoadMoreComments';
 
 interface PostPageParams {
   params: { id: string; name: string };
@@ -33,7 +39,7 @@ const PostPage = async ({ params }: PostPageParams) => {
     return <div>Post not found</div>;
   }
   const [comments, community] = await Promise.all([
-    readCommentsByPost(id),
+    fetchCommentsByPost({ postId: id, limit: 10 }),
     readCommunityById(post.communityId),
   ]);
 
@@ -45,6 +51,19 @@ const PostPage = async ({ params }: PostPageParams) => {
     ? await isUserMemberOfCommunity(community.id)
     : false;
 
+  async function loadMoreComments(
+    cursor?: string
+  ): Promise<[ExtendedComment[], string | null]> {
+    'use server';
+    if (!post) throw new Error('User not found');
+    const c = await fetchCommentsByPost({
+      postId: post.id,
+      cursor,
+    });
+    const comments = c?.comments || [];
+    const nextCursor = c?.nextCursor || null;
+    return [comments, nextCursor];
+  }
   return (
     <HolyGrail>
       <Left />
@@ -59,17 +78,27 @@ const PostPage = async ({ params }: PostPageParams) => {
             />
           )}
           <PostCard post={post} />
-          <CommentsProvider initialCount={totalComments}>
-            <footer className='flex items-center justify-between'>
-              <PostVote post={post} vote={userVote} />
-              <PostCommentsCount />
-            </footer>
-            {comments && comments.length > 0 ? (
-              <CommentsSection comments={comments} post={post} />
-            ) : (
-              <span>No comments found</span>
-            )}
-          </CommentsProvider>
+          {comments && (
+            <CommentsProvider
+              initialCount={totalComments}
+              initialComments={comments.comments}
+            >
+              {/*comentariile de aici trebuie sa fie optimistic si cand loadmore incarca mai multe le adauga, iar comment section le afiseaza */}
+              <footer className='flex items-center justify-between'>
+                <PostVote post={post} vote={userVote} />
+                <PostCommentsCount />
+              </footer>
+
+              {comments && (
+                <LoadMoreComments
+                  loadMoreAction={loadMoreComments}
+                  initialCursor={comments.nextCursor}
+                >
+                  <CommentsSection post={post} />
+                </LoadMoreComments>
+              )}
+            </CommentsProvider>
+          )}
         </div>
       </Middle>
 

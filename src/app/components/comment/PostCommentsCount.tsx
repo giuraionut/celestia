@@ -1,15 +1,15 @@
 'use client';
 import { MessageSquare } from 'lucide-react';
 import React from 'react';
-import { useCommentsCount } from './CommentsCountContext';
+import { useCommentsContext } from './CommentsCountContext';
 
 
 
 const PostCommentsCount = () => {
-  const comments = useCommentsCount();
+  const optimisticTotalComments = useCommentsContext();
   return (
     <div className='flex items-center gap-2'>
-      <span>{comments.optimisticTotalComments}</span>
+      <span>{optimisticTotalComments.totalComments}</span>
       <MessageSquare />
     </div>
   );

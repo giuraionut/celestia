@@ -1,11 +1,9 @@
 import Link from 'next/link';
-import { ExtendedPost, Vote } from '@prisma/client';
+import { ExtendedPost } from '@prisma/client';
 import PostCard from '../presentational/PostCard';
 import PostVote from './PostVote';
 import { Separator } from '@/components/ui/separator';
-import PostCommentsCount from '../comment/PostCommentsCount';
 import { MessageSquareIcon } from 'lucide-react';
-import CommunityCard from '../presentational/CommunityCard';
 import Image from 'next/image';
 interface PostListProps {
   posts: ExtendedPost[];

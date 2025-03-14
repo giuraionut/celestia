@@ -3,6 +3,8 @@
 import db from "@/lib/db";
 import { handleServerError } from "./actionUtils";
 import argon2 from "argon2";
+import { unknown } from "zod";
+import { User } from "@prisma/client";
 // Create a new user
 export const createUser = async ({
     name,
@@ -38,7 +40,7 @@ export const createUser = async ({
         });
 
         return { success: true, message: 'Account created successfully' };
-    } catch (error) {
+    } catch (error: unknown) {
         handleServerError(error, 'creating a new user.');
         return { success: false, message: 'Internal server error' };
     }
@@ -86,8 +88,8 @@ export const setPassword = async ({
         });
 
         return { success: true, message: 'Password updated successfully.' };
-    } catch (error) {
-        console.error('Error setting password:', error);
+    } catch (error: unknown) {
+        handleServerError(error, 'retrieving connected providers.');
         return { success: false, message: 'Internal server error.' };
     }
 };
@@ -125,7 +127,7 @@ export const getConnectedProviders = async ({
             providers: accounts,
             hasPassword: !!user.password,
         };
-    } catch (error) {
+    } catch (error: unknown) {
         handleServerError(error, 'retrieving connected providers.');
         return { success: false, message: 'Internal server error.' };
     }
@@ -159,9 +161,21 @@ export const updateUserProfile = async ({
         }
 
         return { success: true, message: 'Profile updated successfully.' };
-    } catch (error) {
+    } catch (error: unknown) {
         handleServerError(error, 'updating the user profile.');
         return { success: false, message: 'Internal server error.' };
     }
 };
 
+
+export const fetchUserProfileByName = async ({
+    email }: { email: string }): Promise<User | null> => {
+    try {
+        const user = await db.user.findUnique({ where: { email: email } });
+        return user;
+    }
+    catch (error: unknown) {
+        handleServerError(error, 'updating the user profile.');
+        return null;
+    }
+}

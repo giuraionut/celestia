@@ -125,6 +125,32 @@ export const readPosts = async (
     }
 };
 
+export type ReadPostsByUserIdParams = {
+    userId: string;
+    cursor?: string;
+    limit?: number;
+}
+export const readPostsByUserId = async ({ userId, cursor, limit = 20 }: ReadPostsByUserIdParams): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
+    'use cache'
+    cacheTag(`posts-${userId}`);
+    try {
+        const posts = await db.post.findMany({
+            where: { authorId: userId },
+            include: { author: true, votes: true, comments: true, community: true },
+            take: limit + 1, // Fetch one extra to check if there's a next page
+            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // Skip the cursor itself
+            orderBy: { createdAt: 'asc' },
+        });
+        const nextCursor = posts.length > limit ? posts[limit].id : undefined;
+
+        return { posts: posts.slice(0, limit), nextCursor };
+
+    } catch (error) {
+        handleServerError(error, 'reading posts.');
+        return null;
+    }
+}
+
 export const updatePostVotes = async (postId: string): Promise<ExtendedPost | null> => {
     try {
 
@@ -155,6 +181,7 @@ export const ftsPosts = async (
     cursor?: string
 ): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
     'use cache'
+    cacheTag(`fts-posts-${query}`);
     try {
         await new Promise((resolve) => setTimeout(resolve, 2000));
         const results = await searchPosts(query, limit, highlightTags, cursor);

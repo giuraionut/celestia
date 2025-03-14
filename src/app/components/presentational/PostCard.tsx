@@ -1,7 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import { ExtendedPost, Vote } from '@prisma/client';
-import PostVote from '../client/PostVote';
+import { ExtendedPost } from '@prisma/client';
 import { cn } from '@/lib/utils';
 
 interface PostCardProps {
@@ -24,7 +23,7 @@ const PostCard = async ({ post, className }: PostCardProps) => {
       </header>
 
       {/* Image Section */}
-      <div className='relative w-full aspect-square overflow-hidden rounded-lg'>
+      <div className='relative w-full aspect-square overflow-hidden rounded-lg ring'>
         {/* Blurred Background Image */}
         <Image
           src={post.cover}

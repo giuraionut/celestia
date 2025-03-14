@@ -123,6 +123,75 @@ export const readCommentsByPost = async (
     }
 };
 
+
+
+export type FetchCommentsByPostProps = {
+    postId: string;
+    cursor?: string;
+    limit?: number;
+}
+export const fetchCommentsByPost = async ({ postId, cursor, limit = 20 }: FetchCommentsByPostProps): Promise<{ comments: ExtendedComment[]; nextCursor?: string } | null> => {
+    'use cache'
+    cacheTag(`comments-${postId}`);
+    try {
+        // Fetch the top-level comments for the post
+        const topLevelComments = await db.comment.findMany({
+            where: { postId, parentId: null },
+            include: {
+                author: true,
+                votes: true,
+            },
+            take: limit + 1, // Fetch one extra to check if there's a next page
+            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // Skip the cursor itself
+            orderBy: { createdAt: 'asc' },
+        });
+
+        // Recursively fetch replies for each top-level comment
+        const commentsWithReplies = await Promise.all(
+            topLevelComments.map(async (comment: ExtendedComment) => {
+                comment.replies = await fetchRepliesRecursively(comment.id);
+                return comment;
+            })
+        );
+        const nextCursor = commentsWithReplies.length > limit ? commentsWithReplies[limit].id : undefined;
+
+        return { comments: commentsWithReplies.slice(0, limit), nextCursor };
+    } catch (error) {
+        handleServerError(error, 'reading comments by post');
+        return null;
+    }
+};
+
+export type ReadCommentsByUserId = {
+    userId: string,
+    limit?: number,
+    cursor?: string
+}
+
+export const readCommentsByUserId = async ({ userId, cursor, limit = 20 }: ReadCommentsByUserId): Promise<{ comments: ExtendedComment[]; nextCursor?: string } | null> => {
+    'use cache'
+    cacheTag(`comments-${userId}`);
+    try {
+        const comments = await db.comment.findMany({
+            where: { authorId: userId },
+            include: {
+                author: true,
+                votes: true,
+                replies: true
+            },
+            take: limit + 1, // Fetch one extra to check if there's a next page
+            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // Skip the cursor itself
+            orderBy: { createdAt: 'asc' },
+        });
+        const nextCursor = comments.length > limit ? comments[limit].id : undefined;
+
+        return { comments: comments.slice(0, limit), nextCursor };
+    } catch (error) {
+        handleServerError(error, 'reading comments by user');
+        return null;
+    }
+}
+
 export const fetchRepliesRecursively = async (parentId: string): Promise<ExtendedComment[]> => {
     'use cache'
     cacheTag(`replies-${parentId}`);

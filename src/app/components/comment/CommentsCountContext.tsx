@@ -1,27 +1,14 @@
 // CommentsContext.tsx
 'use client';
-import React, {
-  createContext,
-  startTransition,
-  useContext,
-  useOptimistic,
-  useState,
-} from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { useOptimistic } from 'react';
+import { ExtendedComment } from '@prisma/client';
 
-interface CommentsContextType {
-  optimisticTotalComments: number;
-  incrementCommentCount: () => void;
-  decrementCommentCount: () => void;
-  setOptimisticTotalComments: (action: CommentAction) => void;
-}
+type CommentCountAction =
+  | { type: 'ADD_COMMENT' }
+  | { type: 'DELETE_COMMENT' };
 
-const CommentsContext = createContext<CommentsContextType | undefined>(
-  undefined
-);
-
-type CommentAction = { type: 'ADD_COMMENT' } | { type: 'DELETE_COMMENT' };
-
-const totalCommentsReducer = (state: number, action: CommentAction): number => {
+const totalCommentsReducer = (state: number, action: CommentCountAction): number => {
   switch (action.type) {
     case 'ADD_COMMENT':
       return state + 1;
@@ -32,34 +19,92 @@ const totalCommentsReducer = (state: number, action: CommentAction): number => {
   }
 };
 
+export interface CommentsContextType {
+  totalComments: number;
+  comments: ExtendedComment[];
+  incrementCommentCount: () => void;
+  decrementCommentCount: () => void;
+  updateCommentInTree: (updatedComment: ExtendedComment) => void;
+  addComment: (comment: ExtendedComment) => void;
+  appendComments: (newComments: ExtendedComment[]) => void;
+}
+
+interface CommentsProviderProps {
+  initialCount: number;
+  initialComments: ExtendedComment[];
+  children: React.ReactNode;
+}
+
+export const CommentsContext = createContext<CommentsContextType | undefined>(undefined);
+
 export const CommentsProvider = ({
   initialCount,
+  initialComments,
   children,
-}: {
-  initialCount: number;
-  children: React.ReactNode;
-}) => {
-  const [optimisticTotalComments, setOptimisticTotalComments] = useOptimistic(
-    initialCount,
-    totalCommentsReducer
-  );
+}: CommentsProviderProps) => {
+  // Optimistic state for total comments
+  const [totalComments, setTotalComments] = useOptimistic(initialCount, totalCommentsReducer);
+  // Regular state for the comments list
+  const [comments, setComments] = useState<ExtendedComment[]>(initialComments);
 
-  const incrementCommentCount = () =>
-    startTransition(() => {
-      setOptimisticTotalComments({ type: 'ADD_COMMENT' });
+  const incrementCommentCount = () => {
+    setTotalComments({ type: 'ADD_COMMENT' });
+  };
+
+  const decrementCommentCount = () => {
+    setTotalComments({ type: 'DELETE_COMMENT' });
+  };
+
+  const updateCommentRecursively = (
+    comments: ExtendedComment[],
+    updatedComment: ExtendedComment
+  ): ExtendedComment[] => {
+    return comments.map((comment) => {
+      if (comment.id === updatedComment.id) {
+        return updatedComment;
+      }
+      if (comment.replies && comment.replies.length > 0) {
+        return {
+          ...comment,
+          replies: updateCommentRecursively(comment.replies, updatedComment),
+        };
+      }
+      return comment;
     });
-  const decrementCommentCount = () =>
-    startTransition(() => {
-      setOptimisticTotalComments({ type: 'DELETE_COMMENT' });
-    });
+  };
+
+  const updateCommentInTree = (updatedComment: ExtendedComment) => {
+    setComments((prev) =>
+      prev.map((comment) =>
+        comment.id === updatedComment.id
+          ? updatedComment
+          : comment.replies && comment.replies.length > 0
+          ? { ...comment, replies: updateCommentRecursively(comment.replies, updatedComment) }
+          : comment
+      )
+    );
+  };
+
+  const addComment = (comment: ExtendedComment) => {
+    setComments((prev) => [...prev, comment]);
+    setTotalComments({ type: 'ADD_COMMENT' });
+  };
+
+  // For load-more: simply append new comments without modifying the optimistic total
+  const appendComments = (newComments: ExtendedComment[]) => {
+    setComments((prev) => [...prev, ...newComments]);
+  };
 
   return (
     <CommentsContext.Provider
       value={{
-        optimisticTotalComments,
+        totalComments,
+        comments,
         incrementCommentCount,
         decrementCommentCount,
-        setOptimisticTotalComments,
+        updateCommentInTree,
+        addComment,
+        appendComments,
       }}
     >
       {children}
@@ -67,10 +112,10 @@ export const CommentsProvider = ({
   );
 };
 
-export const useCommentsCount = () => {
+export const useCommentsContext = () => {
   const context = useContext(CommentsContext);
   if (!context) {
-    throw new Error('useComments must be used within a CommentsProvider');
+    throw new Error('useCommentsContext must be used within a CommentsProvider');
   }
   return context;
 };

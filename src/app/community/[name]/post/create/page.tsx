@@ -4,7 +4,8 @@ import React from 'react';
 
 const CreatePost = async ({ params }: { params: { name: string } }) => {
   const { name } = await params;
-  const community = await readCommunityByName(name);
+  const decodedName = decodeURIComponent(name);
+  const community = await readCommunityByName(decodedName);
   return (
     <div>
       <div>CreatePost</div>
