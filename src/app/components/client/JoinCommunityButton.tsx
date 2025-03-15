@@ -51,7 +51,7 @@ const JoinCommunityButton = ({
   };
 
   return (
-    <Button onClick={handleClick} className="w-fit">
+    <Button onClick={handleClick} className="w-fit cursor-pointer">
       {optimisticMembership.isMember ? 'Leave' : 'Join'}
     </Button>
   );
