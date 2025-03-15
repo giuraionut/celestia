@@ -9,22 +9,11 @@ import {
   Middle,
   Right,
 } from './components/presentational/HolyGrail';
-import { fetchPosts } from '@/actions/loadMoreActions';
-import { ReactNode } from 'react';
-async function loadMorePosts(
-  cursor?: string
-): Promise<[ReactNode, string | null]> {
-  'use server';
+import {loadMorePosts } from '@/actions/loadMoreActions';
 
-  const { posts, nextCursor, userId } = await fetchPosts(cursor);
-  
-  return [
-    <PostList key={cursor || 'initial'} posts={posts} userId={userId} />,
-    nextCursor,
-  ];
-}
+
+
 export default async function Home() {
-
   // Initial load of posts
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
@@ -37,11 +26,9 @@ export default async function Home() {
     <HolyGrail>
       <Left />
       <Middle>
-        {/* <LoadMore loadMoreAction={loadMorePosts} initialCursor={initialCursor}>
+        <LoadMore loadMoreAction={loadMorePosts} initialCursor={initialCursor}>
           <PostList posts={initialPosts} userId={userId} />
-        </LoadMore> */}
-          <PostList posts={initialPosts} userId={userId} />
-        
+        </LoadMore>
       </Middle>
       <Right>
         <div className='w-full h-32 rounded border m-4 sticky top-14 p-4 bg-red-300'>

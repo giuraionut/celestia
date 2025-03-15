@@ -10,9 +10,7 @@ export const POSTS_PER_PAGE = 5;
 
 // Base function to fetch posts data (not a server action)
 export async function fetchPosts(cursor?: string, communityId?: string) {
-  'use cache'
-  cacheTag(`infinite-posts`);
-  cacheTag(`posts`);
+
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
 
@@ -22,7 +20,6 @@ export async function fetchPosts(cursor?: string, communityId?: string) {
     communityId // Only include communityId if provided
   });
   
-  result?.posts?.forEach(post => cacheTag(`post-${post.id}`));
   const posts = result?.posts || [];
   const nextCursor = result?.nextCursor || null; // Convert undefined to null
 

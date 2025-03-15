@@ -17,8 +17,11 @@ export async function voteOnPost(postId: string, value: VoteType): Promise<Vote 
             : await createVote(postId, userId, value, "postId");
 
         await updatePostVotes(postId);
+
+        // Add this line to revalidate the posts cache tag as well
+        revalidateTag('posts');
         revalidateTag(`post-${postId}`);
-   
+
         return newVote;
     } catch (error) {
         handleServerError(error, 'creating or updating post vote');
@@ -30,6 +33,9 @@ export async function deletePostVote(postId: string, voteId: string): Promise<Vo
     try {
         const deletedVote = await deleteVote(voteId);
         if (deletedVote.postId) await updatePostVotes(postId);
+
+        // Add this line to revalidate the posts cache tag as well
+        revalidateTag('posts');
         revalidateTag(`post-${postId}`);
 
         return deletedVote;
@@ -38,7 +44,6 @@ export async function deletePostVote(postId: string, voteId: string): Promise<Vo
         return null;
     }
 }
-
 export async function getUserVoteForPost(postId: string): Promise<Vote | null> {
     'use cache'
     cacheTag('userPostVote');

@@ -60,7 +60,6 @@ export const CommentsProvider = ({
   const [comments, setComments] = useState<ExtendedComment[]>(initialComments);
 
   const incrementCommentCount = () => {
-    console.log('INCREMENT');
     startTransition(() => {
       setTotalComments({ type: 'ADD_COMMENT' });
     });

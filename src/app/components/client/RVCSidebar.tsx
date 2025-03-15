@@ -27,6 +27,24 @@ export function RVCSidebar({
   visitedCommunities,
 }: RecentlyVisitedCommunitiesProps) {
   const [isOpen, setIsOpen] = React.useState(true);
+  // This state will control the content visibility separately from the collapsible
+  const [isVisible, setIsVisible] = React.useState(true);
+
+  // Handle the open/close state with a delay for exit animations
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // When closing, we first set visibility to false, but keep the collapsible open
+      setIsVisible(false);
+      // Then after the animation duration, we actually close the collapsible
+      setTimeout(() => {
+        setIsOpen(false);
+      }, 300); // Match this to your exit animation duration
+    } else {
+      // When opening, we set both immediately
+      setIsOpen(true);
+      setIsVisible(true);
+    }
+  };
 
   return (
     <Collapsible
@@ -34,7 +52,8 @@ export function RVCSidebar({
       title={'Recently visited communities'}
       defaultOpen
       className='group/collapsible'
-      onOpenChange={setIsOpen} // Track open/close state
+      open={isOpen}
+      onOpenChange={handleOpenChange}
     >
       <SidebarGroup>
         <SidebarGroupLabel
@@ -46,16 +65,16 @@ export function RVCSidebar({
             <ChevronRight className='ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90' />
           </CollapsibleTrigger>
         </SidebarGroupLabel>
-        <CollapsibleContent>
+        <CollapsibleContent forceMount>
           <SidebarMenu>
-            <AnimatePresence>
-              {isOpen && (
+            <AnimatePresence mode="wait">
+              {isVisible && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className='space-y-1'
+                  className='flex flex-col gap-4'
                 >
                   {visitedCommunities.map((community: Community) => (
                     <motion.div
