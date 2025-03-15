@@ -21,8 +21,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import SignOutButton from './client/SignOutButton';
+import SignOutButton from './client/signOutButton';
 
 const Header = async () => {
   const session = await getServerSession(authOptions);

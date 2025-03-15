@@ -13,13 +13,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React, { ReactNode } from 'react';
 
-const UserPage = async ({ params }: { params: { username: string } }) => {
-  const { username } = await params;
-  const email = decodeURIComponent(username);
-  const user = await fetchUserProfileByName({ email: email });
-  if (!user) return <div>User not found</div>;
-
-  if (user.isDeleted) return <div>User not found</div>;
+const UserPage = async ({ params }: { params: { name: string } }) => {
+  const { name } = await params;
+  const decodedName = decodeURIComponent(name);
+  const user = await fetchUserProfileByName({ name: decodedName });
+  if (!user || user.isDeleted) return <div>User not found</div>;
 
   const userPosts = await readPostsByUserId({ userId: user.id });
   const posts = userPosts?.posts || [];

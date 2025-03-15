@@ -1,10 +1,8 @@
-import React, { ReactNode } from 'react';
-import {
-  fetchCommentsByPost,
-  readCommentsByPost,
-} from '@/actions/commentActions';
+import React from 'react';
+import { fetchCommentsByPost } from '@/actions/commentActions';
 import {
   isUserMemberOfCommunity,
+  logCommunityVisit,
   readCommunityById,
 } from '@/actions/communityActions';
 import { readPost } from '@/actions/postActions';
@@ -19,9 +17,8 @@ import {
   Right,
 } from '@/app/components/presentational/HolyGrail';
 import PostCommentsCount from '@/app/components/comment/PostCommentsCount';
-import { CommentsProvider } from '@/app/components/comment/CommentsCountContext';
+import { CommentsProvider } from '@/app/components/comment/CommentsContext';
 import PostVote from '@/app/components/client/PostVote';
-import LoadMore from '@/app/components/client/LoadMore';
 import CommentsSection from '@/app/components/presentational/CommentsSection';
 import { ExtendedComment } from '@prisma/client';
 import LoadMoreComments from '@/app/components/client/LoadMoreComments';
@@ -42,6 +39,8 @@ const PostPage = async ({ params }: PostPageParams) => {
     fetchCommentsByPost({ postId: id, limit: 10 }),
     readCommunityById(post.communityId),
   ]);
+
+  if (community && userId) await logCommunityVisit(userId, community.id);
 
   const postVotes = post.votes || [];
   const userVote = postVotes.find((vote) => vote.userId === userId) || null;

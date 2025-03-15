@@ -17,14 +17,13 @@ async function loadMorePosts(
   'use server';
 
   const { posts, nextCursor, userId } = await fetchPosts(cursor);
-
+  
   return [
     <PostList key={cursor || 'initial'} posts={posts} userId={userId} />,
     nextCursor,
   ];
 }
 export default async function Home() {
-  console.log('HOME');
 
   // Initial load of posts
   const session = await getServerSession(authOptions);
@@ -38,9 +37,11 @@ export default async function Home() {
     <HolyGrail>
       <Left />
       <Middle>
-        <LoadMore loadMoreAction={loadMorePosts} initialCursor={initialCursor}>
+        {/* <LoadMore loadMoreAction={loadMorePosts} initialCursor={initialCursor}>
           <PostList posts={initialPosts} userId={userId} />
-        </LoadMore>
+        </LoadMore> */}
+          <PostList posts={initialPosts} userId={userId} />
+        
       </Middle>
       <Right>
         <div className='w-full h-32 rounded border m-4 sticky top-14 p-4 bg-red-300'>

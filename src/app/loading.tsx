@@ -17,7 +17,7 @@ export default function SearchPageLoading() {
         {[...Array(2)].map((_, i) => (
           <div
             key={i}
-            className='w-full max-w-[600px] mx-auto p-4 flex flex-col gap-2'
+            className='w-full max-w-[700px] mx-auto p-4 flex flex-col gap-2'
           >
             {/* Community image and name skeleton */}
             <div className='flex items-center gap-2'>

@@ -21,16 +21,18 @@ import { ReactNode } from 'react';
 
 const CommunityPage = async ({ params }: { params: { name: string } }) => {
   const session = await getServerSession(authOptions);
-  const userId = session?.user?.id; 
-  const { name } = params;
-  const community = await readCommunityByName(name);
-  
+  const userId = session?.user?.id;
+  const { name } = await params;
+  const decodedName = decodeURIComponent(name);
+  const community = await readCommunityByName(decodedName);
+
   if (!community) return <div>Loading...</div>;
-  
+
   const communityId = community.id;
-  
+
   // We've already checked that community exists, so we can safely use community.id
-  const isMemberOfCommunity = await isUserMemberOfCommunity(communityId) || false;
+  const isMemberOfCommunity =
+    (await isUserMemberOfCommunity(communityId)) || false;
 
   // Initial posts fetch
   const result = await readPosts({
@@ -39,15 +41,17 @@ const CommunityPage = async ({ params }: { params: { name: string } }) => {
   });
   const initialPosts = result?.posts || [];
   const initialCursor = result?.nextCursor;
-  
+
   // Define a dedicated server action for this community
   // We're capturing the communityId in the closure to ensure it's available
-  async function loadMoreCommunityPosts(cursor?: string): Promise<[ReactNode, string | null]> {
+  async function loadMoreCommunityPosts(
+    cursor?: string
+  ): Promise<[ReactNode, string | null]> {
     'use server';
-    
+
     // communityId is now guaranteed to be defined since we've checked for null community
     const { posts, nextCursor, userId } = await fetchPosts(cursor, communityId);
-    
+
     return [
       <PostList key={cursor || 'initial'} posts={posts} userId={userId} />,
       nextCursor,
