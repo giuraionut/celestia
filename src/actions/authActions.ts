@@ -169,9 +169,9 @@ export const updateUserProfile = async ({
 
 
 export const fetchUserProfileByName = async ({
-    email }: { email: string }): Promise<User | null> => {
+    name }: { name: string }): Promise<User | null> => {
     try {
-        const user = await db.user.findUnique({ where: { email: email } });
+        const user = await db.user.findUnique({ where: { name: name } });
         return user;
     }
     catch (error: unknown) {

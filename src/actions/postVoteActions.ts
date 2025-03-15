@@ -5,7 +5,7 @@ import { getSessionUserId, handleServerError } from "./actionUtils";
 import { findVoteByUserAndTarget, updateVote, createVote, deleteVote, getPostVotes } from "./voteUtils";
 import { updatePostVotes } from "./postActions";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function voteOnPost(postId: string, value: VoteType): Promise<Vote | null> {
     try {
@@ -18,6 +18,7 @@ export async function voteOnPost(postId: string, value: VoteType): Promise<Vote 
 
         await updatePostVotes(postId);
         revalidateTag(`post-${postId}`);
+   
         return newVote;
     } catch (error) {
         handleServerError(error, 'creating or updating post vote');
@@ -30,6 +31,7 @@ export async function deletePostVote(postId: string, voteId: string): Promise<Vo
         const deletedVote = await deleteVote(voteId);
         if (deletedVote.postId) await updatePostVotes(postId);
         revalidateTag(`post-${postId}`);
+
         return deletedVote;
     } catch (error) {
         handleServerError(error, 'deleting post vote');

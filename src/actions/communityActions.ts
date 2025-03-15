@@ -4,6 +4,7 @@ import { Community, ExtendedCommunity } from "@prisma/client"
 import { getSessionUserId, handleServerError } from "./actionUtils"
 import db from "@/lib/db";
 import { revalidateTag } from "next/cache";
+import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 
 export const createCommunity = async (community: Community): Promise<ExtendedCommunity | null> => {
     try {
@@ -153,15 +154,58 @@ export const isUserMemberOfCommunity = async (
     communityId: string,
     userId?: string
 ): Promise<boolean> => {
-    if (!userId) userId = await getSessionUserId();
-    const community = await db.community.findFirst({
-        where: {
-            id: communityId,
-            members: {
-                some: { id: userId },
+    try {
+        if (!userId) userId = await getSessionUserId();
+        const community = await db.community.findFirst({
+            where: {
+                id: communityId,
+                members: {
+                    some: { id: userId },
+                },
             },
-        },
-        select: { id: true }, // Only fetch the id, nothing extra
-    });
-    return !!community;
+            select: { id: true }, // Only fetch the id, nothing extra
+        });
+        return !!community;
+    }
+    catch (error) {
+        handleServerError(error, 'checking if user is a member of the community.');
+        return false;
+    }
+
 };
+
+export const logCommunityVisit = async (userId: string, communityId: string) => {
+    try {
+        if (!userId || !communityId) return;
+
+        await db.recentlyVisitedCommunity.upsert({
+            where: { userId_communityId: { userId, communityId } },
+            update: { visitedAt: new Date() },
+            create: { userId, communityId },
+        });
+    }
+    catch (error) {
+        handleServerError(error, 'logging community visit.');
+    }
+};
+
+export const fetchVisitedCommunities = async (userId: string) => {
+    try {
+        const ids = await db.recentlyVisitedCommunity.findMany({
+            where: { userId },
+            select: { communityId: true },
+            orderBy: { visitedAt: 'desc' },
+        });
+
+        const communities = await db.community.findMany({
+            where: { id: { in: ids.map((id) => id.communityId) } },
+            include: { author: true, posts: true },
+        });
+
+        return communities;
+    }
+    catch (error) {
+        handleServerError(error, 'fetching visited communities.');
+        return [];
+    }
+}

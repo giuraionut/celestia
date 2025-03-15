@@ -1,7 +1,7 @@
 'use client';
 import { MessageSquare } from 'lucide-react';
 import React from 'react';
-import { useCommentsContext } from './CommentsCountContext';
+import { useCommentsContext } from './CommentsContext';
 
 
 

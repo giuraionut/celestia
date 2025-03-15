@@ -10,15 +10,15 @@ interface PostCardProps {
 
 const PostCard = async ({ post, className }: PostCardProps) => {
   return (
-    <article
-      className={cn(
-        'flex flex-col gap-4 container',
-        className
-      )}
-    >
+    <article className={cn('flex flex-col gap-4 container', className)}>
       {/* Header: Title & Author */}
       <header>
-        <h1 className='text-lg font-bold'>{post.title}</h1>
+        <h1 className='text-lg font-bold'>
+          {post.title.length > 50
+            ? post.title.slice(0, post.title.lastIndexOf(' ', 50)) + '...'
+            : post.title}
+        </h1>
+
         <p className='text-xs'>Posted by {post.author?.name}</p>
       </header>
 

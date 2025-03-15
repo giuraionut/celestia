@@ -114,6 +114,8 @@ export const readPosts = async (
             ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // Skip the cursor itself
             orderBy: { createdAt: 'asc' },
         });
+        
+        posts?.forEach(post => cacheTag(`post-${post.id}`));
 
         // Determine the next cursor
         const nextCursor = posts.length > limit ? posts[limit].id : undefined;

@@ -1,5 +1,6 @@
 'use client';
 import { deletePostVote, voteOnPost } from '@/actions/postVoteActions';
+import { cn } from '@/lib/utils';
 import { ExtendedPost, Vote } from '@prisma/client';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import React, { startTransition, useOptimistic } from 'react';
@@ -11,9 +12,7 @@ interface VoteState {
 }
 
 // Define the actions for our reducer
-type VoteAction =
-  | { type: 'TOGGLE_UPVOTE' }
-  | { type: 'TOGGLE_DOWNVOTE' };
+type VoteAction = { type: 'TOGGLE_UPVOTE' } | { type: 'TOGGLE_DOWNVOTE' };
 
 // Our reducer computes the new state based on the current state and the action.
 // - If no vote exists and the user clicks upvote, add 1.
@@ -70,6 +69,8 @@ const PostVote = ({
 
   // Handler for upvoting
   const handleUpvote = async () => {
+    console.log('UPVOTE');
+
     // Optimistically update the vote state.
     startTransition(() => {
       setOptimisticVote({ type: 'TOGGLE_UPVOTE' });
@@ -84,6 +85,7 @@ const PostVote = ({
 
   // Handler for downvoting
   const handleDownvote = async () => {
+    console.log('DOWNVOTE');
     startTransition(() => {
       setOptimisticVote({ type: 'TOGGLE_DOWNVOTE' });
     });
@@ -95,19 +97,19 @@ const PostVote = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className='flex items-center gap-2'>
       <button onClick={handleUpvote}>
         <ChevronUp
-          className={
-            optimisticVote.voteType === 'UPVOTE' ? 'text-blue-500' : ''
-          }
+         className={
+          cn(`hover:text-primary text-primary/50 cursor-pointer`, { 'text-blue-500': optimisticVote.voteType === 'UPVOTE' })
+        }
         />
       </button>
       <span>{optimisticVote.count}</span>
       <button onClick={handleDownvote}>
         <ChevronDown
           className={
-            optimisticVote.voteType === 'DOWNVOTE' ? 'text-red-500' : ''
+            cn(`hover:text-primary text-primary/50 cursor-pointer`, { 'text-red-500': optimisticVote.voteType === 'DOWNVOTE' })
           }
         />
       </button>

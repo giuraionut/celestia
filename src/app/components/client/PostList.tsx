@@ -19,33 +19,34 @@ export default function PostList({ posts, userId }: PostListProps) {
 
         return (
           post.community && (
-            <Link
+            <div
               key={post.id}
-              href={`/community/${post.community.name}/post/${post.id}/comments`}
+              className='h-auto max-w-[700px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-md p-4'
             >
-              <div className='h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4'>
-                <div className='flex gap-2 items-center'>
-                  <Image
-                    src={post.community.image}
-                    alt={post.community.name}
-                    width={100}
-                    height={100}
-                    className='w-8 h-8 rounded-full object-contain'
-                  />
-                  <span className='text-xs font-bold'>
-                    {post.community.name}
-                  </span>
-                </div>
+              <Link href={`/community/${post.community.name}`} className='flex gap-2 items-center hover:text-primary text-primary/50'>
+                <Image
+                  src={post.community.image}
+                  alt={post.community.name}
+                  width={100}
+                  height={100}
+                  className='w-8 h-8 rounded-full object-contain'
+                />
+                <span className='text-xs font-bold'>{post.community.name}</span>
+              </Link>
+              <Link
+                href={`/community/${post.community.name}/post/${post.id}/comments`}
+              >
                 <PostCard post={post} />
-                <div className='flex flex-row justify-between items-center'>
-                  <PostVote post={post} vote={userVote} />
-                  <span className='flex flex-row gap-2 items-center'>
-                    {post.totalComments} <MessageSquareIcon />
-                  </span>
-                </div>
-                <Separator />
+              </Link>
+
+              <div className='flex flex-row justify-between items-center'>
+                <PostVote post={post} vote={userVote} />
+                <span className='flex flex-row gap-2 items-center'>
+                  {post.totalComments} <MessageSquareIcon />
+                </span>
               </div>
-            </Link>
+              <Separator />
+            </div>
           )
         );
       })}
