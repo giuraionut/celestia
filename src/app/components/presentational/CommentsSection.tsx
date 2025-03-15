@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { CommentTree } from '../comment/CommentTree';
 import { CommentTreeProvider } from '../comment/CommentTreeContext';
 import CreateComment from '../comment/CreateComment';
-import { useCommentsContext } from '../comment/CommentsCountContext';
+import { useCommentsContext } from '../comment/CommentsContext';
 
 const CommentsSection = ({ post }: { post: ExtendedPost }) => {
   const { isFullDiscussion, baseUrl, currentCommentId } = useCurrentPath();

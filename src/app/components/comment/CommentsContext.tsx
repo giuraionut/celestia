@@ -1,14 +1,21 @@
 // CommentsContext.tsx
 'use client';
-import React, { createContext, useContext, useState } from 'react';
+import React, {
+  createContext,
+  startTransition,
+  useContext,
+  useState,
+} from 'react';
 import { useOptimistic } from 'react';
 import { ExtendedComment } from '@prisma/client';
 
-type CommentCountAction =
-  | { type: 'ADD_COMMENT' }
-  | { type: 'DELETE_COMMENT' };
+type CommentCountAction = { type: 'ADD_COMMENT' } | { type: 'DELETE_COMMENT' };
 
-const totalCommentsReducer = (state: number, action: CommentCountAction): number => {
+const totalCommentsReducer = (
+  state: number,
+  action: CommentCountAction
+): number => {
+  console.log('THE REDUCER');
   switch (action.type) {
     case 'ADD_COMMENT':
       return state + 1;
@@ -35,7 +42,9 @@ interface CommentsProviderProps {
   children: React.ReactNode;
 }
 
-export const CommentsContext = createContext<CommentsContextType | undefined>(undefined);
+export const CommentsContext = createContext<CommentsContextType | undefined>(
+  undefined
+);
 
 export const CommentsProvider = ({
   initialCount,
@@ -43,16 +52,24 @@ export const CommentsProvider = ({
   children,
 }: CommentsProviderProps) => {
   // Optimistic state for total comments
-  const [totalComments, setTotalComments] = useOptimistic(initialCount, totalCommentsReducer);
+  const [totalComments, setTotalComments] = useOptimistic(
+    initialCount,
+    totalCommentsReducer
+  );
   // Regular state for the comments list
   const [comments, setComments] = useState<ExtendedComment[]>(initialComments);
 
   const incrementCommentCount = () => {
-    setTotalComments({ type: 'ADD_COMMENT' });
+    console.log('INCREMENT');
+    startTransition(() => {
+      setTotalComments({ type: 'ADD_COMMENT' });
+    });
   };
 
   const decrementCommentCount = () => {
-    setTotalComments({ type: 'DELETE_COMMENT' });
+    startTransition(() => {
+      setTotalComments({ type: 'DELETE_COMMENT' });
+    });
   };
 
   const updateCommentRecursively = (
@@ -79,7 +96,13 @@ export const CommentsProvider = ({
         comment.id === updatedComment.id
           ? updatedComment
           : comment.replies && comment.replies.length > 0
-          ? { ...comment, replies: updateCommentRecursively(comment.replies, updatedComment) }
+          ? {
+              ...comment,
+              replies: updateCommentRecursively(
+                comment.replies,
+                updatedComment
+              ),
+            }
           : comment
       )
     );
@@ -87,12 +110,15 @@ export const CommentsProvider = ({
 
   const addComment = (comment: ExtendedComment) => {
     setComments((prev) => [...prev, comment]);
-    setTotalComments({ type: 'ADD_COMMENT' });
+    startTransition(() => {
+      setTotalComments({ type: 'ADD_COMMENT' });
+    });
   };
-
   // For load-more: simply append new comments without modifying the optimistic total
   const appendComments = (newComments: ExtendedComment[]) => {
-    setComments((prev) => [...prev, ...newComments]);
+    startTransition(() => {
+      setComments((prev) => [...prev, ...newComments]);
+    });
   };
 
   return (
@@ -115,7 +141,9 @@ export const CommentsProvider = ({
 export const useCommentsContext = () => {
   const context = useContext(CommentsContext);
   if (!context) {
-    throw new Error('useCommentsContext must be used within a CommentsProvider');
+    throw new Error(
+      'useCommentsContext must be used within a CommentsProvider'
+    );
   }
   return context;
 };

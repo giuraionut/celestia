@@ -20,7 +20,7 @@ import {
 } from '@/actions/commentActions';
 import { CommentNodeConnector } from './CommentNodeConnector';
 import { useSession } from 'next-auth/react';
-import { useCommentsContext } from './CommentsCountContext';
+import { useCommentsContext } from './CommentsContext';
 
 interface TreeNodeProps {
   comment: ExtendedComment;

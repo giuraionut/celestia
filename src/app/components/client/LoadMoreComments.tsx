@@ -3,7 +3,7 @@
 import { ExtendedComment } from '@prisma/client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { useCommentsContext } from '@/app/components/comment/CommentsCountContext'; // adjust path if needed
+import { useCommentsContext } from '@/app/components/comment/CommentsContext'; // adjust path if needed
 
 type LoadMoreProps = {
   children: React.ReactNode;
