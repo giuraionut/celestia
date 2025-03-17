@@ -2,7 +2,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { readPosts } from '@/actions/postActions';
-import PostList from '@/app/components/client/PostList';
+import PostList from '@/app/components/post/PostList';
 import { ReactNode } from 'react';
 import { cacheTag } from 'next/dist/server/use-cache/cache-tag';
 

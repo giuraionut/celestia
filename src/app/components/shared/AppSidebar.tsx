@@ -5,10 +5,10 @@ import {
   SidebarContent,
   SidebarRail,
 } from '@/components/ui/sidebar';
-import { SearchBox } from './SearchBox';
 import { fetchVisitedCommunities } from '@/actions/communityActions';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
+import { SearchBox } from './SearchBox';
 import { RVCSidebar } from './RVCSidebar';
 
 export async function AppSidebar({
@@ -18,7 +18,7 @@ export async function AppSidebar({
   if (!session || !session.user) return null;
 
   const visitedCommunities = await fetchVisitedCommunities(session.user.id);
-
+  console.log('sideabbr');
   return (
     <Sidebar {...props}>
       <SidebarHeader className='mt-10'>

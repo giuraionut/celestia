@@ -2,12 +2,12 @@
 'use client';
 import { ExtendedComment, ExtendedPost } from '@prisma/client';
 import React from 'react';
-import { useCurrentPath } from '../comment/commentUtils';
+import { useCurrentPath } from './commentUtils';
 import Link from 'next/link';
-import { CommentTree } from '../comment/CommentTree';
-import { CommentTreeProvider } from '../comment/CommentTreeContext';
-import CreateComment from '../comment/CreateComment';
-import { useCommentsContext } from '../comment/CommentsContext';
+import { CommentTree } from './CommentTree';
+import { CommentTreeProvider } from './CommentTreeContext';
+import CreateComment from './CreateComment';
+import { useCommentsContext } from './CommentsContext';
 
 const CommentsSection = ({ post }: { post: ExtendedPost }) => {
   const { isFullDiscussion, baseUrl, currentCommentId } = useCurrentPath();

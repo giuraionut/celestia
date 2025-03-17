@@ -4,7 +4,7 @@ import {
   Left,
   Middle,
   Right,
-} from '@/app/components/presentational/HolyGrail';
+} from '@/app/components/shared/HolyGrail';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SearchPageLoading() {

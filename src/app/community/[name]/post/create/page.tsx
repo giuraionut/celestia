@@ -1,11 +1,11 @@
 import { readCommunityByName } from '@/actions/communityActions';
-import { CreatePostForm } from '@/app/components/forms/createPostForm';
+import { CreatePostForm } from '@/app/components/post/createPostForm';
 import {
   HolyGrail,
   Left,
   Middle,
   Right,
-} from '@/app/components/presentational/HolyGrail';
+} from '@/app/components/shared/HolyGrail';
 import React from 'react';
 
 const CreatePost = async ({ params }: { params: { name: string } }) => {

@@ -1,5 +1,4 @@
 'use client';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -26,33 +25,21 @@ import {
 } from '@/components/ui/select';
 
 const FormSchema = z.object({
-  title: z.string().min(2, {
-    message: 'Title must be at least 2 characters.',
-  }),
-  content: z.string().min(2, {
-    message: 'Content must be at least 2 characters.',
-  }),
-  image: z
+  title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
+  content: z
     .string()
-    .min(2, {
-      message: 'Image url must be at least 2 characters.',
-    })
-    .url(),
-  community: z.string().cuid(),
+    .min(2, { message: 'Content must be at least 2 characters.' }),
+  image: z.string().url().optional().or(z.literal('')),
+  community: z.string().cuid({ message: 'Please select a community.' }),
 });
 
 type CreatePostFormProps =
-  | {
-      community: Community;
-      communities?: Community[] | null;
-    }
-  | {
-      community?: Community | null;
-      communities: Community[];
-    };
+  | { community: Community; communities?: Community[] | null }
+  | { community?: Community | null; communities: Community[] };
 
 export function CreatePostForm(props: CreatePostFormProps) {
   const { community, communities } = props;
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -61,9 +48,10 @@ export function CreatePostForm(props: CreatePostFormProps) {
       image: '',
       community: community ? community.id : '',
     },
+    mode: 'onChange', // Add this line to trigger validation on change
   });
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     const post: Post = {
       title: data.title,
       content: data.content,
@@ -79,9 +67,21 @@ export function CreatePostForm(props: CreatePostFormProps) {
       totalUpvotes: 0,
       totalDownvotes: 0,
     };
-    const newPost = await createPost(post);
-    toast(JSON.stringify(newPost));
-  }
+
+    try {
+      const newPost = await createPost(post);
+
+      if (newPost) {
+        toast.success(`Post created successfully: ${newPost.title}`);
+      } else {
+        toast.error('Failed to create post. Post returned null or undefined.');
+      }
+    } catch (error) {
+      toast.error('Error creating post. Please try again.');
+    }
+  };
+
+  const isFormValid = form.formState.isValid && !form.formState.isSubmitting;
 
   return (
     <Form {...form}>
@@ -127,7 +127,7 @@ export function CreatePostForm(props: CreatePostFormProps) {
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input placeholder='Post title' {...field} />
+                <Input placeholder='Enter the post title' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -140,7 +140,7 @@ export function CreatePostForm(props: CreatePostFormProps) {
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
-                <Input placeholder='Post content' {...field} />
+                <Input placeholder='Enter the post content' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -153,13 +153,15 @@ export function CreatePostForm(props: CreatePostFormProps) {
             <FormItem>
               <FormLabel>Image URL</FormLabel>
               <FormControl>
-                <Input placeholder='Image URL' {...field} />
+                <Input placeholder='Image URL (optional)' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type='submit'>Submit</Button>
+        <Button type='submit' disabled={!isFormValid}>
+          Submit
+        </Button>
       </form>
     </Form>
   );

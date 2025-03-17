@@ -1,6 +1,6 @@
 // app/search/loading.tsx
 import { Skeleton } from '@/components/ui/skeleton';
-import { HolyGrail, Left, Right } from '../components/presentational/HolyGrail';
+import { HolyGrail, Left, Right } from '../components/shared/HolyGrail';
 
 export default function SearchPageLoading() {
   return (

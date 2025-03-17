@@ -6,7 +6,7 @@ import {
   Left,
   Middle,
   Right,
-} from './components/presentational/HolyGrail';
+} from './components/shared/HolyGrail';
 
 export default function SearchPageLoading() {
   return (

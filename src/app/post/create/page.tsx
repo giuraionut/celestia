@@ -1,12 +1,12 @@
 import React from 'react';
 import { readCommunities } from '@/actions/communityActions';
-import { CreatePostForm } from '@/app/components/forms/createPostForm';
+import { CreatePostForm } from '@/app/components/post/createPostForm';
 import {
   HolyGrail,
   Left,
   Middle,
   Right,
-} from '@/app/components/presentational/HolyGrail';
+} from '@/app/components/shared/HolyGrail';
 
 const CreatePost = async () => {
   const communities = await readCommunities();

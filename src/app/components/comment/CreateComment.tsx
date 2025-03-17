@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ExtendedPost, Comment } from '@prisma/client';
+import { ExtendedPost, Comment, ExtendedComment } from '@prisma/client';
 import TiptapEditor from '../tiptap/TiptapEditor';
 import { cn } from '@/lib/utils';
 import { createComment } from '@/actions/commentActions';
@@ -14,7 +14,7 @@ export default function CreateComment({
 }: {
   className?: string;
   post: ExtendedPost;
-  updateTree: (comment: Comment) => void;
+  updateTree: (comment: ExtendedComment) => void;
 }) {
   const [commentContent, setCommentContent] = useState('');
 
@@ -27,15 +27,15 @@ export default function CreateComment({
       createdAt: new Date(),
       updatedAt: new Date(),
       postId: post?.id || '',
-      authorId: post?.authorId || '',
+      authorId: '',
       parentId: null,
       isDeleted: false,
       totalUpvotes: 0,
       totalDownvotes: 0,
     };
 
-    await createComment(comment);
-    updateTree(comment);
+    const createdComment = await createComment(comment);
+    if (createdComment) updateTree(createdComment);
     setCommentContent(''); // Clear after submitting
   };
 

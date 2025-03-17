@@ -1,26 +1,26 @@
 import { readPosts } from '@/actions/postActions';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
-import LoadMore from './components/client/LoadMore';
-import PostList from './components/client/PostList';
+import LoadMore from './components/post/LoadMorePosts';
+import PostList from './components/post/PostList';
 import {
   HolyGrail,
   Left,
   Middle,
   Right,
-} from './components/presentational/HolyGrail';
-import {loadMorePosts } from '@/actions/loadMoreActions';
-
-
+} from './components/shared/HolyGrail';
+import { loadMorePosts } from '@/actions/loadMoreActions';
 
 export default async function Home() {
   // Initial load of posts
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+  const [session, postData] = await Promise.all([
+    getServerSession(authOptions),
+    readPosts({ limit: 5 }),
+  ]);
 
-  const result = await readPosts({ limit: 5 });
-  const initialPosts = result?.posts || [];
-  const initialCursor = result?.nextCursor;
+  const userId = session?.user?.id;
+  const { posts: initialPosts = [], nextCursor: initialCursor } =
+    postData || {};
 
   return (
     <HolyGrail>

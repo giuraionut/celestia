@@ -253,7 +253,11 @@ const Footer = memo(
         totalDownvotes: comment.totalDownvotes,
       };
       try {
-        await addReply(reply, comment);
+        const newReply =await addReply(reply, comment);
+        if (newReply) {
+          updateCommentInTree({ ...comment, replies: [...(comment.replies || []), newReply] });
+        }
+
         toast.success('Reply added successfully');
         setIsReplying(false);
       } catch (error) {

@@ -1,10 +1,8 @@
 import React from 'react';
-import { SearchBox } from './client/SearchBox';
 import { Avatar } from '@radix-ui/react-avatar';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
 import { AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ThemeToggle } from './client/ThemeToggle';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import {
@@ -21,7 +19,9 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import SignOutButton from './client/signOutButton';
+import { SearchBox } from './SearchBox';
+import SignOutButton from './SignOutButton';
+import { ThemeToggle } from './ThemeToggle';
 
 const Header = async () => {
   const session = await getServerSession(authOptions);
@@ -55,7 +55,7 @@ const Header = async () => {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Link href={`/user/${user?.email}`}>Profile</Link>
+                <Link href={`/user/${user?.name}`}>Profile</Link>
                 <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
               </DropdownMenuItem>
              

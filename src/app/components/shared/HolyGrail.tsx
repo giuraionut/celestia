@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from 'react';
-import { AppSidebar } from '../client/AppSidebar';
 import { cn } from '@/lib/utils';
+import { AppSidebar } from './AppSidebar';
 
 const HolyGrail = ({
   className,

@@ -3,10 +3,9 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from 'next-themes';
-import { SessionProvider } from './components/client/SessionProvider';
-import Header from './components/header';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar } from './components/client/AppSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import Header from './components/shared/header';
+import { SessionProvider } from './components/shared/SessionProvider';
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -41,9 +40,7 @@ export default function RootLayout({
           >
             <SidebarProvider className='flex flex-col min-h-screen'>
               <Header />
-              <div className='flex-1 flex '>
-                {children}
-              </div>
+              <div className='flex-1 flex '>{children}</div>
               <Toaster />
             </SidebarProvider>
           </ThemeProvider>

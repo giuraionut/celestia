@@ -20,17 +20,14 @@ import { createCommunity } from '@/actions/communityActions';
 
 const FormSchema = z.object({
   name: z.string().min(2, {
-    message: 'Title must be at least 2 characters.',
+    message: 'Community name must be at least 2 characters.',
   }),
   description: z.string().min(2, {
-    message: 'Content must be at least 2 characters.',
+    message: 'Description must be at least 2 characters.',
   }),
   image: z
     .string()
-    .min(2, {
-      message: 'Image url must be at least 2 characters.',
-    })
-    .url(),
+    .url({ message: 'Please provide a valid URL for the image.' })
 });
 
 export function CreateCommunityForm() {
@@ -41,11 +38,12 @@ export function CreateCommunityForm() {
       description: '',
       image: '',
     },
+    mode: 'onChange', // Trigger validation on change
   });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     const community: Community = {
-      image: data.image,
+      image: data.image || '', // Handle optional image
       name: data.name,
       id: '',
       description: data.description,
@@ -56,9 +54,24 @@ export function CreateCommunityForm() {
       totalMembers: 0,
       totalManagers: 0,
     };
-    const newCommunity = await createCommunity(community);
-    toast(JSON.stringify(newCommunity));
+
+    try {
+      const newCommunity = await createCommunity(community);
+
+      // Ensure newCommunity is valid before accessing its properties
+      if (newCommunity && newCommunity.name) {
+        toast.success(`Community created successfully: ${newCommunity.name}`);
+      } else {
+        toast.error(
+          'Error: Community creation failed or returned invalid data.'
+        );
+      }
+    } catch (error) {
+      toast.error('Error creating community. Please try again.');
+    }
   }
+
+  const isFormValid = form.formState.isValid && !form.formState.isSubmitting;
 
   return (
     <Form {...form}>
@@ -70,7 +83,7 @@ export function CreateCommunityForm() {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder='shadcn' {...field} />
+                <Input placeholder='Enter community name' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -81,28 +94,33 @@ export function CreateCommunityForm() {
           name='description'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>description</FormLabel>
+              <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input placeholder='shadcn' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />{' '}
-        <FormField
-          control={form.control}
-          name='image'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image</FormLabel>
-              <FormControl>
-                <Input placeholder='shadcn' {...field} />
+                <Input placeholder='Enter community description' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type='submit'>Submit</Button>
+        <FormField
+          control={form.control}
+          name='image'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Image URL (optional)</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder='Enter community image URL'
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type='submit' disabled={!isFormValid}>
+          Submit
+        </Button>
       </form>
     </Form>
   );

@@ -1,10 +1,10 @@
-import { CreateCommunityForm } from '@/app/components/forms/createCommunityForm';
+import { CreateCommunityForm } from '@/app/components/community/createCommunityForm';
 import {
   HolyGrail,
   Left,
   Middle,
   Right,
-} from '@/app/components/presentational/HolyGrail';
+} from '@/app/components/shared/HolyGrail';
 import React from 'react';
 
 const CreateCommunity = () => {

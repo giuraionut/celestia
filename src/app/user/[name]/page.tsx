@@ -1,15 +1,15 @@
 import { fetchUserProfileByName } from '@/actions/authActions';
 import { readCommentsByUserId } from '@/actions/commentActions';
 import { readPostsByUserId } from '@/actions/postActions';
-import CommentList from '@/app/components/client/CommentList';
-import LoadMore from '@/app/components/client/LoadMore';
-import PostList from '@/app/components/client/PostList';
+import CommentList from '@/app/components/comment/CommentList';
+import LoadMore from '@/app/components/post/LoadMorePosts';
+import PostList from '@/app/components/post/PostList';
 import {
   HolyGrail,
   Left,
   Middle,
   Right,
-} from '@/app/components/presentational/HolyGrail';
+} from '@/app/components/shared/HolyGrail';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React, { ReactNode } from 'react';
 
