@@ -36,7 +36,7 @@ const Header = async () => {
         <SidebarTrigger className='h-8 w-8' />
       </div>
       <div className='flex-1 flex justify-center items-center border-l border-r h-10'>
-        <SearchBox className='h-8 px-4 max-w-[600px]' emptyMessage={''} />
+        <SearchBox className='h-8 px-4 max-w-[600px]' />
       </div>
       <div className='flex-[.5] flex justify-end h-10 items-center'>
         <DropdownMenu>
@@ -58,12 +58,11 @@ const Header = async () => {
                 <Link href={`/user/${user?.name}`}>Profile</Link>
                 <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
               </DropdownMenuItem>
-             
+
               <DropdownMenuItem>
                 Settings
                 <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
               </DropdownMenuItem>
-             
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
@@ -79,7 +78,6 @@ const Header = async () => {
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
               </DropdownMenuSub>
-            
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled>API</DropdownMenuItem>

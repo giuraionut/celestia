@@ -23,7 +23,7 @@ export async function AppSidebar({
     <Sidebar {...props}>
       <SidebarHeader className='mt-10'>
         <div className='flex-1 flex justify-center items-center h-10'>
-          <SearchBox className='h-8 px-4 max-w-[600px]' emptyMessage={''} />
+          <SearchBox className='h-8 px-4 max-w-[600px]'/>
         </div>
       </SidebarHeader>
       <SidebarContent className='gap-0'>

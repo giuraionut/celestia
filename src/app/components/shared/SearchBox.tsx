@@ -21,8 +21,6 @@ import { ExtendedCommunity } from '@prisma/client';
 export type Option = Record<'value' | 'label', string> & Record<string, string>;
 
 type SearchBoxProps = {
-  emptyMessage: string;
-  onValueChange?: (value: Option) => void;
   isLoading?: boolean;
   disabled?: boolean;
   className?: string;
@@ -31,8 +29,6 @@ type SearchBoxProps = {
 
 export const SearchBox = ({
   placeholder = 'Search...',
-  emptyMessage = 'No results found',
-  onValueChange,
   disabled,
   className,
   isLoading: isLoadingProp = false,
@@ -188,50 +184,56 @@ export const SearchBox = ({
   const hasPosts = Array.isArray(postSuggestions) && postSuggestions.length > 0;
   const hasCommunities =
     Array.isArray(communitySuggestions) && communitySuggestions.length > 0;
-
   const noResults = hasSearched && !isLoading && !hasPosts && !hasCommunities;
-
   const shouldShowDropdown = isOpen && inputValue.trim() !== '' && hasSearched;
-
-  // console.log('hasPosts', hasPosts);
-  // console.log('hasCommunities', hasCommunities);
-  // console.log('noResults', noResults);
-  // console.log('shouldShowDropdown', shouldShowDropdown);
   return (
     <div className={cn('flex space-x-2 w-full justify-center', className)}>
       <CommandPrimitive
         onKeyDown={handleKeyDown}
-        className='rounded-md border h-full w-full'
+        className='rounded-lg h-full w-full'
         shouldFilter={false}
       >
         {/* Input area */}
         <div
           data-slot='command-input-wrapper'
-          className='relative flex h-full items-center gap-2 px-3'
+          className='relative flex h-full w-full items-center rounded-lg'
         >
-          <SearchIcon className='w-4 shrink-0 opacity-50' />
-          <CommandPrimitiveInput
-            ref={inputRef}
-            value={inputValue}
-            onValueChange={disabled ? undefined : handleValueChange}
-            onBlur={() => setTimeout(() => setOpen(false), 100)}
-            onFocus={() => setOpen(inputValue.trim() !== '')}
-            placeholder={placeholder}
-            disabled={disabled}
-            data-slot='command-input'
-            className='placeholder:text-muted-foreground flex w-full rounded-md bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50'
-          />
-          {/* Clear button, positioned inside the input wrapper */}
-          {inputValue.trim() !== '' && (
-            <button
-              type='button'
-              onClick={handleClearSearch}
-              className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600'
-              aria-label='Clear search'
-            >
-              <X className='w-4 h-4' />
-            </button>
-          )}
+          <div className='relative flex h-full w-full items-center rounded-l-lg focus-within:border-blue-500 border'>
+            <div className='w-8 shrink-0 h-full flex items-center rounded-l-lg'>
+              <SearchIcon className='w-4 text-primary mx-auto' />
+            </div>
+            <CommandPrimitiveInput
+              ref={inputRef}
+              value={inputValue}
+              onValueChange={disabled ? undefined : handleValueChange}
+              onBlur={() => setTimeout(() => setOpen(false), 100)}
+              onFocus={() => setOpen(inputValue.trim() !== '')}
+              placeholder={placeholder}
+              disabled={disabled}
+              data-slot='command-input'
+              className=' h-full placeholder:text-muted-foreground flex w-full bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50'
+            />
+            {/* Other elements */}
+            {inputValue.trim() !== '' && (
+              <button
+                type='button'
+                onClick={handleClearSearch}
+                className='text-primary/50 hover:text-primary h-full cursor-pointer w-8 '
+                aria-label='Clear search'
+              >
+                <X className='w-4 h-4 mx-auto' />
+              </button>
+            )}
+          </div>
+
+          <button
+            type='button'
+            disabled={inputValue.trim() === ''}
+            onClick={handleSearch}
+            className='w-8 shrink-0 hover:bg-foreground bg-foreground/50 h-full rounded-r-lg cursor-pointer'
+          >
+            <SearchIcon className='w-4 mx-auto text-background ' />
+          </button>
         </div>
 
         {/* Dropdown container - only render if should be shown */}
@@ -330,16 +332,6 @@ export const SearchBox = ({
           </div>
         </div>
       </CommandPrimitive>
-
-      {/* Search button */}
-      <button
-        type='button'
-        disabled={inputValue.trim() === ''}
-        onClick={handleSearch}
-        className='h-8 px-4 bg-foreground/70 text-background rounded-md hover:bg-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center whitespace-nowrap'
-      >
-        Search
-      </button>
     </div>
   );
 };
