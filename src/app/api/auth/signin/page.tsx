@@ -1,13 +1,11 @@
 import React from 'react';
-import SignInForm from './signinForm';
-import { getProviders } from 'next-auth/react';
+import SignInForm from '../../../components/shared/signinForm';
 
 const SignInPage = async () => {
-  const providers = await getProviders();
   return (
     <div>
       <div>SignInPage</div>
-      <SignInForm providers={providers} />
+      <SignInForm />
     </div>
   );
 };

@@ -38,7 +38,6 @@ export const SearchBox = ({
 
   // State for dropdown open/closed, selected option, and input text
   const [isOpen, setOpen] = useState(false);
-  const [selected, setSelected] = useState<Option | null>(null);
   const [inputValue, setInputValue] = useState<string>('');
 
   // Search results state - always use empty arrays, never null
@@ -268,14 +267,8 @@ export const SearchBox = ({
                             event.stopPropagation();
                           }}
                           onSelect={() => handleSelectCommunity(option.id)}
-                          className={cn(
-                            'flex w-full items-center gap-2',
-                            selected?.value !== option.id ? 'pl-8' : ''
-                          )}
+                          className={cn('flex w-full items-center gap-2')}
                         >
-                          {selected?.value === option.id ? (
-                            <Check className='w-4' />
-                          ) : null}
                           {option.image && (
                             <img
                               src={option.image}
@@ -299,14 +292,8 @@ export const SearchBox = ({
                             event.stopPropagation();
                           }}
                           onSelect={() => handleSelectPost(option.id)}
-                          className={cn(
-                            'flex w-full items-center gap-2',
-                            selected?.value !== option.id ? 'pl-8' : ''
-                          )}
+                          className={cn('flex w-full items-center gap-2')}
                         >
-                          {selected?.value === option.id ? (
-                            <Check className='w-4' />
-                          ) : null}
                           <div className='flex flex-col'>
                             <span>{option.title}</span>
                             <span

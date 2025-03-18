@@ -8,7 +8,7 @@ import CommunityHeader from '../community/CommunityHeader';
 
 interface PostListProps {
   posts: ExtendedPost[];
-  userId?: string;
+  userId?: string | null;
 }
 
 export default function PostList({ posts, userId }: PostListProps) {

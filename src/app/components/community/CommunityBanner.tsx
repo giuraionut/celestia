@@ -5,6 +5,7 @@ import { ExtendedCommunity } from '@prisma/client';
 
 type CommunityBannerProps = {
   community: ExtendedCommunity;
+  userId: string | null;
   isMemberOfCommunity: boolean;
 };
 
@@ -12,8 +13,7 @@ const CommunityBanner = ({
   community,
   isMemberOfCommunity,
 }: CommunityBannerProps) => {
-
-    console.log("community banner");
+  console.log('community banner');
   return (
     <div className='border rounded-lg flex flex-col gap-4 h-fit'>
       <div className='relative flex gap-4 rounded-t-lg p-4 w-full'>
@@ -25,10 +25,10 @@ const CommunityBanner = ({
             width={200}
             height={200}
           />
-          <JoinCommunityButton
-            communityId={community.id}
-            isMemberOfCommunity={isMemberOfCommunity}
-          />
+            <JoinCommunityButton
+              communityId={community.id}
+              isMemberOfCommunity={isMemberOfCommunity}
+            />
         </div>
         <div className='w-full flex flex-col'>
           <div className='text-4xl font-bold'>{community.name}</div>

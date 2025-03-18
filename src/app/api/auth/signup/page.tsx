@@ -1,5 +1,5 @@
 import React from 'react';
-import SignUpForm from './signupForm';
+import SignUpForm from '../../../components/shared/signupForm';
 import Link from 'next/link';
 
 const SignUpPage = async () => {

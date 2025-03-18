@@ -1,7 +1,10 @@
 'use client';
+
+import React, { useState, startTransition, useOptimistic } from 'react';
 import { joinCommunity, leaveCommunity } from '@/actions/communityActions';
 import { Button } from '@/components/ui/button';
-import React, { startTransition, useOptimistic } from 'react';
+import { LoginDialog } from '../shared/LoginDialog';
+import { useAuth } from '@/app/hooks/useAuth';
 
 interface MembershipState {
   isMember: boolean;
@@ -28,32 +31,40 @@ const JoinCommunityButton = ({
   communityId: string;
   isMemberOfCommunity: boolean;
 }) => {
-  // Initialize optimistic membership state with the value passed from the server.
   const [optimisticMembership, setOptimisticMembership] = useOptimistic(
     { isMember: isMemberOfCommunity },
     membershipReducer
   );
 
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { isLoggedIn } = useAuth();
   const handleClick = async () => {
-    // Optimistically toggle membership state.
-    startTransition(() => {
-      setOptimisticMembership({ type: 'TOGGLE_MEMBERSHIP' });
-    });
-    
-    // Based on the optimistic state, call the appropriate server action.
-    if (optimisticMembership.isMember) {
-      // If the user was a member, they are leaving.
-      await leaveCommunity(communityId);
-    } else {
-      // If the user was not a member, they are joining.
-      await joinCommunity(communityId);
+    if (!isLoggedIn) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+    try {
+      startTransition(() => {
+        setOptimisticMembership({ type: 'TOGGLE_MEMBERSHIP' });
+      });
+
+      if (optimisticMembership.isMember) {
+        await leaveCommunity(communityId);
+      } else {
+        await joinCommunity(communityId);
+      }
+    } catch (error) {
+      console.log('Action failed:', error);
     }
   };
 
   return (
-    <Button onClick={handleClick} className="w-fit cursor-pointer">
-      {optimisticMembership.isMember ? 'Leave' : 'Join'}
-    </Button>
+    <>
+      <Button onClick={handleClick} className='w-fit cursor-pointer'>
+        {optimisticMembership.isMember ? 'Leave' : 'Join'}
+      </Button>
+      <LoginDialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen} />
+    </>
   );
 };
 

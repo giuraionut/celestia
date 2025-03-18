@@ -92,7 +92,6 @@ const PostPage = async ({ params }: { params: { id: string } }) => {
           )}
         </div>
       </Middle>
-
       <Right>
         <div className='w-full h-fit m-4 sticky top-14'>
           {community && (

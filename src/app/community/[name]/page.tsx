@@ -1,86 +1,101 @@
 import {
   isUserMemberOfCommunity,
+  logCommunityVisit,
   readCommunityByName,
 } from '@/actions/communityActions';
-import React from 'react';
+import { readPosts } from '@/actions/postActions';
+import { fetchPosts, POSTS_PER_PAGE } from '@/actions/loadMoreActions';
+import React, { ReactNode } from 'react';
 import {
   HolyGrail,
   Left,
   Middle,
   Right,
 } from '@/app/components/shared/HolyGrail';
-import { readPosts } from '@/actions/postActions';
 import LoadMore from '@/app/components/post/LoadMorePosts';
 import PostList from '@/app/components/post/PostList';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { fetchPosts, POSTS_PER_PAGE } from '@/actions/loadMoreActions';
-import { ReactNode } from 'react';
 import CommunityBanner from '@/app/components/community/CommunityBanner';
+import { getSessionUserId } from '@/actions/actionUtils';
 
-const CommunityPage = async ({ params }: { params: { name: string } }) => {
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
-  const { name } = await params;
-  const decodedName = decodeURIComponent(name);
-  const community = await readCommunityByName(decodedName);
+type CommunityPageProps = {
+  params: { name: string };
+};
 
-  if (!community) return <div>Loading...</div>;
+const CommunityPage = async ({ params }: CommunityPageProps) => {
+  try {
+    const { name } = params;
+    const decodedName = decodeURIComponent(name);
 
-  const communityId = community.id;
+    // Fetch community data (available to all users)
+    const community = await readCommunityByName(decodedName);
+    if (!community) {
+      return <div>Community not found.</div>;
+    }
 
-  // We've already checked that community exists, so we can safely use community.id
-  const isMemberOfCommunity =
-    (await isUserMemberOfCommunity(communityId)) || false;
+    // Get the session user ID (if any)
+    const userId = await getSessionUserId();
 
-  // Initial posts fetch
-  const result = await readPosts({
-    communityId,
-    limit: POSTS_PER_PAGE,
-  });
-  const initialPosts = result?.posts || [];
-  const initialCursor = result?.nextCursor;
+    // For actions that require authentication, check if a user is logged in.
+    if (userId) {
+      await logCommunityVisit(community.id, userId);
+    }
 
-  // Define a dedicated server action for this community
-  // We're capturing the communityId in the closure to ensure it's available
-  async function loadMoreCommunityPosts(
-    cursor?: string
-  ): Promise<[ReactNode, string | null]> {
-    'use server';
+    // Only check membership if the user is authenticated
+    const isMemberOfCommunity = userId
+      ? await isUserMemberOfCommunity(community.id, userId)
+      : false;
 
-    // communityId is now guaranteed to be defined since we've checked for null community
-    const { posts, nextCursor, userId } = await fetchPosts(cursor, communityId);
+    // Fetch initial posts
+    const postsData = await readPosts({
+      communityId: community.id,
+      limit: POSTS_PER_PAGE,
+    });
+    const initialPosts = postsData?.posts ?? [];
+    const initialCursor = postsData?.nextCursor ?? null;
 
-    return [
-      <PostList key={cursor || 'initial'} posts={posts} userId={userId} />,
-      nextCursor,
-    ];
+    // Define a dedicated server action for loading more posts.
+    async function loadMoreCommunityPosts(
+      cursor?: string
+    ): Promise<[ReactNode, string | null]> {
+      'use server';
+      if (!community) {
+        throw new Error("Community is null");
+      }
+      const { posts, nextCursor, userId: fetchedUserId } = await fetchPosts(cursor, community.id);
+      return [
+        <PostList key={cursor ?? 'initial'} posts={posts} userId={fetchedUserId} />,
+        nextCursor,
+      ];
+    }
+
+    return (
+      <HolyGrail>
+        <Left />
+        <Middle>
+          <div className="w-full px-4">
+            <CommunityBanner
+              community={community}
+              isMemberOfCommunity={isMemberOfCommunity}
+              userId={userId}
+            />
+            <LoadMore loadMoreAction={loadMoreCommunityPosts} initialCursor={initialCursor}>
+              <PostList posts={initialPosts} userId={userId} />
+            </LoadMore>
+          </div>
+        </Middle>
+        <Right>
+          <div className="sticky top-0 w-full p-4">Column 1</div>
+        </Right>
+      </HolyGrail>
+    );
+  } catch (error) {
+    console.error("Error loading community page:", error);
+    return (
+      <div>
+        There was an error loading the community. Please try again later.
+      </div>
+    );
   }
-
-  return (
-    <HolyGrail>
-      <Left />
-      <Middle>
-        <div className='w-full px-4'>
-          {/* Community Header */}
-          <CommunityBanner
-            community={community}
-            isMemberOfCommunity={isMemberOfCommunity}
-          />
-          {/* Posts Section */}
-          <LoadMore
-            loadMoreAction={loadMoreCommunityPosts}
-            initialCursor={initialCursor}
-          >
-            <PostList posts={initialPosts} userId={userId} />
-          </LoadMore>
-        </div>
-      </Middle>
-      <Right>
-        <div className='sticky top-0 w-full p-4'>Column 1</div>
-      </Right>
-    </HolyGrail>
-  );
 };
 
 export default CommunityPage;

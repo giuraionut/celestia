@@ -1,25 +1,34 @@
 // CommentsSection.tsx
 'use client';
 import { ExtendedComment, ExtendedPost } from '@prisma/client';
-import React from 'react';
+import React, { useState } from 'react';
 import { useCurrentPath } from './commentUtils';
 import Link from 'next/link';
 import { CommentTree } from './CommentTree';
 import { CommentTreeProvider } from './CommentTreeContext';
 import CreateComment from './CreateComment';
 import { useCommentsContext } from './CommentsContext';
+import { useAuth } from '@/app/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { LoginDialog } from '../shared/LoginDialog';
 
 const CommentsSection = ({ post }: { post: ExtendedPost }) => {
   const { isFullDiscussion, baseUrl, currentCommentId } = useCurrentPath();
   const { comments, updateCommentInTree, addComment } = useCommentsContext();
-
+  const { isLoggedIn } = useAuth();
   const currentComment = comments.find(
     (comment) => comment.id === currentCommentId
   );
 
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
   return (
     <>
-      <CreateComment post={post} updateTree={addComment} />
+      {isLoggedIn ? (
+        <CreateComment post={post} updateTree={addComment} />
+      ) : (
+        <Button onClick={() => setIsLoginModalOpen(true)}>Add a comment</Button>
+      )}
 
       <CommentTreeProvider>
         <div className='flex flex-col pl-4'>
@@ -41,6 +50,7 @@ const CommentsSection = ({ post }: { post: ExtendedPost }) => {
           />
         </div>
       </CommentTreeProvider>
+      <LoginDialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen} />
     </>
   );
 };
