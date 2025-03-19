@@ -1,40 +1,33 @@
-// File: actions/loadMoreActions.ts
-import { readPosts } from '@/actions/postActions';
+'use server';
+
 import PostList from '@/app/components/post/PostList';
-import { ReactNode } from 'react';
 import { getSessionUserId } from './actionUtils';
+import { readPosts } from './postActions';
 
-export const POSTS_PER_PAGE = 5;
-
-// Base function to fetch posts data (not a server action)
-export async function fetchPosts(cursor?: string, communityId?: string) {
-
+export async function loadMorePosts({
+  cursor,
+  sortBy = 'createdAt',
+  sortOrder = 'desc'
+}: {
+  cursor?: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}) {
   const userId = await getSessionUserId();
-
-  const result = await readPosts({ 
-    cursor, 
-    limit: POSTS_PER_PAGE,
-    communityId // Only include communityId if provided
+  
+  const result = await readPosts({
+    cursor,
+    limit: 5,
+    sortBy,
+    sortOrder
   });
-  
-  const posts = result?.posts || [];
-  const nextCursor = result?.nextCursor || null; // Convert undefined to null
 
-  return {
-    posts,
-    nextCursor,
-    userId
-  };
-}
+  if (!result) return [null, null] as const;
 
-// Generic server action for loading more posts
-export async function loadMorePosts(cursor?: string): Promise<[ReactNode, string | null]> {
-  'use server';
-  
-  const { posts, nextCursor, userId } = await fetchPosts(cursor);
-  
+  const { posts, nextCursor } = result;
+
   return [
-    <PostList key={cursor || 'initial'} posts={posts} userId={userId} />,
-    nextCursor,
-  ];
+    <PostList key={cursor} posts={posts} userId={userId} />,
+    nextCursor || null,
+  ] as const;
 }

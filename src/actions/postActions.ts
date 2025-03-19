@@ -1,7 +1,7 @@
 'use server'
 
 import { Post, ExtendedComment, ExtendedPost } from "@prisma/client"
-import { getSessionUserId, handleServerError } from "./actionUtils"
+import { getSessionUserId, handleServerError, requireSessionUserId } from "./actionUtils"
 import db from "@/lib/db";
 import { fetchRepliesRecursively, readComment } from "./commentActions";
 import { getTotalPostDownvotes, getTotalPostUpvotes } from "./voteUtils";
@@ -12,8 +12,8 @@ import { revalidateTag } from "next/cache";
 
 export const createPost = async (post: Post): Promise<Post | null> => {
     try {
-        const userId = await getSessionUserId();
-        post.authorId = userId;
+        const userId = await requireSessionUserId('creating new post.');
+        if(!userId) return null;
         delete (post as { id?: string }).id;
         return await db.post.create({ data: post });
     }
@@ -94,25 +94,70 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
 
 
 
-export type ReadPostsParams = {
-    communityId?: string;
-    cursor?: string;
-    limit?: number;
-};
-export const readPosts = async (
-    { communityId, cursor, limit = 20 }: ReadPostsParams = {}
-): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
-    'use cache'
-    cacheTag('posts')
+
+export const readPosts = async ({
+    communityId,
+    cursor,
+    limit = 20,
+    sortBy = 'createdAt',
+    sortOrder = 'desc'
+}: ReadPostsParams = {}): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
+    'use cache';
+    cacheTag('posts');
     try {
-        // await new Promise((resolve) => setTimeout(resolve, 20000));
+        // Handle special sorting cases
+        let orderBy: any = {};
+        
+        // Basic sorting for standard database fields
+        if (['createdAt', 'title', 'updatedAt'].includes(sortBy)) {
+            orderBy[sortBy] = sortOrder;
+        }
+        // Custom sorting for aggregated fields like vote count
+        else if (sortBy === 'voteCount') {
+            orderBy = [
+                {
+                    votes: {
+                        _count: sortOrder,
+                    },
+                },
+                // Secondary sort by creation date for stability
+                { createdAt: 'desc' },
+            ];
+        }
+        // Comment count sorting
+        else if (sortBy === 'totalComments') {
+            orderBy = [
+                {
+                    comments: {
+                        _count: sortOrder,
+                    },
+                },
+                // Secondary sort by creation date for stability
+                { createdAt: 'desc' },
+            ];
+        }
+        // Default fallback
+        else {
+            orderBy = { createdAt: 'desc' };
+        }
 
         const posts = await db.post.findMany({
             where: communityId ? { communityId } : undefined,
-            include: { author: true, votes: true, comments: true, community: true },
-            take: limit + 1, // Fetch one extra to check if there's a next page
-            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // Skip the cursor itself
-            orderBy: { createdAt: 'asc' },
+            include: { 
+                author: true, 
+                votes: true, 
+                comments: true, 
+                community: true,
+                _count: {
+                    select: {
+                        votes: true,
+                        comments: true,
+                    },
+                },
+            },
+            take: limit + 1,
+            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+            orderBy,
         });
         
         posts?.forEach(post => cacheTag(`post-${post.id}`));
@@ -127,6 +172,14 @@ export const readPosts = async (
     }
 };
 
+// Type definitions
+export interface ReadPostsParams {
+    communityId?: string;
+    cursor?: string;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+}
 export type ReadPostsByUserIdParams = {
     userId: string;
     cursor?: string;
