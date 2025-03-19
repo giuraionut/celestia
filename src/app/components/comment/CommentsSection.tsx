@@ -1,6 +1,6 @@
 // CommentsSection.tsx
 'use client';
-import { ExtendedComment, ExtendedPost } from '@prisma/client';
+import { ExtendedPost } from '@prisma/client';
 import React, { useState } from 'react';
 import { useCurrentPath } from './commentUtils';
 import Link from 'next/link';
@@ -8,23 +8,29 @@ import { CommentTree } from './CommentTree';
 import { CommentTreeProvider } from './CommentTreeContext';
 import CreateComment from './CreateComment';
 import { useCommentsContext } from './CommentsContext';
-import { useAuth } from '@/app/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { LoginDialog } from '../shared/LoginDialog';
 
 const CommentsSection = ({ post }: { post: ExtendedPost }) => {
   const { isFullDiscussion, baseUrl, currentCommentId } = useCurrentPath();
-  const { comments, updateCommentInTree, addComment } = useCommentsContext();
-  const { isLoggedIn } = useAuth();
+  const {
+    comments,
+    updateCommentInTree,
+    addComment,
+    session,
+    sessionStatus,
+  } = useCommentsContext();
   const currentComment = comments.find(
     (comment) => comment.id === currentCommentId
   );
-
+  // const { data: session, status } = useSession();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   return (
     <>
-      {isLoggedIn ? (
+      {sessionStatus === 'loading' ? (
+        <div>Loading...</div>
+      ) : session?.user.id ? (
         <CreateComment post={post} updateTree={addComment} />
       ) : (
         <Button onClick={() => setIsLoginModalOpen(true)}>Add a comment</Button>

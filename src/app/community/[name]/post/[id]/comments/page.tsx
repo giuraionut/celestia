@@ -21,12 +21,12 @@ import LoadMoreComments from '@/app/components/comment/LoadMoreComments';
 import CommentsSection from '@/app/components/comment/CommentsSection';
 import { ExtendedComment } from '@prisma/client';
 import { CommentsProvider } from '@/app/components/comment/CommentsContext';
+import { getSessionUserId } from '@/actions/actionUtils';
 
 // This is now an SSR Server Component
 const PostPage = async ({ params }: { params: { id: string } }) => {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+  const userId = await getSessionUserId();
 
   // Fetch the post and community data
   const post = await readPost(id);
@@ -78,7 +78,7 @@ const PostPage = async ({ params }: { params: { id: string } }) => {
               initialComments={comments.comments}
             >
               <footer className='flex items-center justify-between'>
-                <PostVote post={post} vote={userVote} />
+                <PostVote post={post} vote={userVote} userId={userId} />
                 <PostCommentsCount />
               </footer>
 

@@ -4,8 +4,9 @@ import React from 'react';
 import Image from 'next/image';
 import JoinCommunityButton from './JoinCommunityButton';
 import Link from 'next/link';
+import { getSessionUserId } from '@/actions/actionUtils';
 
-const CommunityCard = ({
+const CommunityCard = async ({
   community,
   isMemberOfCommunity,
   content = true,
@@ -18,6 +19,7 @@ const CommunityCard = ({
   footer?: boolean;
   className?: string;
 }) => {
+  const userId = await getSessionUserId();
   return (
     <div className={cn(`flex gap-4 flex-col`, className)}>
       <Link
@@ -38,6 +40,7 @@ const CommunityCard = ({
         <JoinCommunityButton
           communityId={community.id}
           isMemberOfCommunity={isMemberOfCommunity}
+          userId={userId}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 'use server'
 import db from "@/lib/db";
-import { getSessionUserId, handleServerError } from "./actionUtils";
+import { getSessionUserId, handleServerError, requireSessionUserId } from "./actionUtils";
 import { Comment, ExtendedComment } from "@prisma/client"
 import { getTotalCommentDownvotes, getTotalCommentUpvotes } from "./voteUtils";
 import { revalidateTag } from "next/cache";
@@ -8,7 +8,8 @@ import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 
 export const createComment = async (comment: Comment): Promise<ExtendedComment | null> => {
     try {
-        const userId = await getSessionUserId();
+        const userId = await requireSessionUserId("creating new comment.");
+        if (!userId) return null;
         comment.authorId = userId;
         delete (comment as { id?: string }).id;
         const newComment = await db.comment.create({
@@ -24,7 +25,7 @@ export const createComment = async (comment: Comment): Promise<ExtendedComment |
 
         revalidateTag(`comments-${comment.postId}`)
         revalidateTag(`post-${comment.postId}`);
-        console.log("CREATED COMMENT",newComment);
+        console.log("CREATED COMMENT", newComment);
         return newComment;
     }
     catch (error) {
@@ -148,6 +149,7 @@ export const fetchCommentsByPost = async ({ postId, cursor, limit = 20 }: FetchC
         // Recursively fetch replies for each top-level comment
         const commentsWithReplies = await Promise.all(
             topLevelComments.map(async (comment: ExtendedComment) => {
+                cacheTag(`comment-${comment.id}`);
                 comment.replies = await fetchRepliesRecursively(comment.id);
                 return comment;
             })

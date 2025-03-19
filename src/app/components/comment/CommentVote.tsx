@@ -1,11 +1,11 @@
 'use client';
 import { cn } from '@/lib/utils';
-import { ExtendedComment, ExtendedPost, Vote } from '@prisma/client';
+import { ExtendedComment, Vote } from '@prisma/client';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { LoginDialog } from '../shared/LoginDialog';
 import { deleteCommentVote, voteOnComment } from '@/actions/commentVoteActions';
-import { deletePostVote, voteOnPost } from '@/actions/postVoteActions';
+import { useCommentsContext } from './CommentsContext';
 
 // Utility function to debounce rapid clicks
 const debounce = (fn: Function, delay: number) => {
@@ -16,18 +16,19 @@ const debounce = (fn: Function, delay: number) => {
   };
 };
 
-const PostVote = ({
-  post,
+const CommentVote = ({
+  comment,
   vote,
-  userId,
 }: {
-  post: ExtendedPost;
+  comment: ExtendedComment;
   vote: Vote | null;
-  userId: string | null;
 }) => {
+  const { updateCommentInTree, session, sessionStatus } =
+    useCommentsContext();
+
   // Track both the optimistic UI state and the actual vote object
   const [optimisticVote, setOptimisticVote] = useState({
-    count: post.totalUpvotes - post.totalDownvotes,
+    count: comment.totalUpvotes - comment.totalDownvotes,
     voteType: vote ? vote.type : null,
     voteId: vote ? vote.id : null,
   });
@@ -36,20 +37,20 @@ const PostVote = ({
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Keep a reference to the current comment
-  const commentRef = useRef(post);
+  const commentRef = useRef(comment);
 
   // Update local state when comment or vote changes
   useEffect(() => {
-    commentRef.current = post;
+    commentRef.current = comment;
     setOptimisticVote({
-      count: post.totalUpvotes - post.totalDownvotes,
+      count: comment.totalUpvotes - comment.totalDownvotes,
       voteType: vote ? vote.type : null,
       voteId: vote ? vote.id : null,
     });
-  }, [post, vote]);
+  }, [comment, vote]);
 
   const handleVote = async (type: 'UPVOTE' | 'DOWNVOTE') => {
-    if (!userId) {
+    if (sessionStatus === 'unauthenticated') {
       setIsLoginModalOpen(true);
       return;
     }
@@ -112,43 +113,53 @@ const PostVote = ({
 
       if (isSameVote && optimisticVote.voteId) {
         // Removing existing vote
-        await deletePostVote(post.id, optimisticVote.voteId);
+        await deleteCommentVote(comment.id, optimisticVote.voteId);
         // Vote is being removed, so it becomes null
         newVoteObject = null;
       } else {
         // If switching votes, remove previous vote first
         if (isSwitchingVote && optimisticVote.voteId) {
-          await deletePostVote(post.id, optimisticVote.voteId);
+          await deleteCommentVote(comment.id, optimisticVote.voteId);
         }
 
         // Cast new vote
-        const newVote = await voteOnPost(post.id, type);
+        const newVote = await voteOnComment(comment.id, type);
         if (newVote) {
           setOptimisticVote((prev) => ({ ...prev, voteId: newVote.id }));
           // Create vote object for the updated comment
           newVoteObject = {
             id: newVote.id,
             type: type,
-            userId: userId || '',
-            postId: post.id,
-            commentId: null,
+            userId: session?.user.id || '',
+            commentId: comment.id,
+            postId: comment.postId,
           };
         }
       }
 
       // Create the updated vote array for the comment
-      const updatedVotes = post.votes
-        ? post.votes.filter((v) => v.userId !== userId)
+      const updatedVotes = comment.votes
+        ? comment.votes.filter((v) => v.userId !== session?.user.id)
         : [];
 
       if (newVoteObject) {
         updatedVotes.push(newVoteObject);
       }
+
+      // Update the comment in the tree with new vote counts and vote array
+      const updatedComment = {
+        ...commentRef.current,
+        totalUpvotes: commentRef.current.totalUpvotes + upvoteDelta,
+        totalDownvotes: commentRef.current.totalDownvotes + downvoteDelta,
+        votes: updatedVotes,
+      };
+
+      updateCommentInTree(updatedComment);
     } catch (error) {
       console.error('Vote failed:', error);
       // Rollback on failure
       setOptimisticVote({
-        count: post.totalUpvotes - post.totalDownvotes,
+        count: comment.totalUpvotes - comment.totalDownvotes,
         voteType: vote ? vote.type : null,
         voteId: vote ? vote.id : null,
       });
@@ -183,7 +194,11 @@ const PostVote = ({
   }, []);
 
   return (
-    <div className={cn('flex items-center gap-2')}>
+    <div
+      className={cn('flex items-center gap-2', {
+        'animate-pulse': optimisticVote.voteType === null,
+      })}
+    >
       {
         <button onClick={() => triggerVote('UPVOTE')} disabled={isVoting}>
           <ChevronUp
@@ -210,4 +225,4 @@ const PostVote = ({
   );
 };
 
-export default PostVote;
+export default CommentVote;

@@ -1,24 +1,15 @@
 import { readPosts } from '@/actions/postActions';
-import { authOptions } from '@/lib/auth';
-import { getServerSession } from 'next-auth';
 import LoadMore from './components/post/LoadMorePosts';
 import PostList from './components/post/PostList';
-import {
-  HolyGrail,
-  Left,
-  Middle,
-  Right,
-} from './components/shared/HolyGrail';
+import { HolyGrail, Left, Middle, Right } from './components/shared/HolyGrail';
 import { loadMorePosts } from '@/actions/loadMoreActions';
+import { getSessionUserId } from '@/actions/actionUtils';
 
 export default async function Home() {
   // Initial load of posts
-  const [session, postData] = await Promise.all([
-    getServerSession(authOptions),
-    readPosts({ limit: 5 }),
-  ]);
+  const postData = await readPosts({ limit: 5 });
 
-  const userId = session?.user?.id;
+  const userId = await getSessionUserId();
   const { posts: initialPosts = [], nextCursor: initialCursor } =
     postData || {};
 

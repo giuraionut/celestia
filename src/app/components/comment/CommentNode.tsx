@@ -21,6 +21,8 @@ import {
 import { CommentNodeConnector } from './CommentNodeConnector';
 import { useSession } from 'next-auth/react';
 import { useCommentsContext } from './CommentsContext';
+import { LoginDialog } from '../shared/LoginDialog';
+import CommentVote from './CommentVote';
 
 interface TreeNodeProps {
   comment: ExtendedComment;
@@ -122,7 +124,11 @@ export const CommentNode = ({
               exit={{ height: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <CommentTree comments={comment.replies} path={path} updateCommentInTree={updateCommentInTree}/>
+              <CommentTree
+                comments={comment.replies}
+                path={path}
+                updateCommentInTree={updateCommentInTree}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -210,9 +216,13 @@ const Footer = memo(
     const [isEditing, setIsEditing] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
     const [editorContent, setEditorContent] = useState<string>('');
-    const { data: session } = useSession();
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-    const optimisticTotalComments = useCommentsContext();
+    const { data: session } = useSession();
+    const context = useCommentsContext();
+
+    const userVote =
+      comment.votes?.find((vote) => vote.userId === context.session?.user.id) || null;
     const handleEditComment = useCallback(async () => {
       const editedComment: Comment = {
         id: comment.id,
@@ -240,6 +250,10 @@ const Footer = memo(
     }, [comment, editorContent]);
 
     const handleReplyComment = useCallback(async () => {
+      if (context.sessionStatus==='unauthenticated') {
+        setIsLoginModalOpen(true);
+        return;
+      }
       const reply: Comment = {
         content: editorContent,
         createdAt: new Date(),
@@ -253,9 +267,12 @@ const Footer = memo(
         totalDownvotes: comment.totalDownvotes,
       };
       try {
-        const newReply =await addReply(reply, comment);
+        const newReply = await addReply(reply, comment);
         if (newReply) {
-          updateCommentInTree({ ...comment, replies: [...(comment.replies || []), newReply] });
+          updateCommentInTree({
+            ...comment,
+            replies: [...(comment.replies || []), newReply],
+          });
         }
 
         toast.success('Reply added successfully');
@@ -271,7 +288,7 @@ const Footer = memo(
       try {
         await deleteComment(comment);
         updateCommentInTree({ ...comment, isDeleted: true });
-        optimisticTotalComments.decrementCommentCount();
+        context.decrementCommentCount();
         toast.success('Comment deleted successfully');
       } catch (error) {
         toast.error('Failed to delete comment', {
@@ -283,8 +300,11 @@ const Footer = memo(
     return (
       <div className={cn('ml-12 flex flex-col gap-4', className)}>
         <div className='flex items-center gap-2 rounded-md'>
-          {
-            session?.user.id === comment.authorId &&
+          <CommentVote
+            comment={comment}
+            vote={userVote}
+          />
+          {session?.user.id === comment.authorId && (
             <>
               <button
                 disabled={comment.isDeleted}
@@ -308,11 +328,15 @@ const Footer = memo(
                 Delete
               </button>
             </>
-          }
+          )}
 
           <button
             disabled={comment.isDeleted}
-            onClick={() => setIsReplying(!isReplying)}
+            onClick={() => {
+              context.sessionStatus === 'authenticated'
+                ? setIsReplying(!isReplying)
+                : setIsLoginModalOpen(true);
+            }}
             className={cn('text-sm transition px-2 py-1 rounded-md', {
               'text-green-500/70 hover:bg-green-100/70': !comment.isDeleted,
               'text-foreground/50 opacity-50': comment.isDeleted,
@@ -352,6 +376,10 @@ const Footer = memo(
             </div>
           </TiptapEditor>
         )}
+        <LoginDialog
+          open={isLoginModalOpen}
+          onOpenChange={setIsLoginModalOpen}
+        />
       </div>
     );
   }

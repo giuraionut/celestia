@@ -23,7 +23,7 @@ type CommunityPageProps = {
 
 const CommunityPage = async ({ params }: CommunityPageProps) => {
   try {
-    const { name } = params;
+    const { name } = await params;
     const decodedName = decodeURIComponent(name);
 
     // Fetch community data (available to all users)

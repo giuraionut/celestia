@@ -27,9 +27,11 @@ const membershipReducer = (
 const JoinCommunityButton = ({
   communityId,
   isMemberOfCommunity,
+  userId
 }: {
   communityId: string;
   isMemberOfCommunity: boolean;
+  userId:string|null
 }) => {
   const [optimisticMembership, setOptimisticMembership] = useOptimistic(
     { isMember: isMemberOfCommunity },
@@ -37,9 +39,8 @@ const JoinCommunityButton = ({
   );
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { isLoggedIn } = useAuth();
   const handleClick = async () => {
-    if (!isLoggedIn) {
+    if (!userId) {
       setIsLoginModalOpen(true);
       return;
     }

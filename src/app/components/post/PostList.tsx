@@ -8,22 +8,19 @@ import CommunityHeader from '../community/CommunityHeader';
 
 interface PostListProps {
   posts: ExtendedPost[];
-  userId?: string | null;
+  userId: string | null;
 }
 
 export default function PostList({ posts, userId }: PostListProps) {
   const validPosts = posts.filter((post) => post.community);
-  const voteMap = new Map(
-    validPosts.flatMap(
-      (post) => post.votes?.map((vote) => [vote.userId, vote]) || []
-    )
-  );
 
-  console.log('post list');
   return (
     <div className='py-4 w-full'>
       {validPosts.map((post) => {
-        const userVote = userId ? voteMap.get(userId) || null : null;
+        // Determine the current user's vote on this post specifically
+        const userVote = userId
+          ? post.votes?.find((vote) => vote.userId === userId) || null
+          : null;
 
         return (
           <div
@@ -36,16 +33,14 @@ export default function PostList({ posts, userId }: PostListProps) {
             />
 
             <Link
-              href={`/community/${post.community!.name}/post/${
-                post.id
-              }/comments`}
+              href={`/community/${post.community!.name}/post/${post.id}/comments`}
               className='block'
             >
               <PostCard post={post} />
             </Link>
 
             <div className='flex flex-row justify-between items-center'>
-              <PostVote post={post} vote={userVote} />
+              <PostVote post={post} vote={userVote} userId={userId} />
               <span className='flex flex-row gap-2 items-center'>
                 {post.totalComments} <MessageSquareIcon />
               </span>

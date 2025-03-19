@@ -1,17 +1,19 @@
 'use server'
 
 import { VoteType, Vote, ExtendedComment } from "@prisma/client";
-import { getSessionUserId, handleServerError } from "./actionUtils";
+import { handleServerError, requireSessionUserId } from "./actionUtils";
 import { readComment, readCommentsByPost, updateCommentVotes } from "./commentActions";
 import { findVoteByUserAndTarget, updateVote, createVote, deleteVote } from "./voteUtils";
+import { revalidateTag } from "next/cache";
 
 export async function voteOnComment(commentId: string, value: VoteType): Promise<Vote | null> {
     try {
-        const userId = await getSessionUserId();
+        const userId = await requireSessionUserId("creating or updating comment vote");
+        if (!userId) return null;
         const existingVote = await findVoteByUserAndTarget(commentId, userId, "commentId");
         const newVote = existingVote ? await updateVote(existingVote.id, value) : await createVote(commentId, userId, value, "commentId");
         await updateCommentVotes(commentId);
-
+        revalidateTag(`comment-${commentId}`);
         return newVote
     } catch (error) {
         handleServerError(error, 'creating or updating comment vote');
@@ -23,6 +25,7 @@ export async function deleteCommentVote(commentId: string, voteId: string): Prom
     try {
         const deletedVote = await deleteVote(voteId);
         if (deletedVote.commentId) await updateCommentVotes(commentId);
+        revalidateTag(`comment-${commentId}`);
         return deletedVote;
     } catch (error) {
         handleServerError(error, 'deleting comment vote');
@@ -31,9 +34,9 @@ export async function deleteCommentVote(commentId: string, voteId: string): Prom
 }
 
 export async function getUserVoteForComment(commentId: string): Promise<Vote | null> {
-    'use cache'
     try {
-        const userId = await getSessionUserId();
+        const userId = await requireSessionUserId("creating or updating comment vote");
+        if (!userId) return null;
         return await findVoteByUserAndTarget(commentId, userId, "commentId");
     } catch (error) {
         handleServerError(error, 'retrieving user comment vote');
@@ -42,7 +45,6 @@ export async function getUserVoteForComment(commentId: string): Promise<Vote | n
 }
 
 export async function getVotesForCommentsByPost(postId: string): Promise<Vote[]> {
-    'use cache'
     try {
         const comments = await readCommentsByPost(postId);
         if (!comments) return [];
@@ -61,7 +63,6 @@ export async function getVotesForCommentsByPost(postId: string): Promise<Vote[]>
 }
 
 export async function getVotesForComment(commentId: string): Promise<Vote[]> {
-    'use cache'
     try {
         const comments = [await readComment(commentId)].filter(comment => comment !== null) as ExtendedComment[];
         const collectVotes = (comments: ExtendedComment[]): Vote[] =>

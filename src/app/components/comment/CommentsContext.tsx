@@ -8,6 +8,8 @@ import React, {
 } from 'react';
 import { useOptimistic } from 'react';
 import { ExtendedComment } from '@prisma/client';
+import { Session } from 'next-auth';
+import { useSession } from 'next-auth/react';
 
 type CommentCountAction = { type: 'ADD_COMMENT' } | { type: 'DELETE_COMMENT' };
 
@@ -15,7 +17,6 @@ const totalCommentsReducer = (
   state: number,
   action: CommentCountAction
 ): number => {
-  console.log('THE REDUCER');
   switch (action.type) {
     case 'ADD_COMMENT':
       return state + 1;
@@ -34,6 +35,8 @@ export interface CommentsContextType {
   updateCommentInTree: (updatedComment: ExtendedComment) => void;
   addComment: (comment: ExtendedComment) => void;
   appendComments: (newComments: ExtendedComment[]) => void;
+  session: Session | null;
+  sessionStatus: 'loading' | 'unauthenticated' | 'authenticated';
 }
 
 interface CommentsProviderProps {
@@ -58,7 +61,7 @@ export const CommentsProvider = ({
   );
   // Regular state for the comments list
   const [comments, setComments] = useState<ExtendedComment[]>(initialComments);
-
+  const { data: session, status: sessionStatus } = useSession();
   const incrementCommentCount = () => {
     startTransition(() => {
       setTotalComments({ type: 'ADD_COMMENT' });
@@ -130,6 +133,8 @@ export const CommentsProvider = ({
         updateCommentInTree,
         addComment,
         appendComments,
+        session,
+        sessionStatus,
       }}
     >
       {children}

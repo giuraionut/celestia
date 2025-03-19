@@ -1,18 +1,15 @@
 // File: actions/loadMoreActions.ts
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { readPosts } from '@/actions/postActions';
 import PostList from '@/app/components/post/PostList';
 import { ReactNode } from 'react';
-import { cacheTag } from 'next/dist/server/use-cache/cache-tag';
+import { getSessionUserId } from './actionUtils';
 
 export const POSTS_PER_PAGE = 5;
 
 // Base function to fetch posts data (not a server action)
 export async function fetchPosts(cursor?: string, communityId?: string) {
 
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+  const userId = await getSessionUserId();
 
   const result = await readPosts({ 
     cursor, 
