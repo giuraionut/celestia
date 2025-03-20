@@ -11,7 +11,7 @@ import {
   Middle,
   Right,
 } from '@/app/components/shared/HolyGrail';
-import LoadMore from '@/app/components/post/LoadMorePosts';
+import LoadMore from '@/app/components/shared/LoadMore';
 import PostList from '@/app/components/post/PostList';
 import CommunityBanner from '@/app/components/community/CommunityBanner';
 import { getSessionUserId } from '@/actions/actionUtils';

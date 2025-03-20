@@ -5,8 +5,8 @@ import { loadMorePosts } from '@/actions/loadMoreActions';
 import { getSessionUserId } from '@/actions/actionUtils';
 import { SortProvider } from './components/post/PostSortingContext';
 import { SortingControls } from './components/post/PostSortingControls';
-import LoadMorePosts from './components/post/LoadMorePosts';
 import { getSortParams } from '@/lib/utils';
+import LoadMore from './components/shared/LoadMore';
 
 // Handle the search params to get the initial sort
 interface HomeProps {
@@ -42,12 +42,12 @@ export default async function Home({ searchParams }: HomeProps) {
       <Middle>
         <SortProvider initialSort={initialSort}>
           <SortingControls title='Posts' />
-          <LoadMorePosts
+          <LoadMore
             loadMoreAction={loadMorePosts}
             initialCursor={initialCursor}
           >
             <PostList key={postListKey} posts={initialPosts} userId={userId} />
-          </LoadMorePosts>
+          </LoadMore>
         </SortProvider>
       </Middle>
       <Right>

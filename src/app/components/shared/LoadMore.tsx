@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { useSortContext } from './PostSortingContext';
+import { useSortContext } from '../post/PostSortingContext';
 
 type LoadMoreAction = (options: {
   cursor?: string;
@@ -16,7 +16,7 @@ type LoadMoreProps = {
   initialCursor?: string | null;
 };
 
-export default function LoadMorePosts({
+export default function LoadMore({
   children,
   loadMoreAction,
   initialCursor,

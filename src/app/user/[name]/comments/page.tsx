@@ -2,7 +2,7 @@ import { fetchUserProfileByName } from '@/actions/authActions';
 import { readCommentsByUserId } from '@/actions/commentActions';
 import { loadMoreUserComments } from '@/actions/loadMoreActions';
 import CommentList from '@/app/components/comment/CommentList';
-import LoadMorePosts from '@/app/components/post/LoadMorePosts';
+import LoadMore from '@/app/components/shared/LoadMore';
 import { SortProvider } from '@/app/components/post/PostSortingContext';
 import { SortingControls } from '@/app/components/post/PostSortingControls';
 import {
@@ -52,7 +52,7 @@ const UserPageComments = async ({
       <Middle>
         <SortProvider initialSort={initialCommentsSort}>
           <SortingControls title='Comments' />
-          <LoadMorePosts
+          <LoadMore
             loadMoreAction={loadMoreUserComments}
             initialCursor={initialCommentsCursor}
           >
@@ -61,7 +61,7 @@ const UserPageComments = async ({
               comments={initialComments}
               userId={user.id}
             />
-          </LoadMorePosts>
+          </LoadMore>
         </SortProvider>
       </Middle>
       <Right></Right>

@@ -1,28 +1,10 @@
 'use client';
 
-import React, { useState, startTransition, useOptimistic } from 'react';
+import React, { useState } from 'react';
 import { joinCommunity, leaveCommunity } from '@/actions/communityActions';
 import { Button } from '@/components/ui/button';
 import { LoginDialog } from '../shared/LoginDialog';
-import { useAuth } from '@/app/hooks/useAuth';
-
-interface MembershipState {
-  isMember: boolean;
-}
-
-type MembershipAction = { type: 'TOGGLE_MEMBERSHIP' };
-
-const membershipReducer = (
-  state: MembershipState,
-  action: MembershipAction
-): MembershipState => {
-  switch (action.type) {
-    case 'TOGGLE_MEMBERSHIP':
-      return { isMember: !state.isMember };
-    default:
-      return state;
-  }
-};
+import { toast } from 'sonner'; // Import Sonner toast
 
 const JoinCommunityButton = ({
   communityId,
@@ -31,38 +13,43 @@ const JoinCommunityButton = ({
 }: {
   communityId: string;
   isMemberOfCommunity: boolean;
-  userId:string|null
+  userId: string | null;
 }) => {
-  const [optimisticMembership, setOptimisticMembership] = useOptimistic(
-    { isMember: isMemberOfCommunity },
-    membershipReducer
-  );
-
+  const [isMember, setIsMember] = useState(isMemberOfCommunity);
+  const [isLoading, setIsLoading] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
   const handleClick = async () => {
     if (!userId) {
       setIsLoginModalOpen(true);
       return;
     }
-    try {
-      startTransition(() => {
-        setOptimisticMembership({ type: 'TOGGLE_MEMBERSHIP' });
-      });
 
-      if (optimisticMembership.isMember) {
+    const toastId = toast.loading(isMember ? 'Leaving community...' : 'Joining community...');
+    setIsLoading(true);
+
+    try {
+      if (isMember) {
         await leaveCommunity(communityId);
+        setIsMember(false);
+        toast.success('You have left the community.', { id: toastId });
       } else {
         await joinCommunity(communityId);
+        setIsMember(true);
+        toast.success('You have joined the community!', { id: toastId });
       }
     } catch (error) {
-      console.log('Action failed:', error);
+      console.error('Action failed:', error);
+      toast.error('Something went wrong. Please try again.', { id: toastId });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <>
-      <Button onClick={handleClick} className='w-fit cursor-pointer'>
-        {optimisticMembership.isMember ? 'Leave' : 'Join'}
+      <Button onClick={handleClick} disabled={isLoading} className='w-fit cursor-pointer'>
+        {isLoading ? 'Processing...' : isMember ? 'Leave' : 'Join'}
       </Button>
       <LoginDialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen} />
     </>

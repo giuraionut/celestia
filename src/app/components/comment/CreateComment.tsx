@@ -32,6 +32,7 @@ export default function CreateComment({
       isDeleted: false,
       totalUpvotes: 0,
       totalDownvotes: 0,
+      voteScore: 0
     };
 
     const createdComment = await createComment(comment);

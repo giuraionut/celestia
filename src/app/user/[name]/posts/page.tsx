@@ -1,7 +1,7 @@
 import { fetchUserProfileByName } from '@/actions/authActions';
 import { loadMoreUserPosts } from '@/actions/loadMoreActions';
 import { readPostsByUserId } from '@/actions/postActions';
-import LoadMorePosts from '@/app/components/post/LoadMorePosts';
+import LoadMore from '@/app/components/shared/LoadMore';
 import PostList from '@/app/components/post/PostList';
 import { SortProvider } from '@/app/components/post/PostSortingContext';
 import { SortingControls } from '@/app/components/post/PostSortingControls';
@@ -52,12 +52,12 @@ const UserPagePosts = async ({
       <Middle>
         <SortProvider initialSort={initialPostsSort}>
           <SortingControls title='Posts' />
-          <LoadMorePosts
+          <LoadMore
             loadMoreAction={loadMoreUserPosts}
             initialCursor={initialPostCursor}
           >
             <PostList key={postListKey} posts={initialPosts} userId={user.id} />
-          </LoadMorePosts>
+          </LoadMore>
         </SortProvider>
       </Middle>
       <Right></Right>

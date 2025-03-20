@@ -66,6 +66,7 @@ export function CreatePostForm(props: CreatePostFormProps) {
       totalComments: 0,
       totalUpvotes: 0,
       totalDownvotes: 0,
+      voteScore: 0
     };
 
     try {

@@ -22,6 +22,7 @@ import {
 import { SearchBox } from './SearchBox';
 import SignOutButton from './SignOutButton';
 import { ThemeToggle } from './ThemeToggle';
+import { PlusCircleIcon } from 'lucide-react';
 
 const Header = async () => {
   const session = await getServerSession(authOptions);
@@ -38,7 +39,13 @@ const Header = async () => {
       <div className='flex-1 flex justify-center items-center border-l border-r h-10'>
         <SearchBox className='h-8 px-4 max-w-[600px]' />
       </div>
-      <div className='flex-[.5] flex justify-end h-10 items-center'>
+      <div className='flex-[.5] flex justify-end h-10 items-center gap-2'>
+        <Link href='/post/create' className='flex flex-row gap-1 items-center hover:bg-primary/30 p-2 rounded transition-colors'>
+          <PlusCircleIcon className='h-4 w-4' /> <span className='text-xs font-bold'>Post</span>
+        </Link>
+        <Link href='/community/create' className='flex flex-row gap-1 items-center hover:bg-primary/30 p-2 rounded transition-colors'>
+          <PlusCircleIcon className='h-4 w-4' /> <span className='text-xs font-bold'>Community</span>
+        </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className='h-8 w-8 mr-2 cursor-pointer'>

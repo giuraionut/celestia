@@ -6,6 +6,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { LoginDialog } from '../shared/LoginDialog';
 import { deleteCommentVote, voteOnComment } from '@/actions/commentVoteActions';
 import { useCommentsContext } from './CommentsContext';
+import { toast } from 'sonner';
 
 // Utility function to debounce rapid clicks
 const debounce = (fn: Function, delay: number) => {
@@ -23,8 +24,7 @@ const CommentVote = ({
   comment: ExtendedComment;
   vote: Vote | null;
 }) => {
-  const { updateCommentInTree, session, sessionStatus } =
-    useCommentsContext();
+  const { updateCommentInTree, session, sessionStatus } = useCommentsContext();
 
   // Track both the optimistic UI state and the actual vote object
   const [optimisticVote, setOptimisticVote] = useState({
@@ -106,7 +106,13 @@ const CommentVote = ({
 
     setOptimisticVote(newVoteState);
     setIsVoting(true);
-
+    const toastId = toast.loading(
+      isSameVote
+        ? 'Removing vote...'
+        : isSwitchingVote
+        ? 'Changing vote...'
+        : 'Voting...'
+    );
     try {
       // Create a new vote object for the updated comment
       let newVoteObject: Vote | null = null;
@@ -116,6 +122,7 @@ const CommentVote = ({
         await deleteCommentVote(comment.id, optimisticVote.voteId);
         // Vote is being removed, so it becomes null
         newVoteObject = null;
+        toast.success('Vote removed!', { id: toastId });
       } else {
         // If switching votes, remove previous vote first
         if (isSwitchingVote && optimisticVote.voteId) {
@@ -134,6 +141,12 @@ const CommentVote = ({
             commentId: comment.id,
             postId: comment.postId,
           };
+          toast.success(
+            type === 'UPVOTE'
+              ? 'Upvoted successfully!'
+              : 'Downvoted successfully!',
+            { id: toastId }
+          );
         }
       }
 
@@ -163,6 +176,7 @@ const CommentVote = ({
         voteType: vote ? vote.type : null,
         voteId: vote ? vote.id : null,
       });
+      toast.error('Something went wrong. Please try again.', { id: toastId });
     } finally {
       setIsVoting(false);
     }
@@ -196,7 +210,7 @@ const CommentVote = ({
   return (
     <div
       className={cn('flex items-center gap-2', {
-        'animate-pulse': optimisticVote.voteType === null,
+        'animate-pulse': optimisticVote.voteType === undefined,
       })}
     >
       {
