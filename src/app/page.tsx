@@ -16,7 +16,7 @@ interface HomeProps {
 }
 
 export default async function Home({ searchParams }: HomeProps) {
-  const { sort } = await searchParams || {};
+  const { sort } = (await searchParams) || {};
 
   const initialSort = sort || 'newest';
   const userId = await getSessionUserId();
@@ -41,7 +41,9 @@ export default async function Home({ searchParams }: HomeProps) {
       <Left />
       <Middle>
         <SortProvider initialSort={initialSort}>
-          <SortingControls title='Posts' />
+          <div className='max-w-[700px] w-full items-center flex px-4'>
+            <SortingControls title='Posts' />
+          </div>
           <LoadMore
             loadMoreAction={loadMorePosts}
             initialCursor={initialCursor}

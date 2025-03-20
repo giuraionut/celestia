@@ -177,6 +177,9 @@ export const isUserMemberOfCommunity = async (
     }
 };
 
+
+
+
 export const logCommunityVisit = async (
     communityId: string,
     userId?: string
@@ -210,3 +213,16 @@ export const fetchVisitedCommunities = async (userId: string) => {
         return [];
     }
 };
+
+
+export const fetchUserCommunities = async (userId: string) => {
+    try {
+        return await db.community.findMany({
+            where: { members: { some: { id: userId } } },
+            include: { author: true, posts: true },
+        });
+    } catch (error) {
+        handleServerError(error, "fetching user communities.");
+        return [];
+    }
+}

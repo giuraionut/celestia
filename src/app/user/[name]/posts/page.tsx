@@ -51,7 +51,9 @@ const UserPagePosts = async ({
       <Left></Left>
       <Middle>
         <SortProvider initialSort={initialPostsSort}>
-          <SortingControls title='Posts' />
+          <div className='max-w-[700px] w-full items-center flex px-4'>
+            <SortingControls title='Posts' />
+          </div>
           <LoadMore
             loadMoreAction={loadMoreUserPosts}
             initialCursor={initialPostCursor}

@@ -51,7 +51,9 @@ const UserPageComments = async ({
       <Left></Left>
       <Middle>
         <SortProvider initialSort={initialCommentsSort}>
-          <SortingControls title='Comments' />
+        <div className='max-w-[700px] w-full items-center flex px-4'>
+            <SortingControls title='Comments' />
+          </div>
           <LoadMore
             loadMoreAction={loadMoreUserComments}
             initialCursor={initialCommentsCursor}

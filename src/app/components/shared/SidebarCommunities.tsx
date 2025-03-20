@@ -20,11 +20,13 @@ import Link from 'next/link';
 import { Community } from '@prisma/client';
 
 interface RecentlyVisitedCommunitiesProps {
-  visitedCommunities: Community[];
+  communities: Community[];
+  title: string;
 }
 
-export function RVCSidebar({
-  visitedCommunities,
+export function SidebarCommunities({
+  communities,
+  title,
 }: RecentlyVisitedCommunitiesProps) {
   const [isOpen, setIsOpen] = React.useState(true);
   // This state will control the content visibility separately from the collapsible
@@ -49,7 +51,7 @@ export function RVCSidebar({
   return (
     <Collapsible
       key={'communities'}
-      title={'Recently visited communities'}
+      title={title}
       defaultOpen
       className='group/collapsible'
       open={isOpen}
@@ -60,14 +62,14 @@ export function RVCSidebar({
           asChild
           className='group/label text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
         >
-          <CollapsibleTrigger className='cursor-pointer'>
-            {'Recently visited communities'}
+          <CollapsibleTrigger className='cursor-pointer mb-2'>
+            {title}
             <ChevronRight className='ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90' />
           </CollapsibleTrigger>
         </SidebarGroupLabel>
         <CollapsibleContent forceMount>
           <SidebarMenu>
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode='wait'>
               {isVisible && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
@@ -76,7 +78,7 @@ export function RVCSidebar({
                   transition={{ duration: 0.3, ease: 'easeInOut' }}
                   className='flex flex-col gap-4'
                 >
-                  {visitedCommunities.map((community: Community) => (
+                  {communities.map((community: Community) => (
                     <motion.div
                       key={community.name}
                       initial={{ opacity: 0, y: -10 }}
