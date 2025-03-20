@@ -10,7 +10,7 @@ import {
   CommandEmpty,
 } from '@/components/ui/command';
 import { Check, SearchIcon, X, Loader2 } from 'lucide-react';
-import { useState, useRef, useCallback, useEffect, KeyboardEvent } from 'react';
+import { useState, useRef, useCallback, useEffect, KeyboardEvent, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { searchSuggestionPosts } from '@/actions/postActions';
@@ -35,10 +35,13 @@ export const SearchBox = ({
 }: SearchBoxProps) => {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  // Add useTransition hook
+  const [isPending, startTransition] = useTransition();
 
   // State for dropdown open/closed, selected option, and input text
   const [isOpen, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState<string>('');
+  const [deferredInputValue, setDeferredInputValue] = useState<string>('');
 
   // Search results state - always use empty arrays, never null
   const [postSuggestions, setPostSuggestions] = useState<PostSuggestion[]>([]);
@@ -47,6 +50,7 @@ export const SearchBox = ({
   >([]);
   const [isLoading, setIsLoading] = useState(isLoadingProp);
   const [hasSearched, setHasSearched] = useState(false);
+  
   // Safely reset all search-related states
   const resetSearchState = useCallback(() => {
     setPostSuggestions([]);
@@ -58,12 +62,18 @@ export const SearchBox = ({
   // Handle value change safely
   const handleValueChange = useCallback(
     (value: string) => {
+      // Immediate update for input field
       setInputValue(value);
 
       if (value.trim() === '') {
         resetSearchState();
+        setDeferredInputValue('');
       } else {
         setOpen(true);
+        // Defer the search processing
+        startTransition(() => {
+          setDeferredInputValue(value);
+        });
       }
     },
     [resetSearchState]
@@ -72,6 +82,7 @@ export const SearchBox = ({
   // Clear search input and suggestions
   const handleClearSearch = useCallback(() => {
     setInputValue('');
+    setDeferredInputValue('');
     resetSearchState();
 
     setTimeout(() => {
@@ -80,12 +91,9 @@ export const SearchBox = ({
   }, [resetSearchState]);
 
   useEffect(() => {
-    // console.log('inputvalue:', inputValue);
-
-    // Cancel previous request and reset if input is empty
-    if (inputValue.trim() === '') {
-      resetSearchState();
-      return () => {}; // Return empty cleanup function
+    // Now using deferredInputValue instead of inputValue for search
+    if (deferredInputValue.trim() === '') {
+      return () => {};
     }
 
     let isMounted = true;
@@ -94,13 +102,11 @@ export const SearchBox = ({
       setIsLoading(true);
 
       try {
-        const posts = await searchSuggestionPosts(inputValue, 100, [
+        const posts = await searchSuggestionPosts(deferredInputValue, 100, [
           '<span class="text-red-400">',
           '</span>',
         ]);
-        // console.log('posts', posts);
-        const communities = await findCommunityByName(inputValue);
-        // console.log('communities', communities);
+        const communities = await findCommunityByName(deferredInputValue);
 
         if (isMounted) {
           setPostSuggestions(Array.isArray(posts) ? posts : []);
@@ -129,7 +135,7 @@ export const SearchBox = ({
       isMounted = false;
       clearTimeout(debounceTimer);
     };
-  }, [inputValue, resetSearchState]);
+  }, [deferredInputValue]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
@@ -184,7 +190,10 @@ export const SearchBox = ({
   const hasCommunities =
     Array.isArray(communitySuggestions) && communitySuggestions.length > 0;
   const noResults = hasSearched && !isLoading && !hasPosts && !hasCommunities;
+  // Consider both isPending from useTransition and your existing isLoading state
+  const showLoading = isLoading || isPending;
   const shouldShowDropdown = isOpen && inputValue.trim() !== '' && hasSearched;
+  
   return (
     <div className={cn('flex space-x-2 w-full justify-center', className)}>
       <CommandPrimitive
@@ -215,18 +224,26 @@ export const SearchBox = ({
               placeholder={placeholder}
               disabled={disabled}
               data-slot='command-input'
-              className=' h-full placeholder:text-muted-foreground flex w-full bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50'
+              className='h-full placeholder:text-muted-foreground flex w-full bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50'
             />
-            {/* Other elements */}
+            {/* Clear button or Pending indicator */}
             {inputValue.trim() !== '' && (
-              <button
-                type='button'
-                onClick={handleClearSearch}
-                className='text-primary/50 hover:text-primary h-full cursor-pointer w-8 '
-                aria-label='Clear search'
-              >
-                <X className='w-4 h-4 mx-auto' />
-              </button>
+              <>
+                {isPending ? (
+                  <div className="h-full w-8 flex items-center justify-center">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary/50" /> 
+                  </div>
+                ) : (
+                  <button
+                    type='button'
+                    onClick={handleClearSearch}
+                    className='text-primary/50 hover:text-primary h-full cursor-pointer w-8'
+                    aria-label='Clear search'
+                  >
+                    <X className='w-4 h-4 mx-auto' />
+                  </button>
+                )}
+              </>
             )}
           </div>
 
@@ -248,11 +265,8 @@ export const SearchBox = ({
               { hidden: !shouldShowDropdown }
             )}
           >
-            <CommandList
-              className='
-              '
-            >
-              {isLoading ? (
+            <CommandList>
+              {showLoading ? (
                 <div className='flex justify-center items-center p-4'>
                   <Loader2 className='w-5 h-5 animate-spin text-gray-400' />
                   <span className='ml-2 text-sm text-gray-500'>

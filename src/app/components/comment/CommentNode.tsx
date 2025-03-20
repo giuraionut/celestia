@@ -235,6 +235,7 @@ const Footer = memo(
         isDeleted: comment.isDeleted,
         totalUpvotes: comment.totalUpvotes,
         totalDownvotes: comment.totalDownvotes,
+        voteScore: 0
       };
 
       try {
@@ -265,6 +266,7 @@ const Footer = memo(
         isDeleted: comment.isDeleted,
         totalUpvotes: comment.totalUpvotes,
         totalDownvotes: comment.totalDownvotes,
+        voteScore: 0
       };
       try {
         const newReply = await addReply(reply, comment);
