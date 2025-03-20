@@ -4,6 +4,7 @@ import {
   SidebarHeader,
   SidebarContent,
   SidebarRail,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
 import {
   fetchUserCommunities,
@@ -14,6 +15,8 @@ import { getServerSession } from 'next-auth';
 import { SearchBox } from './SearchBox';
 import { SidebarCommunities } from './SidebarCommunities';
 import { Separator } from '@/components/ui/separator';
+import UserProfileDropdown from './UserProfileDropdown';
+import { cn } from '@/lib/utils';
 
 export async function AppSidebar({
   ...props
@@ -27,9 +30,7 @@ export async function AppSidebar({
   return (
     <Sidebar {...props}>
       <SidebarHeader className='mt-10'>
-        <div className='flex-1 flex justify-center items-center h-10'>
-          <SearchBox className='h-8 px-4 max-w-[600px]' />
-        </div>
+       
       </SidebarHeader>
       <SidebarContent className='flex flex-col gap-4'>
         <SidebarCommunities
@@ -44,6 +45,13 @@ export async function AppSidebar({
           title={'Joined communities'}
         />
       </SidebarContent>
+      <SidebarFooter>
+        <UserProfileDropdown
+          side='right'
+          className={cn('w-full p-2 hover:bg-primary/10 rounded transition-colors cursor-pointer sm:hidden')}
+          position='sidebar'
+        />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
