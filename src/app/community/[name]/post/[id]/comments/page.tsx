@@ -7,8 +7,6 @@ import {
 import { readPost } from '@/actions/postActions';
 import CommunityCard from '@/app/components/community/CommunityCard';
 import PostCard from '@/app/components/post/PostCard';
-import { authOptions } from '@/lib/auth';
-import { getServerSession } from 'next-auth';
 import {
   HolyGrail,
   Left,
@@ -17,11 +15,11 @@ import {
 } from '@/app/components/shared/HolyGrail';
 import PostCommentsCount from '@/app/components/comment/PostCommentsCount';
 import PostVote from '@/app/components/post/PostVote';
-import LoadMoreComments from '@/app/components/comment/LoadMoreComments';
 import CommentsSection from '@/app/components/comment/CommentsSection';
 import { ExtendedComment } from '@prisma/client';
 import { CommentsProvider } from '@/app/components/comment/CommentsContext';
 import { getSessionUserId } from '@/actions/actionUtils';
+import LoadMorePostComments from '@/app/components/comment/LoadMorePostComments';
 
 // This is now an SSR Server Component
 const PostPage = async ({ params }: { params: { id: string } }) => {
@@ -82,12 +80,12 @@ const PostPage = async ({ params }: { params: { id: string } }) => {
                 <PostCommentsCount />
               </footer>
 
-              <LoadMoreComments
+              <LoadMorePostComments
                 loadMoreAction={loadMoreComments}
                 initialCursor={comments.nextCursor}
               >
                 <CommentsSection post={post} />
-              </LoadMoreComments>
+              </LoadMorePostComments>
             </CommentsProvider>
           )}
         </div>

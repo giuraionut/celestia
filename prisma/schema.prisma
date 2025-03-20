@@ -100,7 +100,7 @@ model Post {
   totalComments    Int       @default(0)
   totalUpvotes     Int       @default(0)
   totalDownvotes   Int       @default(0)
-
+  voteScore        Int       @default(0)
   @@index([title])
 }
 
@@ -120,7 +120,7 @@ model Comment {
   isDeleted      Boolean   @default(false)
   totalUpvotes   Int       @default(0)
   totalDownvotes Int       @default(0)
-
+  voteScore      Int       @default(0)
   @@index([content])
 }
 

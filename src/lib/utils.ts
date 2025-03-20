@@ -14,3 +14,22 @@ export const shortenText = (text: string, amount:number) => {
   }
   return text;
 };
+
+
+export function getSortParams(sortOption: string): {
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+} {
+  const sortMapping: {
+    [key: string]: { sortBy: string; sortOrder: 'asc' | 'desc' };
+  } = {
+    newest: { sortBy: 'createdAt', sortOrder: 'desc' },
+    oldest: { sortBy: 'createdAt', sortOrder: 'asc' },
+    mostVoted: { sortBy: 'voteCount', sortOrder: 'desc' },
+    mostCommented: { sortBy: 'totalComments', sortOrder: 'desc' },
+  };
+
+  return (
+    sortMapping[sortOption as keyof typeof sortMapping] || sortMapping.newest
+  );
+}

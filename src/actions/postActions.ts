@@ -1,7 +1,7 @@
 'use server'
 
-import { Post, ExtendedComment, ExtendedPost } from "@prisma/client"
-import { getSessionUserId, handleServerError, requireSessionUserId } from "./actionUtils"
+import { Post, ExtendedComment, ExtendedPost, VoteType } from "@prisma/client"
+import { handleServerError, requireSessionUserId } from "./actionUtils"
 import db from "@/lib/db";
 import { fetchRepliesRecursively, readComment } from "./commentActions";
 import { getTotalPostDownvotes, getTotalPostUpvotes } from "./voteUtils";
@@ -13,7 +13,8 @@ import { revalidateTag } from "next/cache";
 export const createPost = async (post: Post): Promise<Post | null> => {
     try {
         const userId = await requireSessionUserId('creating new post.');
-        if(!userId) return null;
+        if (!userId) return null;
+        post.authorId = userId;
         delete (post as { id?: string }).id;
         return await db.post.create({ data: post });
     }
@@ -93,7 +94,14 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
 };
 
 
-
+// Type definitions
+export interface ReadPostsParams {
+    communityId?: string;
+    cursor?: string;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+}
 
 export const readPosts = async ({
     communityId,
@@ -107,7 +115,7 @@ export const readPosts = async ({
     try {
         // Handle special sorting cases
         let orderBy: any = {};
-        
+
         // Basic sorting for standard database fields
         if (['createdAt', 'title', 'updatedAt'].includes(sortBy)) {
             orderBy[sortBy] = sortOrder;
@@ -143,10 +151,10 @@ export const readPosts = async ({
 
         const posts = await db.post.findMany({
             where: communityId ? { communityId } : undefined,
-            include: { 
-                author: true, 
-                votes: true, 
-                comments: true, 
+            include: {
+                author: true,
+                votes: true,
+                comments: true,
                 community: true,
                 _count: {
                     select: {
@@ -159,7 +167,7 @@ export const readPosts = async ({
             ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
             orderBy,
         });
-        
+
         posts?.forEach(post => cacheTag(`post-${post.id}`));
 
         // Determine the next cursor
@@ -172,62 +180,133 @@ export const readPosts = async ({
     }
 };
 
-// Type definitions
-export interface ReadPostsParams {
-    communityId?: string;
+
+export interface ReadPostsByUserIdParams {
+    userId: string;
     cursor?: string;
     limit?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
 }
-export type ReadPostsByUserIdParams = {
-    userId: string;
-    cursor?: string;
-    limit?: number;
-}
-export const readPostsByUserId = async ({ userId, cursor, limit = 20 }: ReadPostsByUserIdParams): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
-    'use cache'
+
+export const readPostsByUserId = async ({
+    userId,
+    cursor,
+    limit = 20,
+    sortBy = 'createdAt',
+    sortOrder = 'asc'
+  }: ReadPostsByUserIdParams): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
+    'use cache';
     cacheTag(`posts-${userId}`);
+  
     try {
-        const posts = await db.post.findMany({
-            where: { authorId: userId },
-            include: { author: true, votes: true, comments: true, community: true },
-            take: limit + 1, // Fetch one extra to check if there's a next page
-            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // Skip the cursor itself
-            orderBy: { createdAt: 'asc' },
-        });
-        const nextCursor = posts.length > limit ? posts[limit].id : undefined;
-
-        return { posts: posts.slice(0, limit), nextCursor };
-
+      // Debug the incoming sort parameters
+      console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
+  
+      let queryOptions: any = {
+        where: { authorId: userId },
+        include: {
+          author: true,
+          votes: true,
+          comments: true,
+          community: true,
+        },
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {})
+      };
+  
+      // Set up ordering based on the sort type
+      if (['createdAt', 'title', 'updatedAt'].includes(sortBy)) {
+        // Simple field sorting
+        queryOptions.orderBy = { [sortBy]: sortOrder };
+      }
+      else if (sortBy === 'voteCount') {
+        // Order by the stored voteScore field instead of counting votes.
+        queryOptions.orderBy = { voteScore: sortOrder };
+      }
+      else if (sortBy === 'totalComments') {
+        // Order by the stored totalComments field.
+        queryOptions.orderBy = { totalComments: sortOrder };
+      }
+      else {
+        // Default fallback
+        queryOptions.orderBy = { createdAt: 'desc' };
+      }
+  
+      // Debug the final query structure
+      console.log('Final query structure:', JSON.stringify(queryOptions.orderBy, null, 2));
+  
+      const posts = await db.post.findMany(queryOptions);
+  
+      posts.map(post => cacheTag(`post-${post.id}`));
+      const nextCursor = posts.length > limit ? posts[limit].id : undefined;
+      return { posts: posts.slice(0, limit), nextCursor };
     } catch (error) {
-        handleServerError(error, 'reading posts.');
-        return null;
+      console.error('Prisma error:', error);
+      handleServerError(error, 'reading posts by user.');
+      return null;
     }
-}
+  };
+  
 
-export const updatePostVotes = async (postId: string): Promise<ExtendedPost | null> => {
-    try {
 
-        const totalUpvotes = await getTotalPostUpvotes(postId);
-        const totalDownVotes = await getTotalPostDownvotes(postId);
 
-        const res = await db.post.update({
-            where: { id: postId },
-            data: { totalDownvotes: totalDownVotes, totalUpvotes: totalUpvotes },
-            include: {
-                author: true,
-                votes: true
-            }
-        });
-        revalidateTag(`post-${postId}`);
-        return res;
-    }
-    catch (error) {
-        handleServerError(error, 'updating post vote.');
-        return null;
-    }
-}
+// Updates either totalUpvotes or totalDownvotes based on vote type and action.
+export async function updatePostVoteCounts(
+    postId: string,
+    type: VoteType,
+    action: 'increment' | 'decrement'
+  ): Promise<void> {
+    const updateData =
+      type === VoteType.UPVOTE
+        ? { totalUpvotes: { [action]: 1 } }
+        : { totalDownvotes: { [action]: 1 } };
+  
+    await db.post.update({
+      where: { id: postId },
+      data: updateData,
+    });
+  }
+  
+  // Recalculates and updates the voteScore (totalUpvotes - totalDownvotes) for a given post.
+  export async function updatePostVoteScore(postId: string): Promise<void> {
+    // Fetch current vote counts.
+    const post = await db.post.findUnique({
+      where: { id: postId },
+      select: { totalUpvotes: true, totalDownvotes: true },
+    });
+    if (!post) return;
+    const newScore = post.totalUpvotes - post.totalDownvotes;
+  
+    await db.post.update({
+      where: { id: postId },
+      data: { voteScore: newScore },
+    });
+  }
+  
+
+// export const updatePostVotes = async (postId: string, voteType: VoteType): Promise<ExtendedPost | null> => {
+//     try {
+
+//         const totalUpvotes = await getTotalPostUpvotes(postId);
+//         const totalDownVotes = await getTotalPostDownvotes(postId);
+
+//         const res = await db.post.update({
+//             where: { id: postId },
+//             data: { totalDownvotes: totalDownVotes, totalUpvotes: totalUpvotes },
+//             include: {
+//                 author: true,
+//                 votes: true
+//             }
+//         });
+//         revalidateTag(`post-${postId}`);
+//         return res;
+//     }
+//     catch (error) {
+//         handleServerError(error, 'updating post vote.');
+//         return null;
+//     }
+// }
 
 export const ftsPosts = async (
     query: string,

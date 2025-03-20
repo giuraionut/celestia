@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useSortContext } from './PostSortingContext';
-import { useSearchParams } from 'next/navigation';
 
 type LoadMoreAction = (options: {
   cursor?: string;
@@ -17,40 +16,33 @@ type LoadMoreProps = {
   initialCursor?: string | null;
 };
 
-export default function LoadMore({
+export default function LoadMorePosts({
   children,
   loadMoreAction,
   initialCursor,
 }: LoadMoreProps) {
-  const { sortBy, sortOrder, isLoading, setIsLoading } = useSortContext();
-  const searchParams = useSearchParams();
-  const sortParam = searchParams.get('sort') || 'newest';
-
-  const [content, setContent] = useState<React.ReactNode[]>([children]);
-  const [cursor, setCursor] = useState<string | null>(initialCursor || null);
+  const { sortBy, sortOrder, isSortChanging, currentSort } = useSortContext();
+  
+  const [content, setContent] = useState<React.ReactNode[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
-
+  
   const { ref, inView } = useInView({
     threshold: 0,
     rootMargin: '200px',
   });
-
-  // Reset when URL sort parameter changes
-  const prevSortParam = useRef(sortParam);
+  
+  // Reset content when the sort changes or when initial children change
   useEffect(() => {
-    if (sortParam !== prevSortParam.current) {
-      console.log('Sort changed in URL, resetting content');
-      setContent([children]);
-      setCursor(initialCursor ?? null);
-      prevSortParam.current = sortParam;
-    }
-  }, [sortParam, children, initialCursor]);
-
+    setContent([children]);
+    setCursor(initialCursor || null);
+  }, [children, initialCursor, currentSort]);
+  
   // Load more posts when the loading indicator comes into view
   useEffect(() => {
     const loadMore = async () => {
-      if (!cursor || isPending) return;
-
+      if (!cursor || isPending || isSortChanging) return;
+      
       setIsPending(true);
       try {
         console.log('Loading more with params:', { cursor, sortBy, sortOrder });
@@ -59,29 +51,37 @@ export default function LoadMore({
           sortBy,
           sortOrder,
         });
-
+        
         setContent((prev) => [...prev, newContent]);
         setCursor(nextCursor);
       } catch (error) {
         console.error('Error loading more posts:', error);
       } finally {
         setIsPending(false);
-        setIsLoading(false);
       }
     };
-
+    
     if (inView) {
       loadMore();
     }
-  }, [inView, cursor, isPending, loadMoreAction, sortBy, sortOrder]);
-
+  }, [inView, cursor, isPending, loadMoreAction, sortBy, sortOrder, isSortChanging]);
+  
+  // Loading indicator while sort is changing (initial load)
+  if (isSortChanging) {
+    return (
+      <div className="w-full py-8 flex justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-gray-500 rounded-full border-t-transparent"></div>
+      </div>
+    );
+  }
+  
   return (
     <>
-      {!isLoading && content}
-      {~isLoading && cursor && (
-        <div ref={ref} className='w-full h-16 flex items-center justify-center'>
+      {content}
+      {cursor && (
+        <div ref={ref} className="w-full h-16 flex items-center justify-center">
           {isPending && (
-            <div className='animate-spin h-6 w-6 border-2 border-gray-500 rounded-full border-t-transparent'></div>
+            <div className="animate-spin h-6 w-6 border-2 border-gray-500 rounded-full border-t-transparent"></div>
           )}
         </div>
       )}

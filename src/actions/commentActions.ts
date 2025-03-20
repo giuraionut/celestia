@@ -1,7 +1,7 @@
 'use server'
 import db from "@/lib/db";
 import { getSessionUserId, handleServerError, requireSessionUserId } from "./actionUtils";
-import { Comment, ExtendedComment } from "@prisma/client"
+import { Comment, ExtendedComment, VoteType } from "@prisma/client"
 import { getTotalCommentDownvotes, getTotalCommentUpvotes } from "./voteUtils";
 import { revalidateTag } from "next/cache";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
@@ -163,35 +163,64 @@ export const fetchCommentsByPost = async ({ postId, cursor, limit = 20 }: FetchC
     }
 };
 
-export type ReadCommentsByUserId = {
-    userId: string,
-    limit?: number,
-    cursor?: string
-}
-
-export const readCommentsByUserId = async ({ userId, cursor, limit = 20 }: ReadCommentsByUserId): Promise<{ comments: ExtendedComment[]; nextCursor?: string } | null> => {
-    'use cache'
+export interface ReadCommentsByUserId {
+    userId: string;
+    cursor?: string;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }
+  
+  export const readCommentsByUserId = async ({
+    userId,
+    cursor,
+    limit = 20,
+    sortBy = 'createdAt',
+    sortOrder = 'asc'
+  }: ReadCommentsByUserId): Promise<{ comments: ExtendedComment[]; nextCursor?: string } | null> => {
+    'use cache';
     cacheTag(`comments-${userId}`);
     try {
-        const comments = await db.comment.findMany({
-            where: { authorId: userId },
-            include: {
-                author: true,
-                votes: true,
-                replies: true
-            },
-            take: limit + 1, // Fetch one extra to check if there's a next page
-            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // Skip the cursor itself
-            orderBy: { createdAt: 'asc' },
-        });
-        const nextCursor = comments.length > limit ? comments[limit].id : undefined;
-
-        return { comments: comments.slice(0, limit), nextCursor };
+      // Build orderBy clause based on sortBy and sortOrder
+      let orderBy: any = {};
+      if (['createdAt', 'updatedAt'].includes(sortBy)) {
+        orderBy[sortBy] = sortOrder;
+      } else if (sortBy === 'voteCount') {
+        // Sorting by aggregated vote count
+        orderBy = [
+          { votes: { _count: sortOrder } },
+          { createdAt: 'asc' } // Secondary sort for stability
+        ];
+      } else if (sortBy === 'replyCount') {
+        // Sorting by number of replies
+        orderBy = [
+          { replies: { _count: sortOrder } },
+          { createdAt: 'asc' }
+        ];
+      } else {
+        orderBy = { createdAt: sortOrder };
+      }
+  
+      const comments = await db.comment.findMany({
+        where: { authorId: userId },
+        include: {
+          author: true,
+          votes: true,
+          replies: true,
+        },
+        take: limit + 1, // Fetch one extra to determine nextCursor
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        orderBy,
+      });
+      
+      const nextCursor = comments.length > limit ? comments[limit].id : undefined;
+      return { comments: comments.slice(0, limit), nextCursor };
     } catch (error) {
-        handleServerError(error, 'reading comments by user');
-        return null;
+      handleServerError(error, 'reading comments by user');
+      return null;
     }
-}
+  };
+  
 
 export const fetchRepliesRecursively = async (parentId: string): Promise<ExtendedComment[]> => {
     'use cache'
@@ -269,3 +298,33 @@ export const updateCommentVotes = async (commentId: string): Promise<ExtendedCom
         return null;
     }
 }
+
+export async function updateCommentVoteCounts(
+    commentId: string,
+    type: VoteType,
+    action: 'increment' | 'decrement'
+  ): Promise<void> {
+    const updateData =
+      type === VoteType.UPVOTE
+        ? { totalUpvotes: { [action]: 1 } }
+        : { totalDownvotes: { [action]: 1 } };
+  
+    await db.comment.update({
+      where: { id: commentId },
+      data: updateData,
+    });
+  }
+  
+  // Recalculates and updates the voteScore (totalUpvotes - totalDownvotes) for a comment.
+  export async function updateCommentVoteScore(commentId: string): Promise<void> {
+    const comment = await db.comment.findUnique({
+      where: { id: commentId },
+      select: { totalUpvotes: true, totalDownvotes: true },
+    });
+    if (!comment) return;
+    const newScore = comment.totalUpvotes - comment.totalDownvotes;
+    await db.comment.update({
+      where: { id: commentId },
+      data: { voteScore: newScore },
+    });
+  }
