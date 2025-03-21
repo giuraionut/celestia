@@ -38,25 +38,18 @@ export const loadMoreUserPosts = async ({
   cursor,
   sortBy = 'createdAt',
   sortOrder = 'desc',
+  userId, 
 }: {
   cursor?: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
+  userId?: string; 
 }) => {
-  const userId = await getSessionUserId();
-
-  if (!userId) throw new Error('User not found');
-
-  // Debug log to verify sort parameters
-  console.log('Loading more posts with:', {
-    userId,
-    cursor,
-    sortBy,
-    sortOrder,
-  });
+  const actualUserId = userId || (await getSessionUserId());
+  if (!actualUserId) throw new Error('User not found');
 
   const result = await readPostsByUserId({
-    userId,
+    userId: actualUserId,
     cursor,
     limit: 5,
     sortBy,
@@ -64,28 +57,31 @@ export const loadMoreUserPosts = async ({
   });
 
   if (!result) return [null, null] as const;
-
   const { posts, nextCursor } = result;
 
   return [
-    <PostList key={cursor || 'initial'} posts={posts} userId={userId} />,
+    <PostList key={cursor || 'initial'} posts={posts} userId={actualUserId} />,
     nextCursor || null,
   ] as const;
 };
+
 
 export async function loadMoreUserComments({
   cursor,
   sortBy = 'createdAt',
   sortOrder = 'desc',
+  userId, 
 }: {
   cursor?: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
+  userId?: string;
 }) {
-  const userId = await getSessionUserId();
-  if (!userId) throw new Error('User not found');
+  const actualUserId = userId || (await getSessionUserId());
+  if (!actualUserId) throw new Error('User not found');
+
   const result = await readCommentsByUserId({
-    userId: userId,
+    userId: actualUserId,
     cursor,
     limit: 5,
     sortBy,
@@ -98,8 +94,9 @@ export async function loadMoreUserComments({
     <CommentList
       key={cursor || 'initial'}
       comments={comments}
-      userId={userId}
+      userId={actualUserId} // Fix: use actualUserId instead of userId
     />,
     nextCursor || null,
   ] as const;
 }
+

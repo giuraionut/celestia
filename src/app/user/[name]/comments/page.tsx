@@ -50,13 +50,14 @@ const UserPageComments = async ({
     <HolyGrail>
       <Left></Left>
       <Middle>
-        <SortProvider initialSort={initialCommentsSort}>
-        <div className='max-w-[700px] w-full items-center flex px-4'>
+        <SortProvider initialSort={initialCommentsSort} contentType='comments'>
+          <div className='max-w-[700px] w-full items-center flex px-4'>
             <SortingControls title='Comments' />
           </div>
           <LoadMore
             loadMoreAction={loadMoreUserComments}
             initialCursor={initialCommentsCursor}
+            userId={user.id} // Pass the user ID here
           >
             <CommentList
               key={commentListKey}

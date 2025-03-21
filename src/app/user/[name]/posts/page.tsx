@@ -50,13 +50,14 @@ const UserPagePosts = async ({
     <HolyGrail>
       <Left></Left>
       <Middle>
-        <SortProvider initialSort={initialPostsSort}>
+        <SortProvider initialSort={initialPostsSort} contentType='posts'>
           <div className='max-w-[700px] w-full items-center flex px-4'>
             <SortingControls title='Posts' />
           </div>
           <LoadMore
             loadMoreAction={loadMoreUserPosts}
             initialCursor={initialPostCursor}
+            userId={user.id} // Pass userId here
           >
             <PostList key={postListKey} posts={initialPosts} userId={user.id} />
           </LoadMore>

@@ -212,8 +212,13 @@ export const readPostsByUserId = async ({
           community: true,
         },
         take: limit + 1,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {})
       };
+      
+      // Handle cursor pagination properly
+      if (cursor) {
+        queryOptions.cursor = { id: cursor };
+        queryOptions.skip = 1; // Skip the cursor item
+      }
   
       // Set up ordering based on the sort type
       if (['createdAt', 'title', 'updatedAt'].includes(sortBy)) {
@@ -234,13 +239,21 @@ export const readPostsByUserId = async ({
       }
   
       // Debug the final query structure
-      console.log('Final query structure:', JSON.stringify(queryOptions.orderBy, null, 2));
+      console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
   
       const posts = await db.post.findMany(queryOptions);
   
       posts.map(post => cacheTag(`post-${post.id}`));
-      const nextCursor = posts.length > limit ? posts[limit].id : undefined;
-      return { posts: posts.slice(0, limit), nextCursor };
+      
+      // Only set nextCursor if we actually have more items than the limit
+      const hasMore = posts.length > limit;
+      const nextCursor = hasMore ? posts[limit - 1].id : undefined;
+      
+      // Return posts up to the limit (or all if less than limit)
+      return { 
+        posts: posts.slice(0, limit), 
+        nextCursor: hasMore ? nextCursor : undefined 
+      };
     } catch (error) {
       console.error('Prisma error:', error);
       handleServerError(error, 'reading posts by user.');

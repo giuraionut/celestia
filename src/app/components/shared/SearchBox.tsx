@@ -9,7 +9,7 @@ import {
   CommandList,
   CommandEmpty,
 } from '@/components/ui/command';
-import { Check, SearchIcon, X, Loader2 } from 'lucide-react';
+import {  SearchIcon, X, Loader2 } from 'lucide-react';
 import { useState, useRef, useCallback, useEffect, KeyboardEvent, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -139,15 +139,17 @@ export const SearchBox = ({
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
-      if (event.key === 'Enter' && inputValue.trim() !== '' && !isOpen) {
+      if (event.key === 'Enter' && inputValue.trim() !== '') {
+        // Trigger search on Enter regardless of isOpen
         router.push(`/search?q=${encodeURIComponent(inputValue)}`);
+        setOpen(false);
       }
       if (event.key === 'Escape') {
         inputRef.current?.blur();
         setOpen(false);
       }
     },
-    [inputValue, isOpen, router]
+    [inputValue, router]
   );
 
   const handleSelectPost = useCallback(
@@ -223,6 +225,7 @@ export const SearchBox = ({
               onFocus={() => setOpen(inputValue.trim() !== '')}
               placeholder={placeholder}
               disabled={disabled}
+              onKeyDown={handleKeyDown}
               data-slot='command-input'
               className='h-full placeholder:text-muted-foreground flex w-full bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50'
             />

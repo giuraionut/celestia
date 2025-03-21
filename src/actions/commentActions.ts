@@ -180,46 +180,62 @@ export interface ReadCommentsByUserId {
   }: ReadCommentsByUserId): Promise<{ comments: ExtendedComment[]; nextCursor?: string } | null> => {
     'use cache';
     cacheTag(`comments-${userId}`);
-    try {
-      // Build orderBy clause based on sortBy and sortOrder
-      let orderBy: any = {};
-      if (['createdAt', 'updatedAt'].includes(sortBy)) {
-        orderBy[sortBy] = sortOrder;
-      } else if (sortBy === 'voteCount') {
-        // Sorting by aggregated vote count
-        orderBy = [
-          { votes: { _count: sortOrder } },
-          { createdAt: 'asc' } // Secondary sort for stability
-        ];
-      } else if (sortBy === 'replyCount') {
-        // Sorting by number of replies
-        orderBy = [
-          { replies: { _count: sortOrder } },
-          { createdAt: 'asc' }
-        ];
-      } else {
-        orderBy = { createdAt: sortOrder };
-      }
   
-      const comments = await db.comment.findMany({
+    try {
+      let queryOptions: any = {
         where: { authorId: userId },
         include: {
           author: true,
           votes: true,
-          replies: true,
+          post: {
+            include: {
+              community: true,
+            },
+          },
         },
-        take: limit + 1, // Fetch one extra to determine nextCursor
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-        orderBy,
-      });
+        take: limit + 1,
+      };
       
-      const nextCursor = comments.length > limit ? comments[limit].id : undefined;
-      return { comments: comments.slice(0, limit), nextCursor };
+      // Handle cursor pagination properly
+      if (cursor) {
+        queryOptions.cursor = { id: cursor };
+        queryOptions.skip = 1; // Skip the cursor item
+      }
+  
+      // Set up ordering based on the sort type
+      if (['createdAt', 'updatedAt'].includes(sortBy)) {
+        // Simple field sorting
+        queryOptions.orderBy = { [sortBy]: sortOrder };
+      }
+      else if (sortBy === 'voteCount') {
+        // Order by the stored voteScore field
+        queryOptions.orderBy = { voteScore: sortOrder };
+      }
+      else {
+        // Default fallback
+        queryOptions.orderBy = { createdAt: 'desc' };
+      }
+  
+      const comments = await db.comment.findMany(queryOptions);
+  
+      comments.map(comment => cacheTag(`comment-${comment.id}`));
+      
+      // Only set nextCursor if we actually have more items than the limit
+      const hasMore = comments.length > limit;
+      const nextCursor = hasMore ? comments[limit - 1].id : undefined;
+      
+      // Return comments up to the limit (or all if less than limit)
+      return { 
+        comments: comments.slice(0, limit), 
+        nextCursor: hasMore ? nextCursor : undefined 
+      };
     } catch (error) {
-      handleServerError(error, 'reading comments by user');
+      console.error('Prisma error:', error);
+      handleServerError(error, 'reading comments by user.');
       return null;
     }
   };
+  
   
 
 export const fetchRepliesRecursively = async (parentId: string): Promise<ExtendedComment[]> => {

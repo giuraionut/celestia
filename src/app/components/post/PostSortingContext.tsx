@@ -10,11 +10,33 @@ export type SortOption = {
   sortOrder: 'asc' | 'desc';
 };
 
-export const SORT_OPTIONS: Record<string, SortOption> = {
+// Base sort options available for all content types
+const BASE_SORT_OPTIONS: Record<string, SortOption> = {
   newest: { label: 'Newest First', sortBy: 'createdAt', sortOrder: 'desc' },
   oldest: { label: 'Oldest First', sortBy: 'createdAt', sortOrder: 'asc' },
-  mostVoted: { label: 'Most Upvoted', sortBy: 'voteCount', sortOrder: 'desc' }, // Fixed: now DESC so that higher vote scores come first.
+  mostVoted: { label: 'Most Upvoted', sortBy: 'voteCount', sortOrder: 'desc' },
+};
+
+// Extended sort options for posts only
+const POST_SORT_OPTIONS: Record<string, SortOption> = {
+  ...BASE_SORT_OPTIONS,
   mostCommented: { label: 'Most Commented', sortBy: 'totalComments', sortOrder: 'desc' },
+};
+
+// Content type options
+export type ContentType = 'posts' | 'comments' | 'overview';
+
+// Get appropriate sort options based on content type
+export const getSortOptionsForContentType = (contentType: ContentType): Record<string, SortOption> => {
+  switch (contentType) {
+    case 'posts':
+      return POST_SORT_OPTIONS;
+    case 'comments':
+    case 'overview':
+      return BASE_SORT_OPTIONS;
+    default:
+      return BASE_SORT_OPTIONS;
+  }
 };
 
 type SortContextType = {
@@ -22,8 +44,9 @@ type SortContextType = {
   sortBy: string;
   sortOrder: 'asc' | 'desc';
   setSortOption: (option: string) => void;
-  availableSortOptions: typeof SORT_OPTIONS;
+  availableSortOptions: Record<string, SortOption>;
   isSortChanging: boolean;
+  contentType: ContentType;
 };
 
 // Create the context
@@ -41,27 +64,40 @@ export const useSortContext = () => {
 export const SortProvider = ({ 
   children, 
   initialSort = 'newest', 
-  paramName = 'sort' 
+  paramName = 'sort',
+  contentType = 'posts'
 }: { 
   children: ReactNode; 
   initialSort?: string; 
-  paramName?: string; 
+  paramName?: string;
+  contentType?: ContentType;
 }) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
+  // Get available sort options based on content type
+  const availableSortOptions = getSortOptionsForContentType(contentType);
+  
   // Get initial sort from URL or use the default
   const urlSort = searchParams.get(paramName);
-  const [currentSort, setCurrentSort] = useState(urlSort || initialSort);
+  
+  // Ensure the initial sort is valid for this content type
+  const validInitialSort = urlSort && availableSortOptions[urlSort] 
+    ? urlSort 
+    : initialSort in availableSortOptions 
+      ? initialSort 
+      : 'newest';
+  
+  const [currentSort, setCurrentSort] = useState(validInitialSort);
   const [isSortChanging, setIsSortChanging] = useState(false);
   
   // Determine the current sort option
-  const sortOption = SORT_OPTIONS[currentSort] || SORT_OPTIONS.newest;
+  const sortOption = availableSortOptions[currentSort] || availableSortOptions.newest;
   
   // Change sort option and update URL
   const setSortOption = (option: string) => {
-    if (option === currentSort) return; // No change needed
+    if (option === currentSort || !availableSortOptions[option]) return; // No change needed or invalid option
     
     setIsSortChanging(true);
     setCurrentSort(option);
@@ -89,8 +125,9 @@ export const SortProvider = ({
         sortBy: sortOption.sortBy,
         sortOrder: sortOption.sortOrder,
         setSortOption,
-        availableSortOptions: SORT_OPTIONS,
+        availableSortOptions,
         isSortChanging,
+        contentType,
       }}
     >
       {children}
