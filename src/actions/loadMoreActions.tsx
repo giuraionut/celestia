@@ -5,6 +5,8 @@ import { getSessionUserId } from './actionUtils';
 import { readPosts, readPostsByUserId } from './postActions';
 import { readCommentsByUserId } from './commentActions';
 import CommentList from '@/app/components/comment/CommentList';
+import { readCommentsAndPostsByUserId } from './postCommentActions';
+import OverviewList from '@/app/components/shared/OverviewList';
 
 export async function loadMorePosts({
   cursor,
@@ -100,3 +102,41 @@ export async function loadMoreUserComments({
   ] as const;
 }
 
+
+
+
+
+
+export const loadMoreUserPostsAndComments = async ({
+  cursor,
+  sortBy = 'createdAt',
+  sortOrder = 'desc',
+  userId,
+}: {
+  cursor?: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+  userId?: string;
+}) => {
+  const actualUserId = userId || (await getSessionUserId());
+  if (!actualUserId) throw new Error('User not found');
+
+  const result = await readCommentsAndPostsByUserId({
+    userId: actualUserId,
+    cursor,
+    limit: 5,
+    sortBy,
+    sortOrder,
+  });
+  if (!result) return [null, null] as const;
+
+  const { items, nextCursor } = result;
+
+  // Convert nextCursor to a string if it's a Date (or ensure it's a string)
+  const nextCursorStr = nextCursor ? new Date(nextCursor).toISOString() : null;
+
+  return [
+    <OverviewList key={cursor || 'initial'} items={items} userId={actualUserId} />,
+    nextCursorStr,
+  ] as const;
+};
