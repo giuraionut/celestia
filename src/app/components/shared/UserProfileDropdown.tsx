@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { ThemeToggle } from './ThemeToggle';
+import { Button } from '@/components/ui/button';
 
 const UserProfileDropdown = async ({
   side = 'bottom',
@@ -34,6 +35,14 @@ const UserProfileDropdown = async ({
 }) => {
   const session = await getServerSession(authOptions);
   const user = session?.user;
+  if (!user)
+    return (
+      <Button variant={'default'} asChild>
+        <Link href={'/api/auth/signin'} className='mr-2'>
+          Login
+        </Link>
+      </Button>
+    );
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -41,12 +50,12 @@ const UserProfileDropdown = async ({
           <Avatar className={cn('cursor-pointer')}>
             <AvatarImage
               className='rounded-full '
-              src={user?.image}
-              alt={user?.name}
+              src={user.image}
+              alt={user.name}
             />
-            <AvatarFallback>{user?.name[0]}</AvatarFallback>
+            <AvatarFallback>{user.name[0]}</AvatarFallback>
           </Avatar>
-          {position === 'sidebar' && user?.name}
+          {position === 'sidebar' && user.name}
           {position === 'sidebar' && <ChevronsUpDown className='w-4 h-4' />}
         </div>
       </DropdownMenuTrigger>
@@ -55,7 +64,7 @@ const UserProfileDropdown = async ({
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            <Link href={`/user/${user?.name}`}>Profile</Link>
+            <Link href={`/user/${user.name}`}>Profile</Link>
             <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
           </DropdownMenuItem>
 
@@ -64,7 +73,7 @@ const UserProfileDropdown = async ({
             <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem>
-              Theme <ThemeToggle />
+            Theme <ThemeToggle />
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
