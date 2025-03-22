@@ -71,6 +71,7 @@ export const updateComment = async (comment: Comment): Promise<ExtendedComment |
 export const readComment = async (commentId: string): Promise<ExtendedComment | null> => {
     'use cache'
     try {
+        console.log(commentId);
         const parentComment = await db.comment.findFirst({
             where: { id: commentId },
             include: {

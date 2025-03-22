@@ -25,7 +25,7 @@ export default function OverviewList({ items, userId }: OverviewListProps) {
           return (
             <div
               key={`post-${item.id}-${index}`}
-              className="h-auto max-w-[700px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-md p-4"
+              className="h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-md p-4"
             >
               <CommunityHeader
                 name={item.community?.name}
@@ -49,12 +49,13 @@ export default function OverviewList({ items, userId }: OverviewListProps) {
         } else if (item.type === 'comment') {
           // Render comment exactly as in CommentList
           return (
-            <div
+            <Link
               key={`comment-${item.id}-${index}`}
-              className="h-auto max-w-[700px] mx-auto flex flex-col gap-2 mb-4 rounded-md p-4"
+              className="h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 rounded-md p-4"
+              href={`/community/${item.post?.community?.name}/post/${item.post?.id}/comments#${item.id}`}
             >
               <CommentCard comment={item} />
-            </div>
+            </Link>
           );
         }
         return null;

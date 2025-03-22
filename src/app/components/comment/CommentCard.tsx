@@ -4,7 +4,7 @@ import { jsonToHtml } from '../tiptap/utils';
 
 const CommentCard = ({ comment }: { comment: ExtendedComment }) => {
   return (
-    <div className='flex flex-col gap-2 p-4 items-start border rounded-md w-full'>
+    <div className='flex flex-col gap-2 p-4 items-start border rounded-md w-full container cursor-pointer'>
       <div className='flex gap-4 items-center'>
         <div>{comment.author?.name}</div>
         <div>{comment.createdAt.toDateString()}</div>

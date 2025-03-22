@@ -15,7 +15,7 @@ export default function PostList({ posts, userId }: PostListProps) {
   const validPosts = posts.filter((post) => post.community);
 
   return (
-    <div className='py-4 w-full'>
+    <div className='py-4 m-4 w-full'>
       {validPosts.map((post) => {
         // Determine the current user's vote on this post specifically
         const userVote = userId
@@ -25,7 +25,7 @@ export default function PostList({ posts, userId }: PostListProps) {
         return (
           <div
             key={post.id}
-            className='h-auto max-w-[700px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-md p-4'
+            className='h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-md p-4'
           >
             <CommunityHeader
               name={post.community!.name}

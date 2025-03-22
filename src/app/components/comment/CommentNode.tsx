@@ -51,9 +51,17 @@ export const CommentNode = ({
     [setSelectedPath, path]
   );
 
-  const currentPath = usePathname(); // You can also use your custom hook here if needed
   const [isExpanded, setIsExpanded] = useState(false);
-
+  const currentPath = usePathname(); // e.g. "/community/name/post/id/comments/oldCommentId"
+  // Split the current path into segments and replace the last segment with the current comment id.
+  const segments = currentPath.split('/').filter(Boolean);
+  let newPath = '';
+  if (segments.length > 0) {
+    segments[segments.length - 1] = comment.id;
+    newPath = '/' + segments.join('/');
+  } else {
+    newPath = '/' + comment.id;
+  }
   const toggleExpand = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setIsExpanded((prev) => !prev);
@@ -75,7 +83,7 @@ export const CommentNode = ({
           {isParent && (
             <div>
               {path.length >= 5 ? (
-                <Link href={`${currentPath}/${comment.id}`}>
+                <Link href={newPath}>
                   <PlusCircleIcon
                     className={cn(
                       `w-4 h-4 absolute -left-[1.5rem] top-2 text-border bg-background hover:text-primary cursor-pointer`
@@ -168,7 +176,7 @@ const Header = memo(
             {comment?.author?.name || 'Unknown User'}
           </strong>
           <small className='text-sm'>
-            {new Date(comment.createdAt).toLocaleString()}
+            {new Date(comment.createdAt).toLocaleString()}{' '}
             {comment.id}
           </small>
         </div>

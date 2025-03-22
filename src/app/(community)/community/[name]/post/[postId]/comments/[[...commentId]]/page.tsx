@@ -1,5 +1,5 @@
 import React from 'react';
-import { fetchCommentsByPost } from '@/actions/commentActions';
+import { fetchCommentsByPost, readComment } from '@/actions/commentActions';
 import {
   isUserMemberOfCommunity,
   readCommunityById,
@@ -22,21 +22,31 @@ import { getSessionUserId } from '@/actions/actionUtils';
 import LoadMorePostComments from '@/app/components/comment/LoadMorePostComments';
 
 // This is now an SSR Server Component
-const PostPage = async ({ params }: { params: { id: string } }) => {
-  const { id } = await params;
+const PostPage = async ({
+  params,
+}: {
+  params: { postId: string; commentId: string };
+}) => {
+  const { postId, commentId } = await params;
   const userId = await getSessionUserId();
 
   // Fetch the post and community data
-  const post = await readPost(id);
+  const post = await readPost(postId);
   if (!post) {
     return <div>Post not found</div>;
   }
 
-  const [comments, community] = await Promise.all([
-    fetchCommentsByPost({ postId: id, limit: 10 }),
+  const [commentsData, community] = await Promise.all([
+    fetchCommentsByPost({ postId: postId, limit: 10 }),
     readCommunityById(post.communityId),
   ]);
 
+  let singleComment;
+  if (commentId) {
+    const comment = await readComment(commentId[0]);
+    singleComment = comment;
+    console.log(comment);
+  }
   const postVotes = post.votes || [];
   const userVote = postVotes.find((vote) => vote.userId === userId) || null;
   const totalComments = post.totalComments;
@@ -60,6 +70,7 @@ const PostPage = async ({ params }: { params: { id: string } }) => {
     <HolyGrail>
       <Left />
       <Middle>
+        {<div>Comment ID: {commentId}</div>}
         <div className='max-w-[600px] flex flex-col gap-4 w-full'>
           {community && (
             <CommunityCard
@@ -70,10 +81,10 @@ const PostPage = async ({ params }: { params: { id: string } }) => {
             />
           )}
           <PostCard post={post} />
-          {comments && (
+          {commentsData && (
             <CommentsProvider
               initialCount={totalComments}
-              initialComments={comments.comments}
+              initialComments={singleComment ? [singleComment] : commentsData.comments}
             >
               <footer className='flex items-center justify-between'>
                 <PostVote post={post} vote={userVote} userId={userId} />
@@ -82,7 +93,7 @@ const PostPage = async ({ params }: { params: { id: string } }) => {
 
               <LoadMorePostComments
                 loadMoreAction={loadMoreComments}
-                initialCursor={comments.nextCursor}
+                initialCursor={commentsData.nextCursor}
               >
                 <CommentsSection post={post} />
               </LoadMorePostComments>
