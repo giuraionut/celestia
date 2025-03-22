@@ -3,9 +3,10 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import Link from 'next/link';
 
 import { SearchBox } from './SearchBox';
-import { ThemeToggle } from './ThemeToggle';
 import { PlusCircleIcon } from 'lucide-react';
 import UserProfileDropdown from './UserProfileDropdown';
+import CreatePostButton from '../post/CreatePostButton';
+import CreateCommunityButton from '../post/CreateCommunityButton';
 
 const Header = async () => {
   return (
@@ -24,20 +25,8 @@ const Header = async () => {
         <SearchBox className='h-8 px-4 max-w-[600px]' />
       </div>
       <div className='flex-[.5] justify-end h-10 items-center gap-2 hidden sm:flex'>
-        <Link
-          href='/post/create'
-          className='flex flex-row gap-1 items-center hover:bg-primary/30 p-2 rounded transition-colors'
-        >
-          <PlusCircleIcon className='h-4 w-4' />
-          <span className='text-xs font-bold'>Post</span>
-        </Link>
-        <Link
-          href='/community/create'
-          className='flex flex-row gap-1 items-center hover:bg-primary/30 p-2 rounded transition-colors'
-        >
-          <PlusCircleIcon className='h-4 w-4' />
-          <span className='text-xs font-bold'>Community</span>
-        </Link>
+        <CreatePostButton />
+        <CreateCommunityButton />
         <UserProfileDropdown />
       </div>
     </div>
