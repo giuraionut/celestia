@@ -27,7 +27,7 @@ const Header = async () => {
       <div className='flex-[.5] justify-end h-10 items-center gap-2 hidden sm:flex'>
         <CreatePostButton />
         <CreateCommunityButton />
-        <UserProfileDropdown />
+        <UserProfileDropdown className='mr-2'/>
       </div>
     </div>
   );

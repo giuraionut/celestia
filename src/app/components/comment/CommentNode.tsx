@@ -319,7 +319,7 @@ const Footer = memo(
               <button
                 disabled={comment.isDeleted}
                 onClick={() => setIsEditing(!isEditing)}
-                className={cn('text-sm transition px-2 py-1 rounded-md', {
+                className={cn('text-sm transition px-2 py-1 rounded-md cursor-pointer', {
                   'text-blue-500/70 hover:bg-blue-100/70': !comment.isDeleted,
                   'text-foreground/50 opacity-50': comment.isDeleted,
                 })}
@@ -330,7 +330,7 @@ const Footer = memo(
               <button
                 disabled={comment.isDeleted}
                 onClick={() => handleDeleteComment()}
-                className={cn('text-sm transition px-2 py-1 rounded-md ', {
+                className={cn('text-sm transition px-2 py-1 rounded-md cursor-pointer', {
                   'text-red-500/70 hover:bg-red-100/70': !comment.isDeleted,
                   'text-foreground/50 opacity-50': comment.isDeleted,
                 })}
@@ -347,7 +347,7 @@ const Footer = memo(
                 ? setIsReplying(!isReplying)
                 : setIsLoginModalOpen(true);
             }}
-            className={cn('text-sm transition px-2 py-1 rounded-md', {
+            className={cn('text-sm transition px-2 py-1 rounded-md cursor-pointer', {
               'text-green-500/70 hover:bg-green-100/70': !comment.isDeleted,
               'text-foreground/50 opacity-50': comment.isDeleted,
             })}

@@ -43,7 +43,7 @@ const UserPage = async ({
       <Left />
       <Middle>
         <SortProvider initialSort={initialOverviewSort} contentType="overview">
-          <div className="max-w-[700px] w-full items-center flex px-4">
+          <div className="max-w-[700px] w-full items-center flex p-4">
             <SortingControls title="Overview" />
           </div>
           <LoadMore

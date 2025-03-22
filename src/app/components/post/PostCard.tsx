@@ -10,14 +10,12 @@ interface PostCardProps {
 
 const PostCard = ({ post, className }: PostCardProps) => {
   const imageSrc = post.cover || '/fallback-image.png';
-  const authorName = post.author?.name || 'Anonymous';
 
   return (
     <article className={cn('flex flex-col gap-4 container', className)}>
       {/* Header: Title & Author */}
       <header>
         <h1 className='text-lg font-bold'>{shortenText(post.title, 50)}</h1>
-        <p className='text-xs'>Posted by {authorName}</p>
       </header>
 
       {/* Image Section */}

@@ -20,6 +20,7 @@ import { ExtendedComment } from '@prisma/client';
 import { CommentsProvider } from '@/app/components/comment/CommentsContext';
 import { getSessionUserId } from '@/actions/actionUtils';
 import LoadMorePostComments from '@/app/components/comment/LoadMorePostComments';
+import Link from 'next/link';
 
 // This is now an SSR Server Component
 const PostPage = async ({
@@ -65,12 +66,12 @@ const PostPage = async ({
     const c = await fetchCommentsByPost({ postId: post.id, cursor });
     return [c?.comments || [], c?.nextCursor || null];
   }
+  const authorName = post.author?.name;
 
   return (
     <HolyGrail>
       <Left />
       <Middle>
-        {<div>Comment ID: {commentId}</div>}
         <div className='max-w-[600px] flex flex-col gap-4 w-full'>
           {community && (
             <CommunityCard
@@ -80,11 +81,25 @@ const PostPage = async ({
               footer={false}
             />
           )}
+          {authorName && (
+            <span className='text-xs'>
+              Posted by{' '}
+              <Link
+                href={`/user/${authorName}`}
+                className='text-primary/50 hover:text-primary transition-colors'
+              >
+                {authorName}
+              </Link>
+            </span>
+          )}
+          {!authorName && <p className='text-xs'>Posted by {authorName}</p>}
           <PostCard post={post} />
           {commentsData && (
             <CommentsProvider
               initialCount={totalComments}
-              initialComments={singleComment ? [singleComment] : commentsData.comments}
+              initialComments={
+                singleComment ? [singleComment] : commentsData.comments
+              }
             >
               <footer className='flex items-center justify-between'>
                 <PostVote post={post} vote={userVote} userId={userId} />

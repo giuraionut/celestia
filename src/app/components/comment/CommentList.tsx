@@ -8,7 +8,7 @@ interface PostListProps {
 export default function CommentList({ comments, userId }: PostListProps) {
   console.log('comment list');
   return (
-    <div className='py-4 w-full'>
+    <div className='w-full'>
       {comments.map((comment: ExtendedComment) => {
         const userVote =
           comment.votes?.find((vote) => vote.userId === userId) || null;

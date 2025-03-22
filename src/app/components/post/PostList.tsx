@@ -15,12 +15,13 @@ export default function PostList({ posts, userId }: PostListProps) {
   const validPosts = posts.filter((post) => post.community);
 
   return (
-    <div className='py-4 m-4 w-full'>
+    <div className='w-full'>
       {validPosts.map((post) => {
         // Determine the current user's vote on this post specifically
         const userVote = userId
           ? post.votes?.find((vote) => vote.userId === userId) || null
           : null;
+        const authorName = post.author?.name;
 
         return (
           <div
@@ -31,9 +32,22 @@ export default function PostList({ posts, userId }: PostListProps) {
               name={post.community!.name}
               image={post.community!.image}
             />
-
+            {authorName && (
+              <span className='text-xs'>
+                Posted by{' '}
+                <Link
+                  href={`/user/${authorName}`}
+                  className='text-primary/50 hover:text-primary transition-colors'
+                >
+                  {authorName}
+                </Link>
+              </span>
+            )}
+            {!authorName && <p className='text-xs'>Posted by {authorName}</p>}
             <Link
-              href={`/community/${post.community!.name}/post/${post.id}/comments`}
+              href={`/community/${post.community!.name}/post/${
+                post.id
+              }/comments`}
               className='block'
             >
               <PostCard post={post} />
