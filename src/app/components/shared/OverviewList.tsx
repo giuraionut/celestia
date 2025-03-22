@@ -49,7 +49,7 @@ export default function OverviewList({ items, userId }: OverviewListProps) {
             <Link
               key={`comment-${item.id}-${index}`}
               className="h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 rounded-md hover:bg-accent"
-              href={`/community/${item.post?.community?.name}/post/${item.post?.id}/comments#${item.id}`}
+              href={`/community/${item.post?.community?.name}/post/${item.post?.id}/comments/${item.id}`}
             >
               <CommentCard comment={item} />
             </Link>

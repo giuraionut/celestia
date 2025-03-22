@@ -1,7 +1,7 @@
 import {
+  findCommunityByName,
   isUserMemberOfCommunity,
   logCommunityVisit,
-  readCommunityByName,
 } from '@/actions/communityActions';
 import { readPosts } from '@/actions/postActions';
 import React, { ReactNode } from 'react';
@@ -16,6 +16,7 @@ import PostList from '@/app/components/post/PostList';
 import CommunityBanner from '@/app/components/community/CommunityBanner';
 import { getSessionUserId } from '@/actions/actionUtils';
 import { SortProvider } from '@/app/components/post/PostSortingContext';
+import { Cake, User2Icon, UserIcon } from 'lucide-react';
 
 type CommunityPageProps = {
   params: { name: string };
@@ -27,7 +28,7 @@ const CommunityPage = async ({ params }: CommunityPageProps) => {
     const decodedName = decodeURIComponent(name);
 
     // Fetch community data (available to all users)
-    const community = await readCommunityByName(decodedName);
+    const community = await findCommunityByName(decodedName);
     if (!community) {
       return <div>Community not found.</div>;
     }
@@ -90,19 +91,46 @@ const CommunityPage = async ({ params }: CommunityPageProps) => {
               community={community}
               isMemberOfCommunity={isMemberOfCommunity}
               userId={userId}
+              className='mb-4'
             />
             <SortProvider initialSort='newest'>
-            <LoadMore
-              loadMoreAction={loadMoreCommunityPosts}
-              initialCursor={initialCursor}
-            >
-              <PostList posts={initialPosts} userId={userId} />
-            </LoadMore>
+              <LoadMore
+                loadMoreAction={loadMoreCommunityPosts}
+                initialCursor={initialCursor}
+              >
+                <PostList posts={initialPosts} userId={userId} />
+              </LoadMore>
             </SortProvider>
           </div>
         </Middle>
         <Right>
-          <div className='sticky top-0 w-full p-4'>Column 1</div>
+          <div className='sticky top-0 w-full p-4'>
+            <div className='flex flex-col gap-4 p-4 border rounded-md'>
+              <span className='inline-flex gap-2'>
+                <User2Icon />{' '}
+                <span>
+                  Total Managers{' '}
+                  <span className='font-bold'>{community.totalManagers}</span>
+                </span>
+              </span>
+              <span className='inline-flex gap-2'>
+                <UserIcon />{' '}
+                <span>
+                  Total Members{' '}
+                  <span className='font-bold'>{community.totalMembers}</span>
+                </span>
+              </span>
+              <span className='inline-flex gap-2'>
+                <Cake />{' '}
+                <span>
+                  Created at{' '}
+                  <span className='font-bold'>
+                    {community.createdAt.toDateString()}
+                  </span>
+                </span>
+              </span>
+            </div>
+          </div>
         </Right>
       </HolyGrail>
     );

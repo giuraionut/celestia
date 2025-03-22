@@ -4,6 +4,7 @@ import { Community, ExtendedCommunity } from "@prisma/client";
 import { getSessionUserId, handleServerError, requireSessionUserId } from "./actionUtils";
 import db from "@/lib/db";
 import { revalidateTag } from "next/cache";
+import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 
 /**
  * Helper: Returns the session user ID if logged in, or null if not.
@@ -46,38 +47,58 @@ export const readCommunityById = async (
     }
 };
 
-export const readCommunityByName = async (
-    name: string
-): Promise<ExtendedCommunity | null> => {
-    "use cache";
-    name = name.toLowerCase().trim();
-    try {
-        const result = await db.$queryRaw<Community[]>`
-      SELECT * FROM Community 
-      WHERE name COLLATE NOCASE = ${name}
-      LIMIT 1
-    `;
-        if (!result.length) {
-            return null;
-        }
-        const communityId = result[0].id;
-        return readCommunityById(communityId);
-    } catch (error) {
-        handleServerError(error, "reading community by name.");
-        return null;
-    }
-};
+// export const readCommunityByName = async (
+//     name: string
+// ): Promise<ExtendedCommunity | null> => {
+//     "use cache";
+//     name = name.toLowerCase().trim();
+//     try {
+//         const result = await db.$queryRaw<Community[]>`
+//       SELECT * FROM Community 
+//       WHERE name COLLATE NOCASE = ${name}
+//       LIMIT 1
+//     `;
+//         if (!result.length) {
+//             return null;
+//         }
+//         const communityId = result[0].id;
+//         cacheTag(`community-${communityId}`);
+//         return readCommunityById(communityId);
+//     } catch (error) {
+//         handleServerError(error, "reading community by name.");
+//         return null;
+//     }
+// };
 
-export const findCommunityByName = async (
+export const findCommunitiesByName = async (
     name: string
 ): Promise<ExtendedCommunity[] | null> => {
     "use cache";
     name = name.toLowerCase().trim();
     try {
-        return await db.community.findMany({
+        const communities = await db.community.findMany({
             where: { name: { contains: name } },
             include: { author: true, posts: true },
         });
+        communities.forEach(community => cacheTag(`community-${community.id}`));
+        return communities;
+    } catch (error) {
+        handleServerError(error, "reading community by name.");
+        return null;
+    }
+};
+export const findCommunityByName = async (
+    name: string
+): Promise<ExtendedCommunity | null> => {
+    "use cache";
+    name = name.toLowerCase().trim();
+    try {
+        const community = await db.community.findFirstOrThrow({
+            where: { name: { contains: name } },
+            include: { author: true, posts: true },
+        });
+        cacheTag(`community-${community.id}`);
+        return community;
     } catch (error) {
         handleServerError(error, "reading community by name.");
         return null;

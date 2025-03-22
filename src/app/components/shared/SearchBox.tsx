@@ -9,12 +9,22 @@ import {
   CommandList,
   CommandEmpty,
 } from '@/components/ui/command';
-import {  SearchIcon, X, Loader2 } from 'lucide-react';
-import { useState, useRef, useCallback, useEffect, KeyboardEvent, useTransition } from 'react';
+import { SearchIcon, X, Loader2 } from 'lucide-react';
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  KeyboardEvent,
+  useTransition,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { searchSuggestionPosts } from '@/actions/postActions';
-import { findCommunityByName } from '@/actions/communityActions';
+import {
+  findCommunitiesByName,
+  findCommunityByName,
+} from '@/actions/communityActions';
 import { PostSuggestion } from '@/types/types';
 import { ExtendedCommunity } from '@prisma/client';
 
@@ -50,7 +60,7 @@ export const SearchBox = ({
   >([]);
   const [isLoading, setIsLoading] = useState(isLoadingProp);
   const [hasSearched, setHasSearched] = useState(false);
-  
+
   // Safely reset all search-related states
   const resetSearchState = useCallback(() => {
     setPostSuggestions([]);
@@ -106,7 +116,7 @@ export const SearchBox = ({
           '<span class="text-red-400">',
           '</span>',
         ]);
-        const communities = await findCommunityByName(deferredInputValue);
+        const communities = await findCommunitiesByName(deferredInputValue);
 
         if (isMounted) {
           setPostSuggestions(Array.isArray(posts) ? posts : []);
@@ -195,7 +205,7 @@ export const SearchBox = ({
   // Consider both isPending from useTransition and your existing isLoading state
   const showLoading = isLoading || isPending;
   const shouldShowDropdown = isOpen && inputValue.trim() !== '' && hasSearched;
-  
+
   return (
     <div className={cn('flex space-x-2 w-full justify-center', className)}>
       <CommandPrimitive
@@ -208,12 +218,14 @@ export const SearchBox = ({
           data-slot='command-input-wrapper'
           className='relative flex h-full w-full items-center rounded-lg'
         >
-          <div className={cn(
-                  "border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-l-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-                  "focus-within:border-l-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
-                  "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-                  className
-                )}>
+          <div
+            className={cn(
+              'border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-l-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+              'focus-within:border-l-ring focus-within:ring-ring/50 focus-within:ring-[3px]',
+              'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
+              className
+            )}
+          >
             <div className='w-8 shrink-0 h-full flex items-center rounded-l-lg'>
               <SearchIcon className='w-4 text-primary mx-auto' />
             </div>
@@ -233,8 +245,8 @@ export const SearchBox = ({
             {inputValue.trim() !== '' && (
               <>
                 {isPending ? (
-                  <div className="h-full w-8 flex items-center justify-center">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary/50" /> 
+                  <div className='h-full w-8 flex items-center justify-center'>
+                    <Loader2 className='w-4 h-4 animate-spin text-primary/50' />
                   </div>
                 ) : (
                   <button

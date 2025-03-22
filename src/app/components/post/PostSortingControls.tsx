@@ -17,7 +17,7 @@ export function SortingControls({ title }: { title: string }) {
     <div className='flex justify-between items-center gap-4'>
       <h1>{'Sort by'}</h1>
       <Select value={currentSort} onValueChange={setSortOption}>
-        <SelectTrigger className='w-[180px]'>
+        <SelectTrigger className='w-[180px] cursor-pointer'>
           <SelectValue placeholder='Sort by' />
         </SelectTrigger>
         <SelectContent>
