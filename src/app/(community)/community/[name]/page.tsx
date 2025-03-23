@@ -17,15 +17,24 @@ import CommunityBanner from '@/app/components/community/CommunityBanner';
 import { getSessionUserId } from '@/actions/actionUtils';
 import { SortProvider } from '@/app/components/post/PostSortingContext';
 import { Cake, User2Icon, UserIcon } from 'lucide-react';
+import { SortingControls } from '@/app/components/post/PostSortingControls';
+import { getSortParams } from '@/lib/utils';
+import { loadMorePosts } from '@/actions/loadMoreActions';
 
 type CommunityPageProps = {
   params: { name: string };
+  searchParams?: {
+    sort?: string;
+  };
 };
 
-const CommunityPage = async ({ params }: CommunityPageProps) => {
+const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
   try {
     const { name } = await params;
+    const { sort } = searchParams ?? {};
+    const initialSort = sort || 'newest';
     const decodedName = decodeURIComponent(name);
+    const sortParams = getSortParams(initialSort);
 
     // Fetch community data (available to all users)
     const community = await findCommunityByName(decodedName);
@@ -47,40 +56,17 @@ const CommunityPage = async ({ params }: CommunityPageProps) => {
       : false;
 
     // Fetch initial posts
-    const postsData = await readPosts({
+    const postData = await readPosts({
       communityId: community.id,
       limit: 5,
+      sortBy: sortParams.sortBy,
+      sortOrder: sortParams.sortOrder,
     });
-    const initialPosts = postsData?.posts ?? [];
-    const initialCursor = postsData?.nextCursor ?? null;
+    const { posts: initialPosts = [], nextCursor: initialCursor } =
+      postData || {};
 
-    // Define a dedicated server action for loading more posts.
-    async function loadMoreCommunityPosts(options: {
-      cursor?: string;
-      sortBy: string;
-      sortOrder: 'asc' | 'desc';
-    }): Promise<[ReactNode, string | null]> {
-      'use server';
-      if (!community) {
-        throw new Error('Community is null');
-      }
-      const { cursor } = options;
-      const postsData = await readPosts({
-        communityId: community.id,
-        cursor,
-        limit: 5,
-      });
-      const { posts: initialPosts = [], nextCursor: initialCursor } =
-        postsData || {};
-      return [
-        <PostList
-          key={cursor ?? 'initial'}
-          posts={initialPosts}
-          userId={userId}
-        />,
-        initialCursor || null,
-      ] as const;
-    }
+   
+    const postListKey = `post-list-${initialSort}`;
 
     return (
       <HolyGrail>
@@ -93,12 +79,19 @@ const CommunityPage = async ({ params }: CommunityPageProps) => {
               userId={userId}
               className='mb-4'
             />
-            <SortProvider initialSort='newest'>
+            <SortProvider initialSort={initialSort}>
+              <div className='max-w-[700px] w-full items-center flex p-4'>
+                <SortingControls title='Posts' />
+              </div>
               <LoadMore
-                loadMoreAction={loadMoreCommunityPosts}
+                loadMoreAction={loadMorePosts}
                 initialCursor={initialCursor}
               >
-                <PostList posts={initialPosts} userId={userId} />
+                <PostList
+                  key={postListKey}
+                  posts={initialPosts}
+                  userId={userId}
+                />
               </LoadMore>
             </SortProvider>
           </div>

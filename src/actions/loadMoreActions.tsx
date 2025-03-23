@@ -12,14 +12,17 @@ export async function loadMorePosts({
   cursor,
   sortBy = 'createdAt',
   sortOrder = 'desc',
+  communityId,
 }: {
   cursor?: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
+  communityId?: string;
 }) {
   const userId = await getSessionUserId();
 
   const result = await readPosts({
+    communityId,
     cursor,
     limit: 5,
     sortBy,

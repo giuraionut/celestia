@@ -116,23 +116,17 @@ export const readPosts = async ({
         // Handle special sorting cases
         let orderBy: any = {};
 
-        // Basic sorting for standard database fields
         if (['createdAt', 'title', 'updatedAt'].includes(sortBy)) {
             orderBy[sortBy] = sortOrder;
         }
-        // Custom sorting for aggregated fields like vote count
         else if (sortBy === 'voteCount') {
             orderBy = [
                 {
-                    votes: {
-                        _count: sortOrder,
-                    },
+                    voteScore: sortOrder,
                 },
-                // Secondary sort by creation date for stability
                 { createdAt: 'desc' },
             ];
         }
-        // Comment count sorting
         else if (sortBy === 'totalComments') {
             orderBy = [
                 {
@@ -140,7 +134,6 @@ export const readPosts = async ({
                         _count: sortOrder,
                     },
                 },
-                // Secondary sort by creation date for stability
                 { createdAt: 'desc' },
             ];
         }
@@ -195,72 +188,72 @@ export const readPostsByUserId = async ({
     limit = 20,
     sortBy = 'createdAt',
     sortOrder = 'asc'
-  }: ReadPostsByUserIdParams): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
+}: ReadPostsByUserIdParams): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
     'use cache';
     cacheTag(`posts-${userId}`);
-  
+
     try {
-      // Debug the incoming sort parameters
-      console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
-  
-      let queryOptions: any = {
-        where: { authorId: userId },
-        include: {
-          author: true,
-          votes: true,
-          comments: true,
-          community: true,
-        },
-        take: limit + 1,
-      };
-      
-      // Handle cursor pagination properly
-      if (cursor) {
-        queryOptions.cursor = { id: cursor };
-        queryOptions.skip = 1; // Skip the cursor item
-      }
-  
-      // Set up ordering based on the sort type
-      if (['createdAt', 'title', 'updatedAt'].includes(sortBy)) {
-        // Simple field sorting
-        queryOptions.orderBy = { [sortBy]: sortOrder };
-      }
-      else if (sortBy === 'voteCount') {
-        // Order by the stored voteScore field instead of counting votes.
-        queryOptions.orderBy = { voteScore: sortOrder };
-      }
-      else if (sortBy === 'totalComments') {
-        // Order by the stored totalComments field.
-        queryOptions.orderBy = { totalComments: sortOrder };
-      }
-      else {
-        // Default fallback
-        queryOptions.orderBy = { createdAt: 'desc' };
-      }
-  
-      // Debug the final query structure
-      console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
-  
-      const posts = await db.post.findMany(queryOptions);
-  
-      posts.map(post => cacheTag(`post-${post.id}`));
-      
-      // Only set nextCursor if we actually have more items than the limit
-      const hasMore = posts.length > limit;
-      const nextCursor = hasMore ? posts[limit - 1].id : undefined;
-      
-      // Return posts up to the limit (or all if less than limit)
-      return { 
-        posts: posts.slice(0, limit), 
-        nextCursor: hasMore ? nextCursor : undefined 
-      };
+        // Debug the incoming sort parameters
+        console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
+
+        let queryOptions: any = {
+            where: { authorId: userId },
+            include: {
+                author: true,
+                votes: true,
+                comments: true,
+                community: true,
+            },
+            take: limit + 1,
+        };
+
+        // Handle cursor pagination properly
+        if (cursor) {
+            queryOptions.cursor = { id: cursor };
+            queryOptions.skip = 1; // Skip the cursor item
+        }
+
+        // Set up ordering based on the sort type
+        if (['createdAt', 'title', 'updatedAt'].includes(sortBy)) {
+            // Simple field sorting
+            queryOptions.orderBy = { [sortBy]: sortOrder };
+        }
+        else if (sortBy === 'voteCount') {
+            // Order by the stored voteScore field instead of counting votes.
+            queryOptions.orderBy = { voteScore: sortOrder };
+        }
+        else if (sortBy === 'totalComments') {
+            // Order by the stored totalComments field.
+            queryOptions.orderBy = { totalComments: sortOrder };
+        }
+        else {
+            // Default fallback
+            queryOptions.orderBy = { createdAt: 'desc' };
+        }
+
+        // Debug the final query structure
+        console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
+
+        const posts = await db.post.findMany(queryOptions);
+
+        posts.map(post => cacheTag(`post-${post.id}`));
+
+        // Only set nextCursor if we actually have more items than the limit
+        const hasMore = posts.length > limit;
+        const nextCursor = hasMore ? posts[limit - 1].id : undefined;
+
+        // Return posts up to the limit (or all if less than limit)
+        return {
+            posts: posts.slice(0, limit),
+            nextCursor: hasMore ? nextCursor : undefined
+        };
     } catch (error) {
-      console.error('Prisma error:', error);
-      handleServerError(error, 'reading posts by user.');
-      return null;
+        console.error('Prisma error:', error);
+        handleServerError(error, 'reading posts by user.');
+        return null;
     }
-  };
-  
+};
+
 
 
 
@@ -269,34 +262,34 @@ export async function updatePostVoteCounts(
     postId: string,
     type: VoteType,
     action: 'increment' | 'decrement'
-  ): Promise<void> {
+): Promise<void> {
     const updateData =
-      type === VoteType.UPVOTE
-        ? { totalUpvotes: { [action]: 1 } }
-        : { totalDownvotes: { [action]: 1 } };
-  
+        type === VoteType.UPVOTE
+            ? { totalUpvotes: { [action]: 1 } }
+            : { totalDownvotes: { [action]: 1 } };
+
     await db.post.update({
-      where: { id: postId },
-      data: updateData,
+        where: { id: postId },
+        data: updateData,
     });
-  }
-  
-  // Recalculates and updates the voteScore (totalUpvotes - totalDownvotes) for a given post.
-  export async function updatePostVoteScore(postId: string): Promise<void> {
+}
+
+// Recalculates and updates the voteScore (totalUpvotes - totalDownvotes) for a given post.
+export async function updatePostVoteScore(postId: string): Promise<void> {
     // Fetch current vote counts.
     const post = await db.post.findUnique({
-      where: { id: postId },
-      select: { totalUpvotes: true, totalDownvotes: true },
+        where: { id: postId },
+        select: { totalUpvotes: true, totalDownvotes: true },
     });
     if (!post) return;
     const newScore = post.totalUpvotes - post.totalDownvotes;
-  
+
     await db.post.update({
-      where: { id: postId },
-      data: { voteScore: newScore },
+        where: { id: postId },
+        data: { voteScore: newScore },
     });
-  }
-  
+}
+
 
 // export const updatePostVotes = async (postId: string, voteType: VoteType): Promise<ExtendedPost | null> => {
 //     try {
