@@ -5,6 +5,7 @@ import PostVote from './PostVote';
 import { Separator } from '@/components/ui/separator';
 import { MessageSquareIcon } from 'lucide-react';
 import CommunityHeader from '../community/CommunityHeader';
+import { formatDistanceToNow } from 'date-fns';
 
 interface PostListProps {
   posts: ExtendedPost[];
@@ -32,18 +33,23 @@ export default function PostList({ posts, userId }: PostListProps) {
               name={post.community!.name}
               image={post.community!.image}
             />
-            {authorName && (
+            <div className='flex items-center gap-1 flex-row'>
+              {authorName && (
+                <span className='text-xs'>
+                  Posted by{' '}
+                  <Link
+                    href={`/user/${authorName}`}
+                    className='text-primary/50 hover:text-primary transition-colors'
+                  >
+                    {authorName}
+                  </Link>
+                </span>
+              )}
+              {!authorName && <p className='text-xs'>Posted by {authorName}</p>}
               <span className='text-xs'>
-                Posted by{' '}
-                <Link
-                  href={`/user/${authorName}`}
-                  className='text-primary/50 hover:text-primary transition-colors'
-                >
-                  {authorName}
-                </Link>
+                {formatDistanceToNow(post.createdAt, { addSuffix: true })}
               </span>
-            )}
-            {!authorName && <p className='text-xs'>Posted by {authorName}</p>}
+            </div>
             <Link
               href={`/community/${post.community!.name}/post/${
                 post.id

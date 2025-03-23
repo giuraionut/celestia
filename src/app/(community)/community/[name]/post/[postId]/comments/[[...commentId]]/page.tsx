@@ -21,6 +21,7 @@ import { CommentsProvider } from '@/app/components/comment/CommentsContext';
 import { getSessionUserId } from '@/actions/actionUtils';
 import LoadMorePostComments from '@/app/components/comment/LoadMorePostComments';
 import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
 
 // This is now an SSR Server Component
 const PostPage = async ({
@@ -81,18 +82,23 @@ const PostPage = async ({
               footer={false}
             />
           )}
-          {authorName && (
+          <div className='flex items-center gap-1 flex-row'>
+            {authorName && (
+              <span className='text-xs'>
+                Posted by{' '}
+                <Link
+                  href={`/user/${authorName}`}
+                  className='text-primary/50 hover:text-primary transition-colors'
+                >
+                  {authorName}
+                </Link>
+              </span>
+            )}
+            {!authorName && <p className='text-xs'>Posted by {authorName}</p>}
             <span className='text-xs'>
-              Posted by{' '}
-              <Link
-                href={`/user/${authorName}`}
-                className='text-primary/50 hover:text-primary transition-colors'
-              >
-                {authorName}
-              </Link>
+              {formatDistanceToNow(post.createdAt, { addSuffix: true })}
             </span>
-          )}
-          {!authorName && <p className='text-xs'>Posted by {authorName}</p>}
+          </div>
           <PostCard post={post} />
           {commentsData && (
             <CommentsProvider

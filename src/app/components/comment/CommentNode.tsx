@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MinusCircleIcon, PlusCircleIcon } from 'lucide-react';
 import TiptapEditor from '../tiptap/TiptapEditor';
 import { jsonToHtml } from '../tiptap/utils';
-
+import { formatDistanceToNow } from 'date-fns';
 import {
   addReply,
   deleteComment,
@@ -171,13 +171,14 @@ const Header = memo(
             {comment?.author?.name?.[0] || 'U'}
           </AvatarFallback>
         </Avatar>
-        <div className='flex items-center gap-4'>
+        <div className='flex items-center gap-2'>
           <strong className='text-md font-semibold'>
-            {comment?.author?.name || 'Unknown User'}
+            {comment?.author?.name || 'Unknown User'} •
           </strong>
           <small className='text-sm'>
-            {new Date(comment.createdAt).toLocaleString()}{' '}
-            {comment.id}
+            {formatDistanceToNow(new Date(comment.createdAt), {
+              addSuffix: true,
+            })}
           </small>
         </div>
       </div>
@@ -230,7 +231,8 @@ const Footer = memo(
     const context = useCommentsContext();
 
     const userVote =
-      comment.votes?.find((vote) => vote.userId === context.session?.user.id) || null;
+      comment.votes?.find((vote) => vote.userId === context.session?.user.id) ||
+      null;
     const handleEditComment = useCallback(async () => {
       const editedComment: Comment = {
         id: comment.id,
@@ -243,7 +245,7 @@ const Footer = memo(
         isDeleted: comment.isDeleted,
         totalUpvotes: comment.totalUpvotes,
         totalDownvotes: comment.totalDownvotes,
-        voteScore: 0
+        voteScore: 0,
       };
 
       try {
@@ -259,7 +261,7 @@ const Footer = memo(
     }, [comment, editorContent]);
 
     const handleReplyComment = useCallback(async () => {
-      if (context.sessionStatus==='unauthenticated') {
+      if (context.sessionStatus === 'unauthenticated') {
         setIsLoginModalOpen(true);
         return;
       }
@@ -274,7 +276,7 @@ const Footer = memo(
         isDeleted: comment.isDeleted,
         totalUpvotes: comment.totalUpvotes,
         totalDownvotes: comment.totalDownvotes,
-        voteScore: 0
+        voteScore: 0,
       };
       try {
         const newReply = await addReply(reply, comment);
@@ -310,19 +312,19 @@ const Footer = memo(
     return (
       <div className={cn('ml-12 flex flex-col gap-4', className)}>
         <div className='flex items-center gap-2 rounded-md'>
-          <CommentVote
-            comment={comment}
-            vote={userVote}
-          />
+          <CommentVote comment={comment} vote={userVote} />
           {session?.user.id === comment.authorId && (
             <>
               <button
                 disabled={comment.isDeleted}
                 onClick={() => setIsEditing(!isEditing)}
-                className={cn('text-sm transition px-2 py-1 rounded-md cursor-pointer', {
-                  'text-blue-500/70 hover:bg-blue-100/70': !comment.isDeleted,
-                  'text-foreground/50 opacity-50': comment.isDeleted,
-                })}
+                className={cn(
+                  'text-sm transition px-2 py-1 rounded-md cursor-pointer',
+                  {
+                    'text-blue-500/70 hover:bg-blue-100/70': !comment.isDeleted,
+                    'text-foreground/50 opacity-50': comment.isDeleted,
+                  }
+                )}
               >
                 {isEditing ? 'Cancel Edit' : 'Edit'}
               </button>
@@ -330,10 +332,13 @@ const Footer = memo(
               <button
                 disabled={comment.isDeleted}
                 onClick={() => handleDeleteComment()}
-                className={cn('text-sm transition px-2 py-1 rounded-md cursor-pointer', {
-                  'text-red-500/70 hover:bg-red-100/70': !comment.isDeleted,
-                  'text-foreground/50 opacity-50': comment.isDeleted,
-                })}
+                className={cn(
+                  'text-sm transition px-2 py-1 rounded-md cursor-pointer',
+                  {
+                    'text-red-500/70 hover:bg-red-100/70': !comment.isDeleted,
+                    'text-foreground/50 opacity-50': comment.isDeleted,
+                  }
+                )}
               >
                 Delete
               </button>
@@ -347,10 +352,13 @@ const Footer = memo(
                 ? setIsReplying(!isReplying)
                 : setIsLoginModalOpen(true);
             }}
-            className={cn('text-sm transition px-2 py-1 rounded-md cursor-pointer', {
-              'text-green-500/70 hover:bg-green-100/70': !comment.isDeleted,
-              'text-foreground/50 opacity-50': comment.isDeleted,
-            })}
+            className={cn(
+              'text-sm transition px-2 py-1 rounded-md cursor-pointer',
+              {
+                'text-green-500/70 hover:bg-green-100/70': !comment.isDeleted,
+                'text-foreground/50 opacity-50': comment.isDeleted,
+              }
+            )}
           >
             {isReplying ? 'Cancel Reply' : 'Reply'}
           </button>
