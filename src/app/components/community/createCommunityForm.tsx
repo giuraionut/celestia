@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Community } from '@prisma/client';
 import { createCommunity } from '@/actions/communityActions';
@@ -28,6 +29,9 @@ const FormSchema = z.object({
   image: z
     .string()
     .url({ message: 'Please provide a valid URL for the image.' })
+    .optional()
+    .or(z.literal('')),
+  isPrivate: z.boolean().default(false),
 });
 
 export function CreateCommunityForm() {
@@ -37,6 +41,7 @@ export function CreateCommunityForm() {
       name: '',
       description: '',
       image: '',
+      isPrivate: false,
     },
     mode: 'onChange', // Trigger validation on change
   });
@@ -53,6 +58,8 @@ export function CreateCommunityForm() {
       isDeleted: false,
       totalMembers: 0,
       totalManagers: 0,
+      isPrivate: data.isPrivate,
+      totalPosts: 0
     };
 
     try {
@@ -75,15 +82,15 @@ export function CreateCommunityForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className='w-2/3 space-y-6'>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-2/3 space-y-6">
         <FormField
           control={form.control}
-          name='name'
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder='Enter community name' {...field} />
+                <Input placeholder="Enter community name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -91,12 +98,12 @@ export function CreateCommunityForm() {
         />
         <FormField
           control={form.control}
-          name='description'
+          name="description"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input placeholder='Enter community description' {...field} />
+                <Input placeholder="Enter community description" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -104,21 +111,33 @@ export function CreateCommunityForm() {
         />
         <FormField
           control={form.control}
-          name='image'
+          name="image"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Image URL (optional)</FormLabel>
               <FormControl>
-                <Input
-                  placeholder='Enter community image URL'
-                  {...field}
-                />
+                <Input placeholder="Enter community image URL" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type='submit' disabled={!isFormValid}>
+        <FormField
+          control={form.control}
+          name="isPrivate"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center space-x-2">
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked === true);
+                }}
+              />
+              <FormLabel className="cursor-pointer">Private</FormLabel>
+            </FormItem>
+          )}
+        />
+        <Button type="submit" disabled={!isFormValid}>
           Submit
         </Button>
       </form>

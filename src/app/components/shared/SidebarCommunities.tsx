@@ -89,13 +89,15 @@ export function SidebarCommunities({
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild isActive={false}>
                           <div className='flex items-center gap-2'>
-                            <Image
-                              src={community.image}
-                              alt={community.name}
-                              width={100}
-                              height={100}
-                              className='w-8 h-8 rounded-full object-contain'
-                            />
+                            {community.image && (
+                              <Image
+                                src={community.image}
+                                alt={community.name}
+                                width={100}
+                                height={100}
+                                className='w-8 h-8 rounded-full object-contain'
+                              />
+                            )}
                             <Link href={`/community/${community.name}`}>
                               {community.name}
                             </Link>

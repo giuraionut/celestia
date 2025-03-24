@@ -16,18 +16,28 @@ export const createCommunity = async (
     try {
         const userId = await requireSessionUserId("creating new community");
         if (!userId) return null;
-        community.authorId = userId;
-        // Let the database generate the ID.
-        delete (community as { id?: string }).id;
+        delete (community as { id?: string }).id; // Ensure no ID is provided
         return await db.community.create({
-            data: community,
-            include: { author: true, posts: true },
+            data: {
+                ...community,
+                authorId: userId, // Set the creator as the author
+                members: {
+                    connect: { id: userId }, // Add creator as a member
+                },
+                managers: {
+                    connect: { id: userId }, // Add creator as a manager
+                },
+                totalMembers: 1, // Set initial member count
+                totalManagers: 1, // Set initial manager count
+            },
+            include: { author: true, posts: true, members: true, managers: true },
         });
     } catch (error) {
         handleServerError(error, "creating new community.");
         return null;
     }
 };
+
 
 export const readCommunityById = async (
     id: string
@@ -247,3 +257,5 @@ export const fetchUserCommunities = async (userId: string) => {
         return [];
     }
 }
+
+

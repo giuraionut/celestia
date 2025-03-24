@@ -8,22 +8,30 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?   @unique
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  accounts      Account[]
-  sessions      Session[]
-  posts         Post[]
-  comments      Comment[]
-  votes         Vote[]
-  recentCommunities    RecentlyVisitedCommunity[]
-  isDeleted     Boolean   @default(false)
+  id                 String  @id @default(cuid())
+  name               String? @unique
+  email              String? @unique
+  emailVerified      DateTime?
+  image              String?
+  password           String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
+  accounts           Account[]
+  sessions           Session[]
+  posts              Post[]
+  comments           Comment[]
+  votes              Vote[]
+  recentCommunities  RecentlyVisitedCommunity[]
+
+  // Community Relations
   joinedCommunities  Community[] @relation(name: "CommunityMembers")
-  managedCommunities Community[] @relation(name: "CommunityManager")
+  managedCommunities Community[] @relation(name: "CommunityManagers")
+
+  // ✅ One user can be the author of multiple communities (1:N relation)
+  createdCommunities Community[]
+
+  isDeleted Boolean @default(false)
 }
 
 model Account {
@@ -41,8 +49,10 @@ model Account {
   session_state     String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  isDeleted         Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  isDeleted Boolean @default(false)
 }
 
 model Session {
@@ -54,85 +64,100 @@ model Session {
 }
 
 model Community {
-  id            String   @id @default(cuid())
-  name          String   @unique
-  description   String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  posts         Post[]
-  image         String
-  authorId      String
-  author        User     @relation(fields: [authorId], references: [id], name: "CommunityManager")
-  isDeleted     Boolean  @default(false)
-  members       User[]   @relation(name: "CommunityMembers")
-  totalMembers  Int      @default(0)
-  totalManagers Int      @default(0)
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  image       String
+  isDeleted   Boolean  @default(false)
+  isPrivate   Boolean  @default(false)
+
+  // Author (Original Creator) - FIXED RELATION
+  authorId String
+  author   User @relation(fields: [authorId], references: [id])
+
+  // Relations
+  posts    Post[]
+  members  User[] @relation(name: "CommunityMembers")
+  managers User[] @relation(name: "CommunityManagers")
+
+  // Aggregated Counts
+  totalPosts    Int @default(0)
+  totalMembers  Int @default(0)
+  totalManagers Int @default(0)
 
   @@index([name])
 }
-
 model RecentlyVisitedCommunity {
-  id           String    @id @default(cuid())
-  user         User      @relation(fields: [userId], references: [id])
-  userId       String
-  communityId  String
-  visitedAt    DateTime  @default(now())
+  id          String   @id @default(cuid())
+  userId      String
+  communityId String
+  visitedAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, communityId])
 }
 
-
 model Post {
-  id               String    @id @default(cuid())
+  id               String   @id @default(cuid())
   title            String
   content          String
   plainTextContent String
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   communityId      String
-  community        Community @relation(fields: [communityId], references: [id])
   authorId         String
-  author           User      @relation(fields: [authorId], references: [id])
-  comments         Comment[]
-  votes            Vote[]
   cover            String
-  isDeleted        Boolean   @default(false)
-  totalComments    Int       @default(0)
-  totalUpvotes     Int       @default(0)
-  totalDownvotes   Int       @default(0)
-  voteScore        Int       @default(0)
+  isDeleted        Boolean  @default(false)
+
+  community Community @relation(fields: [communityId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id])
+  comments  Comment[]
+  votes     Vote[]
+
+  totalComments  Int @default(0)
+  totalUpvotes   Int @default(0)
+  totalDownvotes Int @default(0)
+  voteScore      Int @default(0)
+
   @@index([title])
 }
 
 model Comment {
-  id             String    @id @default(cuid())
-  content        String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  postId         String
-  post           Post      @relation(fields: [postId], references: [id])
-  authorId       String
-  author         User      @relation(fields: [authorId], references: [id])
-  parentId       String? // Optional field to reference the parent comment (for replies)
-  parent         Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies        Comment[] @relation("CommentReplies") // To get all replies for a comment
-  votes          Vote[]
-  isDeleted      Boolean   @default(false)
-  totalUpvotes   Int       @default(0)
-  totalDownvotes Int       @default(0)
-  voteScore      Int       @default(0)
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  postId    String
+  authorId  String
+  parentId  String? // Optional field to reference the parent comment (for replies)
+
+  isDeleted      Boolean @default(false)
+  totalUpvotes   Int     @default(0)
+  totalDownvotes Int     @default(0)
+  voteScore      Int     @default(0)
+
+  post    Post      @relation(fields: [postId], references: [id])
+  author  User      @relation(fields: [authorId], references: [id])
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies") // To get all replies for a comment
+  votes   Vote[]
+
   @@index([content])
 }
 
 model Vote {
-  id        String   @id @default(cuid())
-  type      VoteType
+  id        String  @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   postId    String? // Optional because votes can be for posts or comments
-  post      Post?    @relation(fields: [postId], references: [id])
   commentId String? // Optional because votes can be for comments
-  comment   Comment? @relation(fields: [commentId], references: [id])
+
+  type    VoteType
+  user    User     @relation(fields: [userId], references: [id])
+  post    Post?    @relation(fields: [postId], references: [id])
+  comment Comment? @relation(fields: [commentId], references: [id])
 
   @@unique([userId, postId]) // Prevent multiple votes on a post
   @@unique([userId, commentId]) // Prevent multiple votes on a comment

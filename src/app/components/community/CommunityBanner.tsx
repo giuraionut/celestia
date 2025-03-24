@@ -27,13 +27,13 @@ const CommunityBanner = async ({
     >
       <div className='relative flex gap-4 rounded-t-lg p-4 w-full'>
         <div className='flex flex-col gap-4 items-center'>
-          <Image
+          {community.image && <Image
             src={community.image}
             className='w-20 h-20 rounded-full object-contain'
             alt={community.name}
             width={200}
             height={200}
-          />
+          />}
           <JoinCommunityButton
             communityId={community.id}
             isMemberOfCommunity={isMemberOfCommunity}

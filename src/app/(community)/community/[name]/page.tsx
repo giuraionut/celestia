@@ -4,7 +4,7 @@ import {
   logCommunityVisit,
 } from '@/actions/communityActions';
 import { readPosts } from '@/actions/postActions';
-import React, { ReactNode } from 'react';
+import React from 'react';
 import {
   HolyGrail,
   Left,
@@ -16,7 +16,13 @@ import PostList from '@/app/components/post/PostList';
 import CommunityBanner from '@/app/components/community/CommunityBanner';
 import { getSessionUserId } from '@/actions/actionUtils';
 import { SortProvider } from '@/app/components/post/PostSortingContext';
-import { Cake, User2Icon, UserIcon } from 'lucide-react';
+import {
+  Cake,
+  GlobeIcon,
+  LockKeyholeIcon,
+  User2Icon,
+  UserIcon,
+} from 'lucide-react';
 import { SortingControls } from '@/app/components/post/PostSortingControls';
 import { getSortParams } from '@/lib/utils';
 import { loadMorePosts } from '@/actions/loadMoreActions';
@@ -31,7 +37,7 @@ type CommunityPageProps = {
 const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
   try {
     const { name } = await params;
-    const { sort } = searchParams ?? {};
+    const { sort } = (await searchParams) ?? {};
     const initialSort = sort || 'newest';
     const decodedName = decodeURIComponent(name);
     const sortParams = getSortParams(initialSort);
@@ -42,6 +48,11 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
       return <div>Community not found.</div>;
     }
 
+    const isPrivate = community.isPrivate;
+
+    if (isPrivate) {
+      return <div>This community is private.</div>;
+    }
     // Get the session user ID (if any)
     const userId = await getSessionUserId();
 
@@ -65,7 +76,6 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
     const { posts: initialPosts = [], nextCursor: initialCursor } =
       postData || {};
 
-   
     const postListKey = `post-list-${initialSort}`;
 
     return (
@@ -100,28 +110,34 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
           <div className='sticky top-0 w-full p-4'>
             <div className='flex flex-col gap-4 p-4 border rounded-md'>
               <span className='inline-flex gap-2'>
-                <User2Icon />{' '}
-                <span>
-                  Total Managers{' '}
-                  <span className='font-bold'>{community.totalManagers}</span>
-                </span>
+                <User2Icon />
+                Total Managers
+                <span className='font-bold'>{community.totalManagers}</span>
               </span>
               <span className='inline-flex gap-2'>
-                <UserIcon />{' '}
-                <span>
-                  Total Members{' '}
-                  <span className='font-bold'>{community.totalMembers}</span>
-                </span>
+                <UserIcon />
+                Total Members
+                <span className='font-bold'>{community.totalMembers}</span>
               </span>
               <span className='inline-flex gap-2'>
-                <Cake />{' '}
-                <span>
-                  Created at{' '}
-                  <span className='font-bold'>
-                    {community.createdAt.toDateString()}
-                  </span>
+                <Cake />
+                Created at
+                <span className='font-bold'>
+                  {community.createdAt.toDateString()}
                 </span>
               </span>
+              {community.isPrivate && (
+                <span className='inline-flex gap-2'>
+                  <LockKeyholeIcon />
+                  <span className='font-bold'>Private</span>
+                </span>
+              )}
+              {!community.isPrivate && (
+                <span className='inline-flex gap-2'>
+                  <GlobeIcon />
+                  <span className='font-bold'>Public</span>
+                </span>
+              )}
             </div>
           </div>
         </Right>

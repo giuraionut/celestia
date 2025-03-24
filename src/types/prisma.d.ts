@@ -100,5 +100,6 @@ declare module '@prisma/client' {
      * The posts associated with the community.
      */
     posts: Post[] | ExtendedPost[];
+    managers?: User[];
   };
 }
