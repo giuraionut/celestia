@@ -1,7 +1,7 @@
 'use client';
 import { memo, useCallback, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ExtendedComment, Comment } from '@prisma/client';
 import { cn } from '@/lib/utils';
 import { CommentTree } from './CommentTree';
@@ -42,7 +42,13 @@ export const CommentNode = ({
   hasParent = false,
   updateCommentInTree,
 }: TreeNodeProps) => {
-  const { selectedPath, setSelectedPath } = useTreeContext();
+  const {
+    selectedPath,
+    setSelectedPath,
+    lastPathSegment,
+    shouldExpand,
+    replaceCuid,
+  } = useTreeContext();
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -51,37 +57,7 @@ export const CommentNode = ({
     [setSelectedPath, path]
   );
 
-  const currentPath = usePathname();
-  const pathSegments = currentPath.split('/').filter(Boolean);
-
-  // Define a Zod schema for CUID validation
-  const cuidSchema = z.string().cuid();
-
-  const segmentsLength = pathSegments.length;
-  const lastSegment =
-    segmentsLength > 0 ? pathSegments[segmentsLength - 1] : '';
-  const secondLastSegment =
-    segmentsLength > 1 ? pathSegments[segmentsLength - 2] : '';
-
-  const validCuid = cuidSchema.safeParse(lastSegment).success;
-
-  const isValidPath =
-    lastSegment === 'comments' ||
-    (segmentsLength >= 2 && secondLastSegment === 'comments' && validCuid);
-
-  if (!isValidPath) {
-    return <div>Invalid</div>;
-  }
-
-  let newPath = '';
-  if (pathSegments.length > 0) {
-    const newPathSegments = [...pathSegments];
-    newPathSegments[newPathSegments.length - 1] = comment.id;
-    newPath = '/' + newPathSegments.join('/');
-  } else {
-    newPath = '/' + comment.id;
-  }
-  const [isExpanded, setIsExpanded] = useState(validCuid);
+  const [isExpanded, setIsExpanded] = useState(shouldExpand);
 
   const toggleExpand = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -104,7 +80,7 @@ export const CommentNode = ({
           {isParent && (
             <div>
               {path.length >= 5 ? (
-                <Link href={newPath}>
+                <Link href={replaceCuid(comment.id)}>
                   <PlusCircleIcon
                     className={cn(
                       `w-4 h-4 absolute -left-[1.5rem] top-2 text-border bg-background hover:text-primary cursor-pointer`
@@ -135,8 +111,7 @@ export const CommentNode = ({
             className={cn(
               `border border-border rounded-md bg-background p-2 flex flex-col gap-2`,
               {
-                'bg-secondary':
-                  comment.id === pathSegments[pathSegments.length - 1],
+                'bg-secondary': comment.id === lastPathSegment,
               }
             )}
           >
