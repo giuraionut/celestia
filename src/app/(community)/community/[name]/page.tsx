@@ -89,21 +89,24 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
               userId={userId}
               className='mb-4'
             />
-            <SortProvider initialSort={initialSort}>
-              <div className='max-w-[700px] w-full items-center flex p-4'>
-                <SortingControls title='Posts' />
-              </div>
-              <LoadMore
-                loadMoreAction={loadMorePosts}
-                initialCursor={initialCursor}
-              >
-                <PostList
-                  key={postListKey}
-                  posts={initialPosts}
-                  userId={userId}
-                />
-              </LoadMore>
-            </SortProvider>
+            {initialPosts.length > 0 && (
+              <SortProvider initialSort={initialSort}>
+                <div className='max-w-[700px] w-full items-center flex p-4'>
+                  <SortingControls title='Posts' />
+                </div>
+                <LoadMore
+                  loadMoreAction={loadMorePosts}
+                  initialCursor={initialCursor}
+                >
+                  <PostList
+                    key={postListKey}
+                    posts={initialPosts}
+                    userId={userId}
+                  />
+                </LoadMore>
+              </SortProvider>
+            )}
+            {initialPosts.length === 0 && <div>No posts found.</div>}
           </div>
         </Middle>
         <Right>

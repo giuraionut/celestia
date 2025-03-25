@@ -94,6 +94,59 @@ export const readComment = async (commentId: string): Promise<ExtendedComment | 
 };
 
 
+export const readCommentWithAncestors = async (
+    commentId: string
+): Promise<ExtendedComment | null> => {
+    try {
+        // Initialize the chain with the target comment.
+        const chain: ExtendedComment[] = [];
+        let currentComment = await db.comment.findUnique({
+            where: { id: commentId }, include: {
+                author: true,
+                votes: true,
+            }
+        });
+        if (!currentComment) {
+            return null;
+        }
+        chain.push(currentComment);
+
+        // Traverse up to the top-most ancestor.
+        let currentParentId = currentComment.parentId;
+        while (currentParentId) {
+            const parentComment = await db.comment.findUnique({
+                where: { id: currentParentId },
+                include: {
+                    author: true,
+                    votes: true,
+                }
+            });
+            if (!parentComment) {
+                break;
+            }
+            chain.push(parentComment);
+            currentParentId = parentComment.parentId;
+        }
+
+        // Now, chain[0] is the target comment and chain[last] is the top-most ancestor.
+        // We need to set up the replies property for each parent to only include its direct child in this chain.
+        // We iterate from the bottom of the chain (target comment) upward.
+        for (let i = 0; i < chain.length - 1; i++) {
+            // Since chain is built from target up to ancestor,
+            // chain[i + 1] is the parent of chain[i].
+            // Set the parent's replies to only contain the current child.
+            chain[i + 1].replies = [chain[i]];
+        }
+
+        // Return the top-most ancestor.
+        return chain[chain.length - 1];
+    } catch (error) {
+        handleServerError(error, 'reading comment last ancestor');
+        return null;
+    }
+};
+
+
 export const readCommentsByPost = async (
     postId: string
 ): Promise<ExtendedComment[] | null> => {
@@ -170,74 +223,74 @@ export interface ReadCommentsByUserId {
     limit?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
-  }
-  
-  export const readCommentsByUserId = async ({
+}
+
+export const readCommentsByUserId = async ({
     userId,
     cursor,
     limit = 20,
     sortBy = 'createdAt',
     sortOrder = 'asc'
-  }: ReadCommentsByUserId): Promise<{ comments: ExtendedComment[]; nextCursor?: string } | null> => {
+}: ReadCommentsByUserId): Promise<{ comments: ExtendedComment[]; nextCursor?: string } | null> => {
     'use cache';
     cacheTag(`comments-${userId}`);
-  
+
     try {
-      let queryOptions: any = {
-        where: { authorId: userId },
-        include: {
-          author: true,
-          votes: true,
-          post: {
+        let queryOptions: any = {
+            where: { authorId: userId },
             include: {
-              community: true,
+                author: true,
+                votes: true,
+                post: {
+                    include: {
+                        community: true,
+                    },
+                },
             },
-          },
-        },
-        take: limit + 1,
-      };
-      
-      // Handle cursor pagination properly
-      if (cursor) {
-        queryOptions.cursor = { id: cursor };
-        queryOptions.skip = 1; // Skip the cursor item
-      }
-  
-      // Set up ordering based on the sort type
-      if (['createdAt', 'updatedAt'].includes(sortBy)) {
-        // Simple field sorting
-        queryOptions.orderBy = { [sortBy]: sortOrder };
-      }
-      else if (sortBy === 'voteCount') {
-        // Order by the stored voteScore field
-        queryOptions.orderBy = { voteScore: sortOrder };
-      }
-      else {
-        // Default fallback
-        queryOptions.orderBy = { createdAt: 'desc' };
-      }
-  
-      const comments = await db.comment.findMany(queryOptions);
-  
-      comments.map(comment => cacheTag(`comment-${comment.id}`));
-      
-      // Only set nextCursor if we actually have more items than the limit
-      const hasMore = comments.length > limit;
-      const nextCursor = hasMore ? comments[limit - 1].id : undefined;
-      
-      // Return comments up to the limit (or all if less than limit)
-      return { 
-        comments: comments.slice(0, limit), 
-        nextCursor: hasMore ? nextCursor : undefined 
-      };
+            take: limit + 1,
+        };
+
+        // Handle cursor pagination properly
+        if (cursor) {
+            queryOptions.cursor = { id: cursor };
+            queryOptions.skip = 1; // Skip the cursor item
+        }
+
+        // Set up ordering based on the sort type
+        if (['createdAt', 'updatedAt'].includes(sortBy)) {
+            // Simple field sorting
+            queryOptions.orderBy = { [sortBy]: sortOrder };
+        }
+        else if (sortBy === 'voteCount') {
+            // Order by the stored voteScore field
+            queryOptions.orderBy = { voteScore: sortOrder };
+        }
+        else {
+            // Default fallback
+            queryOptions.orderBy = { createdAt: 'desc' };
+        }
+
+        const comments = await db.comment.findMany(queryOptions);
+
+        comments.map(comment => cacheTag(`comment-${comment.id}`));
+
+        // Only set nextCursor if we actually have more items than the limit
+        const hasMore = comments.length > limit;
+        const nextCursor = hasMore ? comments[limit - 1].id : undefined;
+
+        // Return comments up to the limit (or all if less than limit)
+        return {
+            comments: comments.slice(0, limit),
+            nextCursor: hasMore ? nextCursor : undefined
+        };
     } catch (error) {
-      console.error('Prisma error:', error);
-      handleServerError(error, 'reading comments by user.');
-      return null;
+        console.error('Prisma error:', error);
+        handleServerError(error, 'reading comments by user.');
+        return null;
     }
-  };
-  
-  
+};
+
+
 
 export const fetchRepliesRecursively = async (parentId: string): Promise<ExtendedComment[]> => {
     'use cache'
@@ -320,28 +373,28 @@ export async function updateCommentVoteCounts(
     commentId: string,
     type: VoteType,
     action: 'increment' | 'decrement'
-  ): Promise<void> {
+): Promise<void> {
     const updateData =
-      type === VoteType.UPVOTE
-        ? { totalUpvotes: { [action]: 1 } }
-        : { totalDownvotes: { [action]: 1 } };
-  
+        type === VoteType.UPVOTE
+            ? { totalUpvotes: { [action]: 1 } }
+            : { totalDownvotes: { [action]: 1 } };
+
     await db.comment.update({
-      where: { id: commentId },
-      data: updateData,
+        where: { id: commentId },
+        data: updateData,
     });
-  }
-  
-  // Recalculates and updates the voteScore (totalUpvotes - totalDownvotes) for a comment.
-  export async function updateCommentVoteScore(commentId: string): Promise<void> {
+}
+
+// Recalculates and updates the voteScore (totalUpvotes - totalDownvotes) for a comment.
+export async function updateCommentVoteScore(commentId: string): Promise<void> {
     const comment = await db.comment.findUnique({
-      where: { id: commentId },
-      select: { totalUpvotes: true, totalDownvotes: true },
+        where: { id: commentId },
+        select: { totalUpvotes: true, totalDownvotes: true },
     });
     if (!comment) return;
     const newScore = comment.totalUpvotes - comment.totalDownvotes;
     await db.comment.update({
-      where: { id: commentId },
-      data: { voteScore: newScore },
+        where: { id: commentId },
+        data: { voteScore: newScore },
     });
-  }
+}

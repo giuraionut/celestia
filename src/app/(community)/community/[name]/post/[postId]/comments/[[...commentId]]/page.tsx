@@ -1,5 +1,5 @@
 import React from 'react';
-import { fetchCommentsByPost, readComment } from '@/actions/commentActions';
+import { fetchCommentsByPost, readCommentWithAncestors, } from '@/actions/commentActions';
 import {
   isUserMemberOfCommunity,
   readCommunityById,
@@ -43,12 +43,8 @@ const PostPage = async ({
     readCommunityById(post.communityId),
   ]);
 
-  let singleComment;
-  if (commentId) {
-    const comment = await readComment(commentId[0]);
-    singleComment = comment;
-    console.log(comment);
-  }
+  const singleComment = commentId ? await readCommentWithAncestors(commentId[0]) : null;
+
   const postVotes = post.votes || [];
   const userVote = postVotes.find((vote) => vote.userId === userId) || null;
   const totalComments = post.totalComments;
@@ -104,7 +100,7 @@ const PostPage = async ({
             <CommentsProvider
               initialCount={totalComments}
               initialComments={
-                singleComment ? [singleComment] : commentsData.comments
+               singleComment ? [singleComment] : commentsData.comments
               }
             >
               <footer className='flex items-center justify-between'>

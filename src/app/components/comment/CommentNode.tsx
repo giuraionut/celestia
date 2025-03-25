@@ -23,7 +23,7 @@ import { useSession } from 'next-auth/react';
 import { useCommentsContext } from './CommentsContext';
 import { LoginDialog } from '../shared/LoginDialog';
 import CommentVote from './CommentVote';
-
+import { z } from 'zod';
 interface TreeNodeProps {
   comment: ExtendedComment;
   path: number[];
@@ -51,17 +51,38 @@ export const CommentNode = ({
     [setSelectedPath, path]
   );
 
-  const [isExpanded, setIsExpanded] = useState(false);
-  const currentPath = usePathname(); // e.g. "/community/name/post/id/comments/oldCommentId"
-  // Split the current path into segments and replace the last segment with the current comment id.
-  const segments = currentPath.split('/').filter(Boolean);
+  const currentPath = usePathname();
+  const pathSegments = currentPath.split('/').filter(Boolean);
+
+  // Define a Zod schema for CUID validation
+  const cuidSchema = z.string().cuid();
+
+  const segmentsLength = pathSegments.length;
+  const lastSegment =
+    segmentsLength > 0 ? pathSegments[segmentsLength - 1] : '';
+  const secondLastSegment =
+    segmentsLength > 1 ? pathSegments[segmentsLength - 2] : '';
+
+  const validCuid = cuidSchema.safeParse(lastSegment).success;
+
+  const isValidPath =
+    lastSegment === 'comments' ||
+    (segmentsLength >= 2 && secondLastSegment === 'comments' && validCuid);
+
+  if (!isValidPath) {
+    return <div>Invalid</div>;
+  }
+
   let newPath = '';
-  if (segments.length > 0) {
-    segments[segments.length - 1] = comment.id;
-    newPath = '/' + segments.join('/');
+  if (pathSegments.length > 0) {
+    const newPathSegments = [...pathSegments];
+    newPathSegments[newPathSegments.length - 1] = comment.id;
+    newPath = '/' + newPathSegments.join('/');
   } else {
     newPath = '/' + comment.id;
   }
+  const [isExpanded, setIsExpanded] = useState(validCuid);
+
   const toggleExpand = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setIsExpanded((prev) => !prev);
@@ -112,7 +133,11 @@ export const CommentNode = ({
           )}
           <div
             className={cn(
-              `border border-border rounded-md p-2 bg-background flex flex-col gap-2`
+              `border border-border rounded-md bg-background p-2 flex flex-col gap-2`,
+              {
+                'bg-secondary':
+                  comment.id === pathSegments[pathSegments.length - 1],
+              }
             )}
           >
             <Header comment={comment} />
