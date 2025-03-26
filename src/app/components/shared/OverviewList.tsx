@@ -23,7 +23,7 @@ export default function OverviewList({ items, userId }: OverviewListProps) {
           return (
             <div
               key={`post-${item.id}-${index}`}
-              className="h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-md p-4 border"
+              className="h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-sm p-4 border"
             >
               <CommunityHeader
                 name={item.community?.name}
@@ -48,7 +48,7 @@ export default function OverviewList({ items, userId }: OverviewListProps) {
           return (
             <Link
               key={`comment-${item.id}-${index}`}
-              className="h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 rounded-md hover:bg-accent"
+              className="h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 rounded-sm hover:bg-accent"
               href={`/community/${item.post?.community?.name}/post/${item.post?.id}/comments/${item.id}`}
             >
               <CommentCard comment={item} />

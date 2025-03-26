@@ -10,7 +10,7 @@ export default function SearchPageLoading() {
         {[...Array(5)].map((_, i) => (
           <div
             key={i}
-            className='flex justify-between items-center h-30 p-4 border rounded-md shadow-sm'
+            className='flex justify-between items-center h-30 p-4 border rounded-sm shadow-sm'
           >
             <div className='flex-1 flex flex-col gap-2 justify-between'>
               {/* Community image and name skeleton */}
@@ -24,13 +24,13 @@ export default function SearchPageLoading() {
               <Skeleton className='h-4 w-1/2' />
             </div>
             {/* Cover image skeleton */}
-            <Skeleton className='w-32 h-full rounded-md' />
+            <Skeleton className='w-32 h-full rounded-sm' />
           </div>
         ))}
       </div>
       {/* Load More button skeleton */}
       <Right>
-        <Skeleton className='h-48 w-full mx-auto rounded-md m-4 top-14' />
+        <Skeleton className='h-48 w-full mx-auto rounded-sm m-4 top-14' />
       </Right>
     </HolyGrail>
   );

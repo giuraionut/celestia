@@ -28,7 +28,7 @@ export default function SearchPageLoading() {
             <Skeleton className='h-8 w-full' />
             {/* Stats skeleton */}
             <Skeleton className='h-2 w-64' />
-            <Skeleton className='h-96 w-full mx-auto rounded-md' />
+            <Skeleton className='h-96 w-full mx-auto rounded-sm' />
             <div className='flex flex-row justify-between'>
               <Skeleton className='h-2 w-32' />
               <Skeleton className='h-2 w-16' />
@@ -40,7 +40,7 @@ export default function SearchPageLoading() {
 
       {/* Right Sidebar (hidden on mobile) */}
       <Right>
-        <Skeleton className='h-48 w-full mx-auto rounded-md m-4 top-14' />
+        <Skeleton className='h-48 w-full mx-auto rounded-sm m-4 top-14' />
       </Right>
     </HolyGrail>
   );

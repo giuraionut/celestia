@@ -20,7 +20,7 @@ const PostCard = ({ post, className }: PostCardProps) => {
 
       {/* Image Section */}
       {post.cover && (
-        <div className='relative w-full aspect-square overflow-hidden rounded-lg ring'>
+        <div className='relative w-full aspect-square overflow-hidden rounded-sm ring'>
           {/* Blurred Background Image */}
           <Image
             src={imageSrc}

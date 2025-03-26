@@ -124,7 +124,7 @@ const PostPage = async ({
             <CommunityCard
               isMemberOfCommunity={isMemberOfCommunity}
               community={community}
-              className='border rounded-lg p-4 w-full h-full'
+              className='border rounded-sm p-4 w-full h-full'
             />
           )}
         </div>

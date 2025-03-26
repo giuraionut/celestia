@@ -111,7 +111,7 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
         </Middle>
         <Right>
           <div className='sticky top-0 w-full p-4'>
-            <div className='flex flex-col gap-4 p-4 border rounded-md'>
+            <div className='flex flex-col gap-4 p-4 border rounded-sm'>
               <span className='inline-flex gap-2'>
                 <User2Icon />
                 Total Managers

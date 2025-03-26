@@ -16,7 +16,7 @@ export default function CommentList({ comments, userId }: PostListProps) {
         return (
           <div
             key={comment.id}
-            className='h-auto max-w-[700px] mx-auto flex flex-col gap-2 mb-4 rounded-md p-4'
+            className='h-auto max-w-[700px] mx-auto flex flex-col gap-2 mb-4 rounded-sm p-4'
           >
             <CommentCard comment={comment} />
           </div>

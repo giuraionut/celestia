@@ -28,9 +28,9 @@ export default function SearchPageLoading() {
             <Skeleton className='h-2 w-64' />
           </div>
           <div className='text-center'>
-            <Skeleton className='h-96 w-full mx-auto rounded-md' />
+            <Skeleton className='h-96 w-full mx-auto rounded-sm' />
           </div>
-          <div className='border rounded-md h-32 gap-4 p-4 flex justify-between flex-col'>
+          <div className='border rounded-sm h-32 gap-4 p-4 flex justify-between flex-col'>
             <Skeleton className='h-full w-full' />
             <div className='flex gap-4 items-center h-8'>
               <Skeleton className='h-8 w-5/6' />
@@ -41,7 +41,7 @@ export default function SearchPageLoading() {
             {[...Array(2)].map((_, i) => (
               <div
                 key={i}
-                className='flex justify-between items-center h-30 p-4 border rounded-md shadow-sm'
+                className='flex justify-between items-center h-30 p-4 border rounded-sm shadow-sm'
               >
                 <div className='flex-1 flex flex-col gap-2 justify-between'>
                   {/* Community image and name skeleton */}
@@ -62,7 +62,7 @@ export default function SearchPageLoading() {
 
       {/* Right Sidebar (hidden on mobile) */}
       <Right>
-        <Skeleton className='h-48 w-full mx-auto rounded-md m-4 top-14' />
+        <Skeleton className='h-48 w-full mx-auto rounded-sm m-4 top-14' />
       </Right>
     </HolyGrail>
   );

@@ -23,9 +23,9 @@ const CommunityBanner = async ({
 
   return (
     <div
-      className={cn('border rounded-lg flex flex-col gap-4 h-fit', className)}
+      className={cn('border rounded-sm flex flex-col gap-4 h-fit', className)}
     >
-      <div className='relative flex gap-4 rounded-t-lg p-4 w-full'>
+      <div className='relative flex gap-4 rounded-t-sm p-4 w-full'>
         <div className='flex flex-col gap-4 items-center'>
           {community.image && <Image
             src={community.image}
@@ -54,7 +54,7 @@ const CommunityBanner = async ({
             </div>
           </div>
         </div>
-        <div className='absolute inset-0 bg-accent -z-10 rounded-t-md'></div>
+        <div className='absolute inset-0 bg-accent -z-10 rounded-t-sm'></div>
       </div>
       <div className='pb-4 px-4'>
         <div>{community.description}</div>

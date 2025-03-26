@@ -27,7 +27,7 @@ export default function PostList({ posts, userId }: PostListProps) {
         return (
           <div
             key={post.id}
-            className='h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-md p-4'
+            className='h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-sm p-4'
           >
             <CommunityHeader
               name={post.community!.name}
