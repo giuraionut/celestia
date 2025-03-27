@@ -105,7 +105,7 @@ export const findCommunityByName = async (
     try {
         const community = await db.community.findFirstOrThrow({
             where: { name: { contains: name } },
-            include: { author: true, posts: true },
+            include: { author: true, posts: true, managers:true },
         });
         cacheTag(`community-${community.id}`);
         return community;

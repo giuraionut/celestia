@@ -37,7 +37,7 @@ const UserProfileDropdown = async ({
   const user = session?.user;
   if (!user)
     return (
-      <Button variant={'default'} asChild>
+      <Button variant={'default'} asChild className='h-6'>
         <Link href={'/api/auth/signin'} className='mr-2'>
           Login
         </Link>

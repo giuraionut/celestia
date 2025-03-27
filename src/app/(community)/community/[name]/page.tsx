@@ -26,6 +26,9 @@ import {
 import { SortingControls } from '@/app/components/post/PostSortingControls';
 import { getSortParams } from '@/lib/utils';
 import { loadMorePosts } from '@/actions/loadMoreActions';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
 
 type CommunityPageProps = {
   params: { name: string };
@@ -113,16 +116,6 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
           <div className='sticky top-0 w-full p-4'>
             <div className='flex flex-col gap-4 p-4 border rounded-sm'>
               <span className='inline-flex gap-2'>
-                <User2Icon />
-                Total Managers
-                <span className='font-bold'>{community.totalManagers}</span>
-              </span>
-              <span className='inline-flex gap-2'>
-                <UserIcon />
-                Total Members
-                <span className='font-bold'>{community.totalMembers}</span>
-              </span>
-              <span className='inline-flex gap-2'>
                 <Cake />
                 Created at
                 <span className='font-bold'>
@@ -141,6 +134,37 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
                   <span className='font-bold'>Public</span>
                 </span>
               )}
+              <span className='inline-flex gap-2'>
+                <UserIcon />
+                Total Members
+                <span className='font-bold'>{community.totalMembers}</span>
+              </span>
+              <Separator />
+              <span className='inline-flex gap-2'>
+                <User2Icon />
+                Managers
+              </span>
+              <span className='ml-8 flex flex-col gap-2'>
+                {community.managers?.map((manager) => (
+                  <Link
+                    href={`/user/${manager.name}`}
+                    key={manager.id}
+                    className='inline-flex gap-2 items-center transition-all text-primary/50 hover:text-primary'
+                  >
+                    <Avatar>
+                      <AvatarImage
+                        className='rounded-full '
+                        src={manager.image || ''}
+                        alt={manager.name || ''}
+                      />
+                      <AvatarFallback>
+                        {(manager.name ?? '?')[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{manager.name}</span>
+                  </Link>
+                ))}
+              </span>
             </div>
           </div>
         </Right>
