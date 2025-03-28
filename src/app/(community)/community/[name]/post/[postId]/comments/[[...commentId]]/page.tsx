@@ -69,7 +69,7 @@ const PostPage = async ({
     <HolyGrail>
       <Left />
       <Middle>
-        <div className='max-w-[600px] flex flex-col gap-4 w-full'>
+        <div className='max-w-[600px] flex flex-col gap-4 w-full p-4'>
           {community && (
             <CommunityCard
               isMemberOfCommunity={isMemberOfCommunity}
@@ -95,7 +95,7 @@ const PostPage = async ({
               {formatDistanceToNow(post.createdAt, { addSuffix: true })}
             </span>
           </div>
-          <PostCard post={post} />
+          <PostCard post={post}/>
           {commentsData && (
             <CommentsProvider
               initialCount={totalComments}

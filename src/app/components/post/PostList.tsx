@@ -10,9 +10,10 @@ import { formatDistanceToNow } from 'date-fns';
 interface PostListProps {
   posts: ExtendedPost[];
   userId: string | null;
+  compact?: boolean;
 }
 
-export default function PostList({ posts, userId }: PostListProps) {
+export default function PostList({ posts, userId, compact }: PostListProps) {
   const validPosts = posts.filter((post) => post.community);
 
   return (
@@ -56,7 +57,7 @@ export default function PostList({ posts, userId }: PostListProps) {
               }/comments`}
               className='block'
             >
-              <PostCard post={post} />
+              <PostCard post={post} compact={compact} />
             </Link>
 
             <div className='flex flex-row justify-between items-center'>

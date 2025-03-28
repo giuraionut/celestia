@@ -322,9 +322,11 @@ export const ftsPosts = async (
 ): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
     'use cache'
     cacheTag(`fts-posts-${query}`);
+    cacheTag(`fts-posts`);
     try {
         await new Promise((resolve) => setTimeout(resolve, 2000));
         const results = await searchPosts(query, limit, highlightTags, cursor);
+        results.posts.map(post => cacheTag(`post-${post.id}`));
         return results;
     } catch (error) {
         handleServerError(error, 'searching posts.');

@@ -47,7 +47,12 @@ export async function searchPosts(
     const results = await prisma.$queryRawUnsafe<any[]>(`
       SELECT 
         Post.*,
-        highlight(PostFTS, 2, '${highlightTags ? highlightTags[0] : ""}', '${highlightTags ? highlightTags[1] : ""}') as highlight,
+        highlight(
+          PostFTS, 
+          2, 
+          '${highlightTags ? highlightTags[0] : ""}', 
+          '${highlightTags ? highlightTags[1] : ""}'
+        ) as highlight,
         CAST(bm25(PostFTS) * 100 AS INTEGER) as rank,
         json_object(
           'id', Community.id,
@@ -61,18 +66,37 @@ export async function searchPosts(
           'totalMembers', Community.totalMembers,
           'totalManagers', Community.totalManagers
         ) as community,
-        "User".id as authorId,
-        "User".name as authorName
+        json_object(
+          'id', User.id,
+          'name', User.name,
+          'image', User.image,
+          'isDeleted', User.isDeleted,
+          'createdAt', User.createdAt,
+          'updatedAt', User.updatedAt,
+          'email', User.email
+        ) as author,
+        (
+          SELECT json_group_array(
+            json_object(
+              'id', Vote.id,
+              'userId', Vote.userId,
+              'type', Vote.type
+            )
+          )
+          FROM Vote 
+          WHERE Vote.postId = Post.id
+        ) as votes
       FROM Post
       JOIN PostFTS ON Post.id = PostFTS.id
       JOIN Community ON Post.communityId = Community.id
-      JOIN "User" ON Post.authorId = "User".id
+      JOIN User ON Post.authorId = User.id
       WHERE PostFTS MATCH ? 
         AND Post.isDeleted = 0
         ${cursorCondition}
       ORDER BY CAST(bm25(PostFTS) * 100 AS INTEGER) ASC, Post.id ASC
       LIMIT ?
     `, ...params);
+    
 
     // Determine nextCursor if we got one extra row.
     let nextCursor: string | undefined = undefined;
@@ -84,6 +108,8 @@ export async function searchPosts(
     const posts = results.map((r) => {
       try {
         r.community = JSON.parse(r.community);
+        r.votes = JSON.parse(r.votes);
+        r.author = JSON.parse(r.author);
       } catch (error) {
         // if already parsed or parsing fails, leave it as-is.
       }

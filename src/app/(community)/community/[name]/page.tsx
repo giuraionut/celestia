@@ -109,7 +109,7 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
                 </LoadMore>
               </SortProvider>
             )}
-            {initialPosts.length === 0 && <div>No posts found.</div>}
+            {initialPosts.length === 0 && <div className='text-center'>No posts found.</div>}
           </div>
         </Middle>
         <Right>
@@ -173,7 +173,7 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
   } catch (error) {
     console.error('Error loading community page:', error);
     return (
-      <div>
+      <div className='text-center'>
         There was an error loading the community. Please try again later.
       </div>
     );

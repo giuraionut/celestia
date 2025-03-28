@@ -1,7 +1,6 @@
 'use client';
 import { memo, useCallback, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
 import { ExtendedComment, Comment } from '@prisma/client';
 import { cn } from '@/lib/utils';
 import { CommentTree } from './CommentTree';
@@ -23,7 +22,6 @@ import { useSession } from 'next-auth/react';
 import { useCommentsContext } from './CommentsContext';
 import { LoginDialog } from '../shared/LoginDialog';
 import CommentVote from './CommentVote';
-import { z } from 'zod';
 interface TreeNodeProps {
   comment: ExtendedComment;
   path: number[];

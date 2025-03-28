@@ -54,7 +54,8 @@ export default async function Home({ searchParams }: HomeProps) {
       </Middle>
       <Right>
         <div className='w-full h-32 rounded border m-4 sticky top-14 p-4 bg-red-300'>
-          Something
+        Something{' '}
+        {userId}
         </div>
       </Right>
     </HolyGrail>
