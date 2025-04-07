@@ -1,7 +1,7 @@
 'use server'
 import db from "@/lib/db";
 import { getSessionUserId, handleServerError, requireSessionUserId } from "./actionUtils";
-import { Comment, ExtendedComment, VoteType } from "@prisma/client"
+import { Comment, ExtendedComment, SavedComment, VoteType } from "@prisma/client"
 import { getTotalCommentDownvotes, getTotalCommentUpvotes } from "./voteUtils";
 import { revalidateTag } from "next/cache";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
@@ -92,6 +92,23 @@ export const readComment = async (commentId: string): Promise<ExtendedComment | 
         return null;
     }
 };
+
+export const saveComment = async (commentId: string): Promise<SavedComment | null> => {
+    try {
+        const userId = await requireSessionUserId("saving comment.");
+        if (!userId) return null;
+        const savedComment = await db.savedComment.create({
+            data: {
+                user: { connect: { id: userId } },
+                comment: { connect: { id: commentId } },
+            },
+        })
+        return savedComment;
+    } catch (error) {
+        handleServerError(error, 'saving comment.');
+        return null;
+    }
+}
 
 
 export const readCommentWithAncestors = async (

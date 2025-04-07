@@ -1,8 +1,8 @@
 import { fetchUserProfileByName } from '@/actions/authActions';
-import { readCommentsByUserId } from '@/actions/commentActions';
-import { loadMoreUserComments } from '@/actions/loadMoreActions';
-import CommentList from '@/app/components/comment/CommentList';
+import { loadMoreUserPosts } from '@/actions/loadMoreActions';
+import { readSavedPostsByUserId } from '@/actions/postActions';
 import LoadMore from '@/app/components/shared/LoadMore';
+import PostList from '@/app/components/post/PostList';
 import { SortProvider } from '@/app/components/post/PostSortingContext';
 import { SortingControls } from '@/app/components/post/PostSortingControls';
 import {
@@ -16,11 +16,12 @@ import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
 
-const UserPageComments = async ({
+const UserSavedPosts = async ({
   params,
   searchParams,
 }: {
-  params: { name: string };
+  params: { name: string; page: string };
+
   searchParams?: {
     sort?: string;
     activeTab?: string;
@@ -30,23 +31,23 @@ const UserPageComments = async ({
   const { sort } = (await searchParams) || {};
   const decodedName = decodeURIComponent(name);
 
-  const initialCommentsSort = sort || 'newest';
+  const initialPostsSort = sort || 'newest';
 
-  const commentsSortParams = getSortParams(initialCommentsSort);
+  const postsSortParams = getSortParams(initialPostsSort);
 
   const user = await fetchUserProfileByName({ name: decodedName });
   if (!user || user.isDeleted) return <div>User not found</div>;
 
-  const commentData = await readCommentsByUserId({
+  const postData = await readSavedPostsByUserId({
     userId: user.id,
     limit: 5,
-    sortBy: commentsSortParams.sortBy,
-    sortOrder: commentsSortParams.sortOrder,
+    sortBy: postsSortParams.sortBy,
+    sortOrder: postsSortParams.sortOrder,
   });
-  const { comments: initialComments = [], nextCursor: initialCommentsCursor } =
-    commentData || {};
+  const { posts: initialPosts = [], nextCursor: initialPostCursor } =
+    postData || {};
 
-  const commentListKey = `comment-list-${initialCommentsSort}`;
+  const postListKey = `post-list-${initialPostsSort}`;
 
   return (
     <HolyGrail>
@@ -66,30 +67,26 @@ const UserPageComments = async ({
         <UserProfileContentButtons
           userName={user.name || ''}
           className='w-full p-4 flex items-center gap-4'
-          page='comments'
+          page='saved'
         />
-        {commentData && commentData.comments.length > 0 ? (
-          <SortProvider
-            initialSort={initialCommentsSort}
-            contentType='comments'
-          >
+        {postData && postData?.posts.length > 0 ? (
+          <SortProvider initialSort={initialPostsSort} contentType='posts'>
             <div className='max-w-[700px] w-full items-center flex px-4'>
-              <SortingControls title='Comments' />
+              <SortingControls title='Posts' />
             </div>
             <LoadMore
-              loadMoreAction={loadMoreUserComments}
-              initialCursor={initialCommentsCursor}
-              userId={user.id} // Pass the user ID here
+              loadMoreAction={loadMoreUserPosts}
+              initialCursor={initialPostCursor}
+              userId={user.id} // Pass userId here
             >
-              <CommentList
-                key={commentListKey}
-                comments={initialComments}
-                userId={user.id}
+              <PostList
+                key={postListKey}
+                posts={initialPosts}
               />
             </LoadMore>
           </SortProvider>
         ) : (
-          <div>No comments found.</div>
+          <div>No posts found.</div>
         )}
       </Middle>
       <Right></Right>
@@ -97,4 +94,4 @@ const UserPageComments = async ({
   );
 };
 
-export default UserPageComments;
+export default UserSavedPosts;

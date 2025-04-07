@@ -7,33 +7,43 @@ datasource db {
   url      = "file:./dev.db"
 }
 
+// -----------------------------------------------------------------------------
+// User model represents application users and their relations.
+// Soft deletion is implemented via the isDeleted flag.
+// -----------------------------------------------------------------------------
 model User {
-  id                 String  @id @default(cuid())
-  name               String? @unique
-  email              String? @unique
-  emailVerified      DateTime?
-  image              String?
-  password           String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id            String    @id @default(cuid())
+  name          String?   @unique
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  accounts           Account[]
-  sessions           Session[]
-  posts              Post[]
-  comments           Comment[]
-  votes              Vote[]
-  recentCommunities  RecentlyVisitedCommunity[]
+  accounts          Account[]
+  sessions          Session[]
+  posts             Post[]
+  comments          Comment[]
+  votes             Vote[]
+  recentCommunities RecentlyVisitedCommunity[]
 
-  // Community Relations
   joinedCommunities  Community[] @relation(name: "CommunityMembers")
   managedCommunities Community[] @relation(name: "CommunityManagers")
-
-  // ✅ One user can be the author of multiple communities (1:N relation)
   createdCommunities Community[]
 
+  hiddenPosts   HiddenPost[]
+  savedPosts    SavedPost[]
+  savedComments SavedComment[]
+
+  // Soft delete flag: true indicates the user is inactive/deleted.
   isDeleted Boolean @default(false)
 }
 
+// -----------------------------------------------------------------------------
+// Account model stores external authentication information for NextAuth.
+// Field names are kept as NextAuth expects.
+// -----------------------------------------------------------------------------
 model Account {
   id                String   @id @default(cuid())
   userId            String
@@ -50,11 +60,16 @@ model Account {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user User @relation(fields: [userId], references: [id])
+  
+  // If an account is deleted, you might decide to remove it,
+  // but typically this is managed by NextAuth.
   isDeleted Boolean @default(false)
 }
 
+// -----------------------------------------------------------------------------
+// Session model tracks login sessions for users.
+// -----------------------------------------------------------------------------
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -63,6 +78,10 @@ model Session {
   user         User     @relation(fields: [userId], references: [id])
 }
 
+// -----------------------------------------------------------------------------
+// Community model represents groups that users can join or manage.
+// Soft deletion via isDeleted so that posts remain even if the community is "deleted".
+// -----------------------------------------------------------------------------
 model Community {
   id          String   @id @default(cuid())
   name        String   @unique
@@ -73,22 +92,24 @@ model Community {
   isDeleted   Boolean  @default(false)
   isPrivate   Boolean  @default(false)
 
-  // Author (Original Creator) - FIXED RELATION
   authorId String
-  author   User @relation(fields: [authorId], references: [id])
+  // Do not cascade delete the community if the author is deleted.
+  author   User   @relation(fields: [authorId], references: [id])
 
-  // Relations
   posts    Post[]
   members  User[] @relation(name: "CommunityMembers")
   managers User[] @relation(name: "CommunityManagers")
 
-  // Aggregated Counts
   totalPosts    Int @default(0)
   totalMembers  Int @default(0)
   totalManagers Int @default(0)
 
   @@index([name])
 }
+
+// -----------------------------------------------------------------------------
+// RecentlyVisitedCommunity tracks communities that a user has visited.
+// -----------------------------------------------------------------------------
 model RecentlyVisitedCommunity {
   id          String   @id @default(cuid())
   userId      String
@@ -100,6 +121,10 @@ model RecentlyVisitedCommunity {
   @@unique([userId, communityId])
 }
 
+// -----------------------------------------------------------------------------
+// Post model stores user posts.
+// Soft deletion via isDeleted, so comments remain visible.
+// -----------------------------------------------------------------------------
 model Post {
   id               String   @id @default(cuid())
   title            String
@@ -112,6 +137,7 @@ model Post {
   cover            String
   isDeleted        Boolean  @default(false)
 
+  // Do not cascade delete posts when the community or author is removed.
   community Community @relation(fields: [communityId], references: [id])
   author    User      @relation(fields: [authorId], references: [id])
   comments  Comment[]
@@ -122,9 +148,17 @@ model Post {
   totalDownvotes Int @default(0)
   voteScore      Int @default(0)
 
+  hiddenBy HiddenPost[]
+  savedBy  SavedPost[]
+
   @@index([title])
+  @@index([createdAt])
 }
 
+// -----------------------------------------------------------------------------
+// Comment model stores comments on posts.
+// Soft deletion via isDeleted; comments remain even if the post is soft-deleted.
+// -----------------------------------------------------------------------------
 model Comment {
   id        String   @id @default(cuid())
   content   String
@@ -132,38 +166,96 @@ model Comment {
   updatedAt DateTime @updatedAt
   postId    String
   authorId  String
-  parentId  String? // Optional field to reference the parent comment (for replies)
+  parentId  String? // Optional field for replies
 
   isDeleted      Boolean @default(false)
   totalUpvotes   Int     @default(0)
   totalDownvotes Int     @default(0)
   voteScore      Int     @default(0)
 
+  // Do not cascade delete comments when a post or author is removed.
   post    Post      @relation(fields: [postId], references: [id])
   author  User      @relation(fields: [authorId], references: [id])
   parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies Comment[] @relation("CommentReplies") // To get all replies for a comment
+  replies Comment[] @relation("CommentReplies")
   votes   Vote[]
 
+  savedBy SavedComment[]
+
   @@index([content])
+  @@index([parentId])
+  @@index([createdAt])
 }
 
+// -----------------------------------------------------------------------------
+// Vote model stores upvotes/downvotes. Votes can be linked to posts or comments.
+// -----------------------------------------------------------------------------
 model Vote {
   id        String  @id @default(cuid())
   userId    String
-  postId    String? // Optional because votes can be for posts or comments
-  commentId String? // Optional because votes can be for comments
+  postId    String? // Optional because a vote can be on a post or comment
+  commentId String? // Optional because a vote can be on a post or comment
 
   type    VoteType
   user    User     @relation(fields: [userId], references: [id])
+  // We avoid cascade deletion here so that votes remain even if the post/comment is soft-deleted.
   post    Post?    @relation(fields: [postId], references: [id])
   comment Comment? @relation(fields: [commentId], references: [id])
 
-  @@unique([userId, postId]) // Prevent multiple votes on a post
-  @@unique([userId, commentId]) // Prevent multiple votes on a comment
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
 }
 
+// -----------------------------------------------------------------------------
 enum VoteType {
   UPVOTE
   DOWNVOTE
+}
+
+// -----------------------------------------------------------------------------
+// HiddenPost model tracks posts a user has chosen to hide.
+// -----------------------------------------------------------------------------
+model HiddenPost {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+  @@index([createdAt])
+}
+
+// -----------------------------------------------------------------------------
+// SavedPost model tracks posts a user has saved.
+// -----------------------------------------------------------------------------
+model SavedPost {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+  @@index([createdAt])
+}
+
+// -----------------------------------------------------------------------------
+// SavedComment model tracks comments a user has saved.
+// -----------------------------------------------------------------------------
+model SavedComment {
+  id        String   @id @default(cuid())
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  comment Comment @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, commentId])
+  @@index([createdAt])
 }

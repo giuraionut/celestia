@@ -1,6 +1,6 @@
 'use server'
 
-import { Post, ExtendedComment, ExtendedPost, VoteType } from "@prisma/client"
+import { Post, ExtendedComment, ExtendedPost, VoteType, SavedPost, HiddenPost, User, Vote, Comment, Community } from "@prisma/client"
 import { handleServerError, requireSessionUserId } from "./actionUtils"
 import db from "@/lib/db";
 import { fetchRepliesRecursively, readComment } from "./commentActions";
@@ -32,6 +32,189 @@ export const getPostTotalComments = async (postId: string): Promise<number> => {
     }
 };
 
+
+export const savePost = async (postId: string): Promise<SavedPost | null> => {
+    try {
+        const userId = await requireSessionUserId('saving post.');
+        if (!userId) return null;
+
+        revalidateTag(`post-${postId}`);
+        revalidateTag(`saved-posts-${userId}`);
+        // Create a new SavedPost record connecting the user and the post.
+        return await db.savedPost.create({
+            data: {
+                user: { connect: { id: userId } },
+                post: { connect: { id: postId } },
+            },
+        });
+    } catch (error) {
+        handleServerError(error, 'saving post.');
+        return null;
+    }
+};
+
+export const readSavedPostsByUserId = async ({
+    userId,
+    cursor,
+    limit = 20,
+    sortBy = 'createdAt',
+    sortOrder = 'asc',
+}: ReadPostsByUserIdParams): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
+    'use cache';
+    cacheTag(`saved-posts-${userId}`);
+
+    try {
+        console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
+
+        let queryOptions: any = {
+            where: { userId },
+            include: {
+                post: {
+                    include: {
+                        author: true,
+                        votes: true,
+                        comments: true,
+                        community: true,
+                    },
+                },
+            },
+            take: limit + 1,
+        };
+
+        if (cursor) {
+            queryOptions.cursor = { id: cursor };
+            queryOptions.skip = 1;
+        }
+
+        if (['createdAt'].includes(sortBy)) {
+            queryOptions.orderBy = { createdAt: sortOrder };
+        } else {
+            queryOptions.orderBy = { createdAt: 'desc' };
+        }
+
+        console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
+
+        // Cast the result to a type that includes the "post" relation.
+        const savedPosts = (await db.savedPost.findMany(queryOptions)) as Array<
+            SavedPost & {
+                post: Post & {
+                    author: User;
+                    votes: Vote[];
+                    comments: Comment[];
+                    community: Community;
+                };
+            }
+        >;
+
+        savedPosts.forEach((saved) => cacheTag(`post-${saved.post.id}`));
+
+        const hasMore = savedPosts.length > limit;
+        const nextCursor = hasMore ? savedPosts[limit - 1].id : undefined;
+
+        // Map to the post itself
+        const posts = savedPosts.slice(0, limit).map((saved) => saved.post);
+
+        return {
+            posts,
+            nextCursor,
+        };
+    } catch (error) {
+        console.error('Prisma error:', error);
+        handleServerError(error, 'reading posts by user.');
+        return null;
+    }
+};
+
+export const readHiddenPostsByUserId = async ({
+    userId,
+    cursor,
+    limit = 20,
+    sortBy = 'createdAt',
+    sortOrder = 'asc',
+}: ReadPostsByUserIdParams): Promise<{ posts: ExtendedPost[]; nextCursor?: string } | null> => {
+    'use cache';
+    cacheTag(`hidden-posts-${userId}`);
+
+    try {
+        console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
+
+        let queryOptions: any = {
+            where: { userId },
+            include: {
+                post: {
+                    include: {
+                        author: true,
+                        votes: true,
+                        comments: true,
+                        community: true,
+                    },
+                },
+            },
+            take: limit + 1,
+        };
+
+        if (cursor) {
+            queryOptions.cursor = { id: cursor };
+            queryOptions.skip = 1;
+        }
+
+        if (['createdAt'].includes(sortBy)) {
+            queryOptions.orderBy = { createdAt: sortOrder };
+        } else {
+            queryOptions.orderBy = { createdAt: 'desc' };
+        }
+
+        console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
+
+        // Cast the result to a type that includes the "post" relation.
+        const savedPosts = (await db.hiddenPost.findMany(queryOptions)) as Array<
+            HiddenPost & {
+                post: Post & {
+                    author: User;
+                    votes: Vote[];
+                    comments: Comment[];
+                    community: Community;
+                };
+            }
+        >;
+
+        savedPosts.forEach((saved) => cacheTag(`post-${saved.post.id}`));
+
+        const hasMore = savedPosts.length > limit;
+        const nextCursor = hasMore ? savedPosts[limit - 1].id : undefined;
+
+        // Map to the post itself
+        const posts = savedPosts.slice(0, limit).map((saved) => saved.post);
+
+        return {
+            posts,
+            nextCursor,
+        };
+    } catch (error) {
+        console.error('Prisma error:', error);
+        handleServerError(error, 'reading posts by user.');
+        return null;
+    }
+};
+
+export const hidePost = async (postId: string): Promise<HiddenPost | null> => {
+    try {
+        const userId = await requireSessionUserId('hiding post.');
+        if (!userId) return null;
+        revalidateTag(`post-${postId}`);
+        revalidateTag(`hidden-posts-${userId}`);
+        revalidateTag(`posts`);
+        return await db.hiddenPost.create({
+            data: {
+                user: { connect: { id: userId } },
+                post: { connect: { id: postId } },
+            },
+        });
+    } catch (error) {
+        handleServerError(error, 'hiding post.');
+        return null;
+    }
+}
 
 export const updatePostTotalComments = async (postId: string): Promise<Post | null> => {
     try {
@@ -149,6 +332,7 @@ export const readPosts = async ({
                 votes: true,
                 comments: true,
                 community: true,
+                hiddenBy:true,
                 _count: {
                     select: {
                         votes: true,

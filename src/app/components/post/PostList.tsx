@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { MessageSquareIcon } from 'lucide-react';
 import CommunityHeader from '../community/CommunityHeader';
 import { formatDistanceToNow } from 'date-fns';
+import PostDropDownMenu from './PostDropDownMenu';
 
 interface PostListProps {
   posts: ExtendedPost[];
@@ -14,8 +15,10 @@ interface PostListProps {
 }
 
 export default function PostList({ posts, userId, compact }: PostListProps) {
-  const validPosts = posts.filter((post) => post.community);
-
+  // const validPosts = posts.filter((post) => post.community);
+  const validPosts = posts.filter((post) =>
+    post.community && (!userId || !post.hiddenBy?.some((hidden) => hidden.userId === userId))
+  );
   return (
     <div className='w-full'>
       {validPosts.map((post) => {
@@ -50,6 +53,7 @@ export default function PostList({ posts, userId, compact }: PostListProps) {
               <span className='text-xs'>
                 {formatDistanceToNow(post.createdAt, { addSuffix: true })}
               </span>
+              <PostDropDownMenu postId={post.id}/>
             </div>
             <Link
               href={`/community/${post.community!.name}/post/${
