@@ -6,18 +6,13 @@ import { cn, shortenText } from '@/lib/utils';
 interface PostCardProps {
   post: ExtendedPost;
   className?: string;
-  compact?: boolean;
 }
 
-const PostCard = ({ post, className, compact }: PostCardProps) => {
+const PostCard = ({ post, className }: PostCardProps) => {
   const imageSrc = post.cover || '/fallback-image.png';
 
   return (
-    <article
-      className={cn('flex flex-col gap-4 container', className, {
-        'flex-row justify-between': compact,
-      })}
-    >
+    <article className={cn('flex flex-col gap-4 container', className, {})}>
       {/* Header: Title & Author */}
       <header>
         <h1 className='text-lg font-bold'>{shortenText(post.title, 100)}</h1>

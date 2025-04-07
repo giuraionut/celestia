@@ -18,9 +18,14 @@ const buttons = [
   },
   {
     name: 'Saved',
-    href: '/saved',
+    href: '/posts/saved',
+  },
+  {
+    name: 'Hidden',
+    href: '/posts/hidden',
   },
 ];
+
 const UserProfileContentButtons = ({
   userName,
   className,
@@ -31,22 +36,29 @@ const UserProfileContentButtons = ({
   page?: string;
 }) => {
   return (
-    <div className={cn('', className)}>
-      {buttons.map((button) => (
-        <Button
-          key={button.name}
-          asChild
-          variant={'outline'}
-          className={cn('flex-1', {
-            'bg-accent':
-              button.href === '/'
-                ? page === undefined || page === button.href
-                : page === button.href.replace('/', ''),
-          })}
-        >
-          <Link href={`/user/${userName}${button.href}`}>{button.name}</Link>
-        </Button>
-      ))}
+    <div className={cn('flex gap-2', className)}>
+      {buttons.map((button) => {
+        // get the last part of the href to compare with `page`
+        const hrefSegments = button.href.split('/').filter(Boolean);
+        const hrefPage = hrefSegments[hrefSegments.length - 1] ?? undefined;
+
+        const isActive =
+          (button.href === '/' && (page === undefined || page === '')) ||
+          page === hrefPage;
+
+        return (
+          <Button
+            key={button.name}
+            asChild
+            variant={'outline'}
+            className={cn('flex-1', {
+              'bg-accent': isActive,
+            })}
+          >
+            <Link href={`/user/${userName}${button.href}`}>{button.name}</Link>
+          </Button>
+        );
+      })}
     </div>
   );
 };

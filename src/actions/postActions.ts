@@ -32,6 +32,43 @@ export const getPostTotalComments = async (postId: string): Promise<number> => {
     }
 };
 
+export const isSaved = async (postId: string): Promise<boolean> => {
+    try {
+        const userId = await requireSessionUserId('checking if post is saved.');
+        if (!userId) return false;
+        return await db.savedPost.findUnique({
+            where: {
+                userId_postId: {
+                    userId,
+                    postId,
+                },
+            },
+        }) !== null;
+    } catch (error) {
+        handleServerError(error, 'checking if post is saved.');
+        return false;
+    }
+}
+
+export const isHidden = async (postId: string): Promise<boolean> => {
+    try {
+        const userId = await requireSessionUserId('checking if post is hidden.');
+        if (!userId) return false;
+        return await db.hiddenPost.findUnique({
+            where: {
+                userId_postId: {
+                    userId,
+                    postId,
+                },
+            },
+        }) !== null;
+    }
+    catch (error) {
+        handleServerError(error, 'checking if post is hidden.');
+        return false;
+    }
+}
+
 
 export const savePost = async (postId: string): Promise<SavedPost | null> => {
     try {
@@ -40,6 +77,8 @@ export const savePost = async (postId: string): Promise<SavedPost | null> => {
 
         revalidateTag(`post-${postId}`);
         revalidateTag(`saved-posts-${userId}`);
+        revalidateTag(`posts`);
+
         // Create a new SavedPost record connecting the user and the post.
         return await db.savedPost.create({
             data: {
@@ -53,6 +92,67 @@ export const savePost = async (postId: string): Promise<SavedPost | null> => {
     }
 };
 
+export const unsavePost = async (postId: string): Promise<SavedPost | null> => {
+    try {
+        const userId = await requireSessionUserId('unsaving post.');
+        if (!userId) return null;
+        revalidateTag(`post-${postId}`);
+        revalidateTag(`saved-posts-${userId}`);
+        revalidateTag(`posts`);
+
+        return await db.savedPost.delete({
+            where: {
+                userId_postId: {
+                    userId,
+                    postId,
+                },
+            },
+        });
+    } catch (error) {
+        handleServerError(error, 'unsaving post.');
+        return null;
+    }
+}
+
+export const hidePost = async (postId: string): Promise<HiddenPost | null> => {
+    try {
+        const userId = await requireSessionUserId('hiding post.');
+        if (!userId) return null;
+        revalidateTag(`post-${postId}`);
+        revalidateTag(`hidden-posts-${userId}`);
+        revalidateTag(`posts`);
+        return await db.hiddenPost.create({
+            data: {
+                user: { connect: { id: userId } },
+                post: { connect: { id: postId } },
+            },
+        });
+    } catch (error) {
+        handleServerError(error, 'hiding post.');
+        return null;
+    }
+}
+
+export const unhidePost = async (postId: string): Promise<HiddenPost | null> => {
+    try {
+        const userId = await requireSessionUserId('unhiding post.');
+        if (!userId) return null;
+        revalidateTag(`post-${postId}`);
+        revalidateTag(`hidden-posts-${userId}`);
+        revalidateTag(`posts`);
+        return await db.hiddenPost.delete({
+            where: {
+                userId_postId: {
+                    userId,
+                    postId,
+                },
+            },
+        });
+    } catch (error) {
+        handleServerError(error, 'unhiding post.');
+        return null;
+    }
+}
 export const readSavedPostsByUserId = async ({
     userId,
     cursor,
@@ -75,6 +175,8 @@ export const readSavedPostsByUserId = async ({
                         votes: true,
                         comments: true,
                         community: true,
+                        savedBy: true,
+                        hiddenBy: true,
                     },
                 },
             },
@@ -102,6 +204,7 @@ export const readSavedPostsByUserId = async ({
                     votes: Vote[];
                     comments: Comment[];
                     community: Community;
+
                 };
             }
         >;
@@ -147,6 +250,8 @@ export const readHiddenPostsByUserId = async ({
                         votes: true,
                         comments: true,
                         community: true,
+                        hiddenBy: true,
+                        savedBy: true
                     },
                 },
             },
@@ -197,24 +302,7 @@ export const readHiddenPostsByUserId = async ({
     }
 };
 
-export const hidePost = async (postId: string): Promise<HiddenPost | null> => {
-    try {
-        const userId = await requireSessionUserId('hiding post.');
-        if (!userId) return null;
-        revalidateTag(`post-${postId}`);
-        revalidateTag(`hidden-posts-${userId}`);
-        revalidateTag(`posts`);
-        return await db.hiddenPost.create({
-            data: {
-                user: { connect: { id: userId } },
-                post: { connect: { id: postId } },
-            },
-        });
-    } catch (error) {
-        handleServerError(error, 'hiding post.');
-        return null;
-    }
-}
+
 
 export const updatePostTotalComments = async (postId: string): Promise<Post | null> => {
     try {
@@ -240,6 +328,8 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
             include: {
                 author: true, // Include author details
                 community: true, // Include community details
+                savedBy: true,
+                hiddenBy: true,
                 comments: {
                     where: { parentId: null },
                     include: {
@@ -332,7 +422,8 @@ export const readPosts = async ({
                 votes: true,
                 comments: true,
                 community: true,
-                hiddenBy:true,
+                savedBy: true,
+                hiddenBy: true,
                 _count: {
                     select: {
                         votes: true,

@@ -11,14 +11,32 @@ import PostDropDownMenu from './PostDropDownMenu';
 interface PostListProps {
   posts: ExtendedPost[];
   userId: string | null;
-  compact?: boolean;
+  showHidden?: boolean;
 }
 
-export default function PostList({ posts, userId, compact }: PostListProps) {
+export default function PostList({
+  posts,
+  userId,
+  showHidden = true,
+}: PostListProps) {
   // const validPosts = posts.filter((post) => post.community);
-  const validPosts = posts.filter((post) =>
-    post.community && (!userId || !post.hiddenBy?.some((hidden) => hidden.userId === userId))
+  const validPosts = posts.filter(
+    (post) =>
+      post.community &&
+      (showHidden || // <- allow all if showHidden is true
+        !userId ||
+        !post.hiddenBy?.some((hidden) => hidden.userId === userId))
   );
+
+  const isSaved = posts.some((post) =>
+    post.savedBy?.some((saved) => saved.userId === userId)
+  );
+  const isHidden = posts.some((post) =>
+    post.hiddenBy?.some((hidden) => hidden.userId === userId)
+  );
+
+  console.log(isSaved, isHidden);
+  console.log(posts);
   return (
     <div className='w-full'>
       {validPosts.map((post) => {
@@ -37,23 +55,31 @@ export default function PostList({ posts, userId, compact }: PostListProps) {
               name={post.community!.name}
               image={post.community!.image}
             />
-            <div className='flex items-center gap-1 flex-row'>
-              {authorName && (
+            <div className='flex items-center gap-1 flex-row justify-between'>
+              <div className='flex items-center gap-1 flex-row'>
+                {authorName && (
+                  <span className='text-xs'>
+                    Posted by{' '}
+                    <Link
+                      href={`/user/${authorName}`}
+                      className='text-primary/50 hover:text-primary transition-colors'
+                    >
+                      {authorName}
+                    </Link>
+                  </span>
+                )}
+                {!authorName && (
+                  <p className='text-xs'>Posted by {authorName}</p>
+                )}
                 <span className='text-xs'>
-                  Posted by{' '}
-                  <Link
-                    href={`/user/${authorName}`}
-                    className='text-primary/50 hover:text-primary transition-colors'
-                  >
-                    {authorName}
-                  </Link>
+                  {formatDistanceToNow(post.createdAt, { addSuffix: true })}
                 </span>
-              )}
-              {!authorName && <p className='text-xs'>Posted by {authorName}</p>}
-              <span className='text-xs'>
-                {formatDistanceToNow(post.createdAt, { addSuffix: true })}
-              </span>
-              <PostDropDownMenu postId={post.id}/>
+              </div>
+              <PostDropDownMenu
+                postId={post.id}
+                isSaved={isSaved}
+                isHidden={isHidden}
+              />
             </div>
             <Link
               href={`/community/${post.community!.name}/post/${
@@ -61,7 +87,7 @@ export default function PostList({ posts, userId, compact }: PostListProps) {
               }/comments`}
               className='block'
             >
-              <PostCard post={post} compact={compact} />
+              <PostCard post={post} />
             </Link>
 
             <div className='flex flex-row justify-between items-center'>

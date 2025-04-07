@@ -82,6 +82,7 @@ const UserPagePosts = async ({
               <PostList
                 key={postListKey}
                 posts={initialPosts}
+                userId={user.id}
               />
             </LoadMore>
           </SortProvider>
