@@ -53,10 +53,7 @@ export default async function Home({ searchParams }: HomeProps) {
         </SortProvider>
       </Middle>
       <Right>
-        <div className='w-full h-32 rounded border m-4 sticky top-14 p-4 bg-red-300'>
-        Something{' '}
-        {userId}
-        </div>
+      
       </Right>
     </HolyGrail>
   );

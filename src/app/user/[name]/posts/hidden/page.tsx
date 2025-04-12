@@ -1,6 +1,9 @@
 import { fetchUserProfileByName } from '@/actions/authActions';
 import { loadMoreUserPosts } from '@/actions/loadMoreActions';
-import { readHiddenPostsByUserId, readPostsByUserId } from '@/actions/postActions';
+import {
+  readHiddenPostsByUserId,
+  readPostsByUserId,
+} from '@/actions/postActions';
 import LoadMore from '@/app/components/shared/LoadMore';
 import PostList from '@/app/components/post/PostList';
 import { SortProvider } from '@/app/components/post/PostSortingContext';
@@ -77,12 +80,13 @@ const UserHiddenPosts = async ({
             <LoadMore
               loadMoreAction={loadMoreUserPosts}
               initialCursor={initialPostCursor}
-              userId={user.id} // Pass userId here
+              userId={user.id}
             >
               <PostList
                 key={postListKey}
                 posts={initialPosts}
                 userId={user.id}
+                showHidden={true}
               />
             </LoadMore>
           </SortProvider>

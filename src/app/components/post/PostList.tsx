@@ -17,30 +17,30 @@ interface PostListProps {
 export default function PostList({
   posts,
   userId,
-  showHidden = true,
+  showHidden = false,
 }: PostListProps) {
-  // const validPosts = posts.filter((post) => post.community);
+  // Filter out posts that are hidden (if applicable) or have no community
   const validPosts = posts.filter(
     (post) =>
       post.community &&
-      (showHidden || // <- allow all if showHidden is true
+      (showHidden ||
         !userId ||
         !post.hiddenBy?.some((hidden) => hidden.userId === userId))
   );
 
-  const isSaved = posts.some((post) =>
-    post.savedBy?.some((saved) => saved.userId === userId)
-  );
-  const isHidden = posts.some((post) =>
-    post.hiddenBy?.some((hidden) => hidden.userId === userId)
-  );
-
-  console.log(isSaved, isHidden);
-  console.log(posts);
   return (
     <div className='w-full'>
       {validPosts.map((post) => {
-        // Determine the current user's vote on this post specifically
+        // Compute the current user's saved and hidden status for each post.
+        // Use ?? false to default to false when the optional chaining returns undefined.
+        const isSaved = userId
+          ? post.savedBy?.some((saved) => saved.userId === userId) ?? false
+          : false;
+        const isHidden = userId
+          ? post.hiddenBy?.some((hidden) => hidden.userId === userId) ?? false
+          : false;
+
+        // Determine the current user's vote on the post
         const userVote = userId
           ? post.votes?.find((vote) => vote.userId === userId) || null
           : null;
@@ -89,7 +89,6 @@ export default function PostList({
             >
               <PostCard post={post} />
             </Link>
-
             <div className='flex flex-row justify-between items-center'>
               <PostVote post={post} vote={userVote} userId={userId} />
               <span className='flex flex-row gap-2 items-center'>
