@@ -6,7 +6,7 @@ import PostList from '../components/post/PostList';
 const SearchPage = async ({
   searchParams,
 }: {
-  searchParams: { q?: string; cursor?: string };
+  searchParams: Promise<{ q?: string; cursor?: string }>;
 }) => {
   const { q, cursor } = await searchParams;
 
@@ -30,7 +30,7 @@ const SearchPage = async ({
         <div className='p-6 w-full mx-auto flex-1 h-full'>
           <div className='flex flex-col gap-4'>
             {/* Display Search Results */}
-            <PostList key={postListKey} posts={posts} userId={userId} compact={true}/>
+            <PostList key={postListKey} posts={posts} userId={userId} />
             {/* Load More */}
             {nextCursor && (
               <div className='mt-6 text-center'>
@@ -47,8 +47,7 @@ const SearchPage = async ({
       </Middle>
       <Right>
         <div className='w-full h-32 rounded border m-4 sticky top-14 p-4 bg-red-300'>
-          Something{' '}
-          {userId}
+          Something {userId}
         </div>
       </Right>
     </HolyGrail>

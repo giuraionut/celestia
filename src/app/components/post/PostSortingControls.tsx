@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { useSortContext } from './PostSortingContext';
 
-export function SortingControls({ title }: { title: string }) {
+export function SortingControls() {
   const { currentSort, setSortOption, availableSortOptions } = useSortContext();
 
   return (

@@ -7,6 +7,12 @@ import { readCommentsByUserId } from './commentActions';
 import CommentList from '@/app/components/comment/CommentList';
 import { readCommentsAndPostsByUserId } from './postCommentActions';
 import OverviewList from '@/app/components/shared/OverviewList';
+import {
+  FetchedItem,
+  OverviewComment,
+  OverviewItem,
+  OverviewPost,
+} from '@/types/types';
 
 export async function loadMorePosts({
   cursor,
@@ -43,12 +49,12 @@ export const loadMoreUserPosts = async ({
   cursor,
   sortBy = 'createdAt',
   sortOrder = 'desc',
-  userId, 
+  userId,
 }: {
   cursor?: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
-  userId?: string; 
+  userId?: string;
 }) => {
   const actualUserId = userId || (await getSessionUserId());
   if (!actualUserId) throw new Error('User not found');
@@ -70,12 +76,11 @@ export const loadMoreUserPosts = async ({
   ] as const;
 };
 
-
 export async function loadMoreUserComments({
   cursor,
   sortBy = 'createdAt',
   sortOrder = 'desc',
-  userId, 
+  userId,
 }: {
   cursor?: string;
   sortBy: string;
@@ -105,10 +110,9 @@ export async function loadMoreUserComments({
   ] as const;
 }
 
-
-
-
-
+// --- Define the type for items returned by readCommentsAndPostsByUserId ---
+// Adjust this based on the EXACT structure returned by your Prisma query,
+// including which relations are optional or always present.
 
 export const loadMoreUserPostsAndComments = async ({
   cursor,
@@ -117,13 +121,14 @@ export const loadMoreUserPostsAndComments = async ({
   userId,
 }: {
   cursor?: string;
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
   userId?: string;
 }) => {
   const actualUserId = userId || (await getSessionUserId());
   if (!actualUserId) throw new Error('User not found');
 
+  // Assuming readCommentsAndPostsByUserId returns { items: FetchedItem[], nextCursor: Date | null }
   const result = await readCommentsAndPostsByUserId({
     userId: actualUserId,
     cursor,
@@ -131,15 +136,60 @@ export const loadMoreUserPostsAndComments = async ({
     sortBy,
     sortOrder,
   });
-  if (!result) return [null, null] as const;
 
-  const { items, nextCursor } = result;
+  if (!result || !result.items) return [null, null] as const;
 
-  // Convert nextCursor to a string if it's a Date (or ensure it's a string)
-  const nextCursorStr = nextCursor ? new Date(nextCursor).toISOString() : null;
+  // Use the specific FetchedItem type here instead of 'any'
+  const items: OverviewItem[] = result.items.map(
+    (item: FetchedItem): OverviewItem => {
+      // Use 'in' operator for structural checks (safer than just checking truthiness)
+      // Add checks for essential differentiating properties
+      if ('title' in item && 'communityId' in item) {
+        // item is likely ExtendedPost-like structure
+        // Cast to OverviewPost after adding/defaulting properties
+        return {
+          ...item, // Spread the original item
+          type: 'post',
+          // Provide defaults using nullish coalescing
+          votes: item.votes ?? [],
+          savedBy: item.savedBy ?? [],
+          hiddenBy: item.hiddenBy ?? [],
+          community: item.community ?? null,
+          // Handle totalComments, prefer _count if available
+          totalComments: item._count?.comments ?? item.totalComments ?? 0,
+        } as OverviewPost; // Assert the final shape matches OverviewPost
+      } else if ('postId' in item && 'content' in item) {
+        // item is likely Comment-like structure
+        // Cast to OverviewComment after adding/defaulting properties
+        return {
+          ...item, // Spread the original item
+          type: 'comment',
+          // Provide default for post relation
+          post: item.post ?? null,
+        } as OverviewComment; // Assert the final shape matches OverviewComment
+      } else {
+        // This block should ideally be unreachable if FetchedItem is accurate
+        console.error(
+          'Unknown item structure in loadMoreUserPostsAndComments:',
+          item
+        );
+        throw new Error(
+          `Unknown item structure encountered: ${JSON.stringify(item)}`
+        );
+      }
+    }
+  );
+
+  const nextCursorStr = result.nextCursor
+    ? result.nextCursor.toISOString()
+    : null;
 
   return [
-    <OverviewList key={cursor || 'initial'} items={items} userId={actualUserId} />,
+    <OverviewList
+      key={cursor || 'initial'}
+      items={items}
+      userId={actualUserId}
+    />,
     nextCursorStr,
   ] as const;
 };

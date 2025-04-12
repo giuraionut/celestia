@@ -7,6 +7,10 @@ export const jsonToHtml = (content: string) => {
         return sanitizeHtml(generateHTML(parsedContent, [StarterKit.configure()]))
     }
     catch (error: unknown) {
+        if (error instanceof Error) {
+            console.error('Error parsing JSON:', error.message);
+        }
+        else console.error('Error parsing JSON:', error);
         return content;
     }
 };

@@ -1,9 +1,6 @@
 import { fetchUserProfileByName } from '@/actions/authActions';
 import { loadMoreUserPosts } from '@/actions/loadMoreActions';
-import {
-  readHiddenPostsByUserId,
-  readPostsByUserId,
-} from '@/actions/postActions';
+import { readHiddenPostsByUserId } from '@/actions/postActions';
 import LoadMore from '@/app/components/shared/LoadMore';
 import PostList from '@/app/components/post/PostList';
 import { SortProvider } from '@/app/components/post/PostSortingContext';
@@ -23,12 +20,12 @@ const UserHiddenPosts = async ({
   params,
   searchParams,
 }: {
-  params: { name: string; page: string };
+  params: Promise<{ name: string; page: string }>;
 
-  searchParams?: {
+  searchParams?: Promise<{
     sort?: string;
     activeTab?: string;
-  };
+  }>;
 }) => {
   const { name } = await params;
   const { sort } = (await searchParams) || {};
@@ -75,7 +72,7 @@ const UserHiddenPosts = async ({
         {postData && postData?.posts.length > 0 ? (
           <SortProvider initialSort={initialPostsSort} contentType='posts'>
             <div className='max-w-[700px] w-full items-center flex px-4'>
-              <SortingControls title='Posts' />
+              <SortingControls />
             </div>
             <LoadMore
               loadMoreAction={loadMoreUserPosts}

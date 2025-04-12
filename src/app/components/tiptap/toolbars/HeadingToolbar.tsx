@@ -4,7 +4,6 @@ import React from 'react';
 import { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
 import { HeadingIcon } from 'lucide-react';
-import { Toggle } from '@/components/ui/toggle';
 import { Button } from '@/components/ui/button';
 
 type Level = 1 | 2 | 3 | 4 | 5 | 6;

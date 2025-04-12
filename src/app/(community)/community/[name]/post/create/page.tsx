@@ -1,4 +1,4 @@
-import { readCommunityByName } from '@/actions/communityActions';
+import { findCommunityByName } from '@/actions/communityActions';
 import { CreatePostForm } from '@/app/components/post/createPostForm';
 import {
   HolyGrail,
@@ -8,10 +8,14 @@ import {
 } from '@/app/components/shared/HolyGrail';
 import React from 'react';
 
-const CreatePost = async ({ params }: { params: { name: string } }) => {
+const CreatePost = async ({
+  params,
+}: {
+  params: Promise<{ name: string }>;
+}) => {
   const { name } = await params;
   const decodedName = decodeURIComponent(name);
-  const community = await readCommunityByName(decodedName);
+  const community = await findCommunityByName(decodedName);
   if (!community) return <div>Community not found</div>;
   return (
     <HolyGrail>

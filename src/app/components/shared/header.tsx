@@ -3,7 +3,6 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import Link from 'next/link';
 
 import { SearchBox } from './SearchBox';
-import { PlusCircleIcon } from 'lucide-react';
 import UserProfileDropdown from './UserProfileDropdown';
 import CreatePostButton from '../post/CreatePostButton';
 import CreateCommunityButton from '../post/CreateCommunityButton';

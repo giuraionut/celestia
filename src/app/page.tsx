@@ -10,14 +10,14 @@ import LoadMore from './components/shared/LoadMore';
 
 // Handle the search params to get the initial sort
 interface HomeProps {
-  searchParams?: {
+  searchParams?: Promise<{
     sort?: string;
-  };
+  }>;
 }
 
 export default async function Home({ searchParams }: HomeProps) {
-  const { sort } = (await searchParams) || {};
-
+  const resolvedSearchParams = await searchParams;
+  const { sort } = resolvedSearchParams || {};
   const initialSort = sort || 'newest';
   const userId = await getSessionUserId();
 
@@ -42,7 +42,7 @@ export default async function Home({ searchParams }: HomeProps) {
       <Middle>
         <SortProvider initialSort={initialSort}>
           <div className='max-w-[700px] w-full items-center flex p-4'>
-            <SortingControls title='Posts' />
+            <SortingControls />
           </div>
           <LoadMore
             loadMoreAction={loadMorePosts}
@@ -52,9 +52,7 @@ export default async function Home({ searchParams }: HomeProps) {
           </LoadMore>
         </SortProvider>
       </Middle>
-      <Right>
-      
-      </Right>
+      <Right></Right>
     </HolyGrail>
   );
 }

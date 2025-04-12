@@ -17,7 +17,7 @@ const SignInPage = async () => {
           <h1 className='text-2xl font-bold'>Sign In</h1>
           <SignInForm />
           <p className='text-sm text-gray-500 text-center'>
-            Don't have an account yet?{' '}
+            Don`&apos;`t have an account yet?{' '}
             <Link href='/api/auth/signup' className='text-blue-500 underline'>
               Sign up
             </Link>

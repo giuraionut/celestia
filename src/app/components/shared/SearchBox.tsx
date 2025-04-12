@@ -18,12 +18,12 @@ import {
   KeyboardEvent,
   useTransition,
 } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { searchSuggestionPosts } from '@/actions/postActions';
 import {
   findCommunitiesByName,
-  findCommunityByName,
 } from '@/actions/communityActions';
 import { PostSuggestion } from '@/types/types';
 import { ExtendedCommunity } from '@prisma/client';
@@ -304,10 +304,12 @@ export const SearchBox = ({
                           className={cn('flex w-full items-center gap-2')}
                         >
                           {option.image && (
-                            <img
+                            <Image
                               src={option.image}
                               alt={option.name}
                               className='w-6 h-6 rounded-full object-cover'
+                              width={24}
+                              height={24}
                             />
                           )}
                           <span>{option.name}</span>

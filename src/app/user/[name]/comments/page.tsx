@@ -20,14 +20,16 @@ const UserPageComments = async ({
   params,
   searchParams,
 }: {
-  params: { name: string };
-  searchParams?: {
+  params: Promise<{ name: string; page: string }>;
+
+  searchParams?: Promise<{
     sort?: string;
     activeTab?: string;
-  };
+  }>;
 }) => {
   const { name } = await params;
-  const { sort } = (await searchParams) || {};
+  const resolvedSearchParams = await searchParams;
+  const { sort } = resolvedSearchParams || {};
   const decodedName = decodeURIComponent(name);
 
   const initialCommentsSort = sort || 'newest';
@@ -74,7 +76,7 @@ const UserPageComments = async ({
             contentType='comments'
           >
             <div className='max-w-[700px] w-full items-center flex px-4'>
-              <SortingControls title='Comments' />
+              <SortingControls />
             </div>
             <LoadMore
               loadMoreAction={loadMoreUserComments}

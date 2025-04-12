@@ -3,7 +3,6 @@
 import db from "@/lib/db";
 import { handleServerError } from "./actionUtils";
 import argon2 from "argon2";
-import { unknown } from "zod";
 import { User } from "@prisma/client";
 // Create a new user
 export const createUser = async ({

@@ -2,7 +2,7 @@
 
 import { VoteType, Vote, ExtendedComment } from "@prisma/client";
 import { handleServerError, requireSessionUserId } from "./actionUtils";
-import { readComment, readCommentsByPost, updateCommentVoteCounts, updateCommentVotes, updateCommentVoteScore } from "./commentActions";
+import { readComment, readCommentsByPost, updateCommentVoteCounts, updateCommentVoteScore } from "./commentActions";
 import { findVoteByUserAndTarget, updateVote, createVote, deleteVote } from "./voteUtils";
 import { revalidateTag } from "next/cache";
 

@@ -1,10 +1,9 @@
 'use server'
 
-import { Post, ExtendedComment, ExtendedPost, VoteType, SavedPost, HiddenPost, User, Vote, Comment, Community } from "@prisma/client"
+import { Post, ExtendedComment, ExtendedPost, VoteType, SavedPost, HiddenPost, User, Vote, Comment, Community, Prisma } from "@prisma/client"
 import { handleServerError, requireSessionUserId } from "./actionUtils"
 import db from "@/lib/db";
 import { fetchRepliesRecursively, readComment } from "./commentActions";
-import { getTotalPostDownvotes, getTotalPostUpvotes } from "./voteUtils";
 import { getSearchSuggestions, searchPosts } from "./postFTS";
 import { PostSuggestion } from "@/types/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
@@ -166,7 +165,7 @@ export const readSavedPostsByUserId = async ({
     try {
         console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
 
-        let queryOptions: any = {
+        const queryOptions: Prisma.SavedPostFindManyArgs = {
             where: { userId },
             include: {
                 post: {
@@ -241,7 +240,7 @@ export const readHiddenPostsByUserId = async ({
     try {
         console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
 
-        let queryOptions: any = {
+        const queryOptions: Prisma.HiddenPostFindManyArgs = {
             where: { userId },
             include: {
                 post: {
@@ -386,28 +385,35 @@ export const readPosts = async ({
     'use cache';
     cacheTag('posts');
     try {
-        // Handle special sorting cases
-        let orderBy: any = {};
+        // Use the specific Prisma union type for orderBy
+        let orderBy: Prisma.PostOrderByWithRelationInput | Prisma.PostOrderByWithRelationInput[];
 
+        // Handle special sorting cases
         if (['createdAt', 'title', 'updatedAt'].includes(sortBy)) {
-            orderBy[sortBy] = sortOrder;
+            // Ensure sortBy is a valid key recognized by Prisma for Post
+            // TypeScript might need an assertion or a stricter type for sortBy
+            // if it can't infer it's 'createdAt' | 'title' | 'updatedAt' here.
+            // A simple approach for now:
+            orderBy = { [sortBy]: sortOrder };
         }
         else if (sortBy === 'voteCount') {
+            // Assumes 'voteScore' exists on your Post model
             orderBy = [
                 {
                     voteScore: sortOrder,
                 },
-                { createdAt: 'desc' },
+                { createdAt: 'desc' }, // Secondary sort
             ];
         }
         else if (sortBy === 'totalComments') {
+            // Order by the count of related comments
             orderBy = [
                 {
                     comments: {
                         _count: sortOrder,
                     },
                 },
-                { createdAt: 'desc' },
+                { createdAt: 'desc' }, // Secondary sort
             ];
         }
         // Default fallback
@@ -415,36 +421,43 @@ export const readPosts = async ({
             orderBy = { createdAt: 'desc' };
         }
 
+        // No need to redefine the query options separately if only used once
         const posts = await db.post.findMany({
             where: communityId ? { communityId } : undefined,
             include: {
                 author: true,
                 votes: true,
-                comments: true,
+                comments: true, // Consider using _count instead if you only need the count
                 community: true,
-                savedBy: true,
-                hiddenBy: true,
+                savedBy: true, // Might impact performance if large relations
+                hiddenBy: true, // Might impact performance if large relations
                 _count: {
                     select: {
-                        votes: true,
+                        // votes: true, // Use voteScore if pre-calculated
                         comments: true,
                     },
                 },
             },
             take: limit + 1,
             ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-            orderBy,
+            orderBy, // Pass the correctly typed orderBy variable
         });
 
+        // Optional Chaining in case posts is null/undefined (though findMany usually returns [])
         posts?.forEach(post => cacheTag(`post-${post.id}`));
 
-        // Determine the next cursor
-        const nextCursor = posts.length > limit ? posts[limit].id : undefined;
+        // Check length *before* slicing
+        const hasMore = posts.length > limit;
+        // Get the ID from the *last* item intended for the *next* page
+        const nextCursor = hasMore ? posts[limit -1 ].id : undefined; // Correct index is limit - 1
 
-        return { posts: posts.slice(0, limit), nextCursor };
+        return {
+            posts: posts.slice(0, limit), // Slice up to the limit
+            nextCursor // Use the calculated nextCursor
+        };
     } catch (error) {
         handleServerError(error, 'reading posts.');
-        return null;
+        return null; // Return null on error as per function signature
     }
 };
 
@@ -471,13 +484,15 @@ export const readPostsByUserId = async ({
         // Debug the incoming sort parameters
         console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
 
-        let queryOptions: any = {
+        const queryOptions: Prisma.PostFindManyArgs = {
             where: { authorId: userId },
             include: {
                 author: true,
                 votes: true,
                 comments: true,
                 community: true,
+                savedBy: true,
+                hiddenBy: true,
             },
             take: limit + 1,
         };

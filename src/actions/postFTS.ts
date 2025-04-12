@@ -1,9 +1,15 @@
 import { PostSuggestion } from '@/types/types';
-import { ExtendedPost, PrismaClient } from '@prisma/client';
+import { Community, ExtendedPost, Post, PrismaClient, User, Vote } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-
+type RawSearchResult = Post & {
+  highlight: string;
+  rank: number;       // The integer rank
+  community: string;  // JSON string from json_object
+  author: string;     // JSON string from json_object
+  votes: string;      // JSON string from json_group_array
+};
 
 /**
  * Search for posts using SQLite FTS
@@ -12,6 +18,8 @@ const prisma = new PrismaClient();
  * @param highlightTags HTML tags for highlighting matched terms [openTag, closeTag]
  * @returns Array of posts matching the search query
  */
+
+
 export async function searchPosts(
   query: string,
   limit: number = 20,
@@ -21,105 +29,145 @@ export async function searchPosts(
   if (!query || query.trim() === '') {
     return { posts: [] };
   }
-  // Sanitize query to prevent SQL injection
+  // Basic sanitization - consider more robust methods or Prisma.sql if possible
   const sanitizedQuery = query.trim().replace(/'/g, "''");
 
   try {
     let cursorCondition = "";
-    const params: any[] = [`${sanitizedQuery}*`];
+    // Parameters for $queryRawUnsafe - MUST be positional primitives
+    const params: Array<string | number | boolean> = [];
+
+    // Add highlight tags first as they come before MATCH param in the query
+    params.push(highlightTags ? highlightTags[0] : "");
+    params.push(highlightTags ? highlightTags[1] : "");
+
+    // Add MATCH param
+    params.push(`${sanitizedQuery}*`);
+
     if (cursor) {
-      // Get the BM25 score multiplied by 100 and cast as INTEGER for the cursor post.
+      // Use Prisma.sql for better type safety and parameter handling if possible
+      // For $queryRawUnsafe, keep parameters separate
+      const cursorParam = cursor; // Keep original cursor value
       const cursorResult = await prisma.$queryRawUnsafe<{ rank: number }[]>(`
-        SELECT CAST(bm25(PostFTS) * 100 AS INTEGER) as rank
-        FROM PostFTS
-        WHERE id = ?
-      `, cursor);
+            SELECT CAST(bm25(PostFTS) * 100 AS INTEGER) as rank
+            FROM PostFTS
+            WHERE id = ?
+          `, cursorParam); // Parameter for WHERE id = ?
+
       const cursorRank = cursorResult[0]?.rank;
+
       if (cursorRank !== undefined) {
-        // Use a tie-breaker: (BM25 > cursorRank) OR (equal BM25 and Post.id > cursor)
-        cursorCondition = "AND (CAST(bm25(PostFTS) * 100 AS INTEGER) > ? OR (CAST(bm25(PostFTS) * 100 AS INTEGER) = ? AND Post.id > ?))";
-        params.push(cursorRank, cursorRank, cursor);
+        // Construct the SQL condition string
+        cursorCondition = `AND (CAST(bm25(PostFTS) * 100 AS INTEGER) < ? OR (CAST(bm25(PostFTS) * 100 AS INTEGER) = ? AND Post.id > ?))`;
+        // Add parameters for the cursor condition IN ORDER
+        params.push(cursorRank); // Parameter for < ?
+        params.push(cursorRank); // Parameter for = ?
+        params.push(cursorParam); // Parameter for AND Post.id > ?
       }
     }
-    // Fetch one extra row to check if there's a next page.
+
+    // Add LIMIT param last
     params.push(limit + 1);
 
-    const results = await prisma.$queryRawUnsafe<any[]>(`
-      SELECT 
-        Post.*,
-        highlight(
-          PostFTS, 
-          2, 
-          '${highlightTags ? highlightTags[0] : ""}', 
-          '${highlightTags ? highlightTags[1] : ""}'
-        ) as highlight,
-        CAST(bm25(PostFTS) * 100 AS INTEGER) as rank,
-        json_object(
-          'id', Community.id,
-          'name', Community.name,
-          'description', Community.description,
-          'createdAt', Community.createdAt,
-          'updatedAt', Community.updatedAt,
-          'image', Community.image,
-          'authorId', Community.authorId,
-          'isDeleted', Community.isDeleted,
-          'totalMembers', Community.totalMembers,
-          'totalManagers', Community.totalManagers
-        ) as community,
-        json_object(
-          'id', User.id,
-          'name', User.name,
-          'image', User.image,
-          'isDeleted', User.isDeleted,
-          'createdAt', User.createdAt,
-          'updatedAt', User.updatedAt,
-          'email', User.email
-        ) as author,
-        (
-          SELECT json_group_array(
+    // --- Execute the main search query ---
+    // Order of placeholders must match order of params added
+    const results = await prisma.$queryRawUnsafe<RawSearchResult[]>(`
+          SELECT
+            Post.*,
+            highlight(PostFTS, 2, ?, ?) as highlight, -- highlight params
+            CAST(bm25(PostFTS) * 100 AS INTEGER) as rank,
             json_object(
-              'id', Vote.id,
-              'userId', Vote.userId,
-              'type', Vote.type
-            )
-          )
-          FROM Vote 
-          WHERE Vote.postId = Post.id
-        ) as votes
-      FROM Post
-      JOIN PostFTS ON Post.id = PostFTS.id
-      JOIN Community ON Post.communityId = Community.id
-      JOIN User ON Post.authorId = User.id
-      WHERE PostFTS MATCH ? 
-        AND Post.isDeleted = 0
-        ${cursorCondition}
-      ORDER BY CAST(bm25(PostFTS) * 100 AS INTEGER) ASC, Post.id ASC
-      LIMIT ?
-    `, ...params);
-    
+              'id', Community.id, 'name', Community.name, 'description', Community.description,
+              'createdAt', Community.createdAt, 'updatedAt', Community.updatedAt, 'image', Community.image,
+              'authorId', Community.authorId, 'isDeleted', Community.isDeleted,
+              'totalMembers', Community.totalMembers, 'totalManagers', Community.totalManagers
+            ) as community,
+            json_object(
+              'id', User.id, 'name', User.name, 'image', User.image, 'isDeleted', User.isDeleted,
+              'createdAt', User.createdAt, 'updatedAt', User.updatedAt, 'email', User.email
+            ) as author,
+            (
+              SELECT json_group_array( json_object( 'id', Vote.id, 'userId', Vote.userId, 'type', Vote.type ))
+              FROM Vote
+              WHERE Vote.postId = Post.id
+            ) as votes
+          FROM Post
+          JOIN PostFTS ON Post.id = PostFTS.id
+          JOIN Community ON Post.communityId = Community.id
+          JOIN User ON Post.authorId = User.id
+          WHERE PostFTS MATCH ? -- MATCH param
+            AND Post.isDeleted = 0
+            ${cursorCondition} -- Appended string; corresponding params already added
+          ORDER BY CAST(bm25(PostFTS) * 100 AS INTEGER) DESC, Post.id ASC
+          LIMIT ? -- LIMIT param
+      `, ...params); // Spread all collected parameters
 
-    // Determine nextCursor if we got one extra row.
+    // --- Process results for pagination ---
     let nextCursor: string | undefined = undefined;
-    if (results.length > limit) {
-      const nextItem = results.pop();
-      nextCursor = nextItem.id;
+    const finalResults = [...results]; // Use mutable copy for pop
+
+    if (finalResults.length > limit) {
+      const nextItem = finalResults.pop(); // Remove and get the extra item
+      nextCursor = nextItem?.id; // Use its ID as the cursor for the next page
     }
-    // Map results and parse the nested community JSON string.
-    const posts = results.map((r) => {
+
+    // --- Map raw results to the final ExtendedPost structure ---
+    const posts: ExtendedPost[] = finalResults.map((r: RawSearchResult): ExtendedPost => {
+      // Parse JSON strings safely
+      let parsedCommunity: Community;
+      let parsedAuthor: User;
+      let parsedVotes: Vote[];
+
       try {
-        r.community = JSON.parse(r.community);
-        r.votes = JSON.parse(r.votes);
-        r.author = JSON.parse(r.author);
-      } catch (error) {
-        // if already parsed or parsing fails, leave it as-is.
+        parsedCommunity = JSON.parse(r.community);
+        parsedAuthor = JSON.parse(r.author);
+        // Handle null votes string before parsing
+        parsedVotes = r.votes ? JSON.parse(r.votes) : [];
+      } catch (e) {
+        console.error("Failed to parse JSON from raw query result:", e, r);
+        // Decide how to handle parse errors, maybe throw or return a default structure
+        // For now, let's use defaults, but logging is important
+        parsedCommunity = {} as Community; // Or some default/null value
+        parsedAuthor = {} as User;
+        parsedVotes = [];
       }
-      delete r.rank;
-      return r;
+
+      // Destructure to exclude raw JSON strings and rank, prefixing unused vars
+      const {
+        rank: _rank,
+        community: _community,
+        author: _author,
+        votes: _votes,
+        // Handle isDeleted if it's numeric (0/1) from DB
+        isDeleted: rawIsDeleted,
+        ...restOfPost // Keep the rest of the properties from Post.*
+      } = r;
+
+      // Convert dates and potentially boolean fields
+      const postData = {
+        ...restOfPost,
+        createdAt: new Date(restOfPost.createdAt), // Ensure Date objects
+        updatedAt: new Date(restOfPost.updatedAt), // Ensure Date objects
+        isDeleted: Boolean(rawIsDeleted)         // Convert 0/1 to false/true
+      };
+
+      // Construct the final ExtendedPost object
+      return {
+        ...postData,             // Base post fields with corrected types
+        highlight: r.highlight,  // Keep the highlight string
+        community: parsedCommunity, // Use parsed object
+        author: parsedAuthor,       // Use parsed object
+        votes: parsedVotes          // Use parsed array
+        // Ensure all properties required by ExtendedPost are present
+      };
     });
+
     return { posts, nextCursor };
+
   } catch (error) {
     console.error('Error searching posts:', error);
-    return { posts: [] };
+    // Return the expected structure even on error
+    return { posts: [], nextCursor: undefined };
   }
 }
 

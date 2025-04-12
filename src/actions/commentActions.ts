@@ -1,7 +1,7 @@
 'use server'
 import db from "@/lib/db";
-import { getSessionUserId, handleServerError, requireSessionUserId } from "./actionUtils";
-import { Comment, ExtendedComment, SavedComment, VoteType } from "@prisma/client"
+import { handleServerError, requireSessionUserId } from "./actionUtils";
+import { Comment, ExtendedComment, Prisma, SavedComment, VoteType } from "@prisma/client"
 import { getTotalCommentDownvotes, getTotalCommentUpvotes } from "./voteUtils";
 import { revalidateTag } from "next/cache";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
@@ -117,7 +117,7 @@ export const readCommentWithAncestors = async (
     try {
         // Initialize the chain with the target comment.
         const chain: ExtendedComment[] = [];
-        let currentComment = await db.comment.findUnique({
+        const currentComment = await db.comment.findUnique({
             where: { id: commentId }, include: {
                 author: true,
                 votes: true,
@@ -253,7 +253,7 @@ export const readCommentsByUserId = async ({
     cacheTag(`comments-${userId}`);
 
     try {
-        let queryOptions: any = {
+        const queryOptions: Prisma.CommentFindManyArgs = {
             where: { authorId: userId },
             include: {
                 author: true,
@@ -263,6 +263,7 @@ export const readCommentsByUserId = async ({
                         community: true,
                     },
                 },
+                savedBy: true,
             },
             take: limit + 1,
         };

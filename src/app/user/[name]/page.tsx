@@ -15,19 +15,18 @@ import {
 import { cn, getSortParams } from '@/lib/utils';
 import OverviewList from '@/app/components/shared/OverviewList';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
+import { OverviewItem, OverviewPost, OverviewComment } from '@/types/types';
 
-const UserPage = async ({
-  params,
-  searchParams,
-}: {
-  params: { name: string };
-  searchParams?: { sort?: string; activeTab?: string };
-}) => {
+interface UserOverviewPageProps {
+  params: Promise<{ name: string }>;
+  searchParams?: Promise<{ sort?: string; activeTab?: string }>;
+}
+
+const UserPage = async ({ params, searchParams }: UserOverviewPageProps) => {
   const { name } = await params;
-  const { sort } = (await searchParams) || {};
+  const resolvedSearchParams = await searchParams;
+  const { sort } = resolvedSearchParams || {};
   const decodedName = decodeURIComponent(name);
   const initialOverviewSort = sort || 'newest';
   const overviewSortParams = getSortParams(initialOverviewSort);
@@ -41,15 +40,31 @@ const UserPage = async ({
     sortBy: overviewSortParams.sortBy,
     sortOrder: overviewSortParams.sortOrder,
   });
-  const { items: initialItems = [], nextCursor: initialOverviewCursor } =
-    overviewData || {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let initialItems: any[] = overviewData?.items || [];
 
-  // Convert initialOverviewCursor to a string if it's not null.
+  // Map the raw items to our OverviewItem union.
+  // If an item already has a type field of 'post' or 'comment', we assume it's correct.
+  // Otherwise, if the item has a community, assume it's a post; else, assume it's a comment.
+  initialItems = initialItems.map((item) => {
+    if (item.type === 'post' || item.type === 'comment') {
+      return item as OverviewItem;
+    }
+    if (item.community) {
+      return { ...item, type: 'post' as const } as OverviewPost;
+    }
+    return { ...item, type: 'comment' as const } as OverviewComment;
+  });
+
+  // Convert initialOverviewCursor to a string (if applicable)
+  const initialOverviewCursor = overviewData?.nextCursor;
   const initialCursorStr = initialOverviewCursor
     ? new Date(initialOverviewCursor).toISOString()
     : null;
   const overviewListKey = `overview-list-${initialOverviewSort}`;
-  console.log(overviewData.items, 'overviewData.items');
+
+  console.log(initialItems, 'overviewData.items');
+
   return (
     <HolyGrail>
       <Left />
@@ -57,7 +72,7 @@ const UserPage = async ({
         <div className='w-full p-4 flex items-center gap-4'>
           <Avatar className={cn('cursor-pointer w-16 h-16')}>
             <AvatarImage
-              className='rounded-full '
+              className='rounded-full'
               src={user.image || undefined}
               alt={user.name || undefined}
             />
@@ -69,13 +84,13 @@ const UserPage = async ({
           userName={user.name || ''}
           className='w-full p-4 flex items-center gap-4'
         />
-        {overviewData.items.length > 0 ? (
+        {initialItems.length > 0 ? (
           <SortProvider
             initialSort={initialOverviewSort}
             contentType='overview'
           >
-            <div className='max-w-[700px] w-full items-center flex p-4'>
-              <SortingControls title='Overview' />
+            <div className='max-w-[700px] w-full flex items-center p-4'>
+              <SortingControls />
             </div>
             <LoadMore
               loadMoreAction={loadMoreUserPostsAndComments}

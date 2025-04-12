@@ -31,16 +31,16 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 
 type CommunityPageProps = {
-  params: { name: string };
-  searchParams?: {
+  params: Promise<{ name: string }>;
+  searchParams?: Promise<{
     sort?: string;
-  };
+  }>;
 };
-
 const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
   try {
     const { name } = await params;
-    const { sort } = (await searchParams) ?? {};
+    const resolvedSearchParams = await searchParams; 
+    const { sort } = resolvedSearchParams || {};
     const initialSort = sort || 'newest';
     const decodedName = decodeURIComponent(name);
     const sortParams = getSortParams(initialSort);
@@ -95,7 +95,7 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
             {initialPosts.length > 0 && (
               <SortProvider initialSort={initialSort}>
                 <div className='max-w-[700px] w-full items-center flex p-4'>
-                  <SortingControls title='Posts' />
+                  <SortingControls />
                 </div>
                 <LoadMore
                   loadMoreAction={loadMorePosts}
@@ -109,7 +109,9 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
                 </LoadMore>
               </SortProvider>
             )}
-            {initialPosts.length === 0 && <div className='text-center'>No posts found.</div>}
+            {initialPosts.length === 0 && (
+              <div className='text-center'>No posts found.</div>
+            )}
           </div>
         </Middle>
         <Right>

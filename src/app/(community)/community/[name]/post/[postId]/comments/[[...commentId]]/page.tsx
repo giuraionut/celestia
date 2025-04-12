@@ -1,5 +1,8 @@
 import React from 'react';
-import { fetchCommentsByPost, readCommentWithAncestors, } from '@/actions/commentActions';
+import {
+  fetchCommentsByPost,
+  readCommentWithAncestors,
+} from '@/actions/commentActions';
 import {
   isUserMemberOfCommunity,
   readCommunityById,
@@ -27,8 +30,10 @@ import { formatDistanceToNow } from 'date-fns';
 const PostPage = async ({
   params,
 }: {
-  params: { postId: string; commentId: string };
+  // --- Fix: Define params as a Promise ---
+  params: Promise<{ postId: string; commentId: string }>;
 }) => {
+  // --- Keep await params as it's correct for v15 ---
   const { postId, commentId } = await params;
   const userId = await getSessionUserId();
 
@@ -43,7 +48,9 @@ const PostPage = async ({
     readCommunityById(post.communityId),
   ]);
 
-  const singleComment = commentId ? await readCommentWithAncestors(commentId[0]) : null;
+  const singleComment = commentId
+    ? await readCommentWithAncestors(commentId[0])
+    : null;
 
   const postVotes = post.votes || [];
   const userVote = postVotes.find((vote) => vote.userId === userId) || null;
@@ -95,12 +102,12 @@ const PostPage = async ({
               {formatDistanceToNow(post.createdAt, { addSuffix: true })}
             </span>
           </div>
-          <PostCard post={post}/>
+          <PostCard post={post} />
           {commentsData && (
             <CommentsProvider
               initialCount={totalComments}
               initialComments={
-               singleComment ? [singleComment] : commentsData.comments
+                singleComment ? [singleComment] : commentsData.comments
               }
             >
               <footer className='flex items-center justify-between'>

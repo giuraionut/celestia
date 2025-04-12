@@ -59,7 +59,7 @@ export function CreateCommunityForm() {
       totalMembers: 0,
       totalManagers: 0,
       isPrivate: data.isPrivate,
-      totalPosts: 0
+      totalPosts: 0,
     };
 
     try {
@@ -73,7 +73,10 @@ export function CreateCommunityForm() {
           'Error: Community creation failed or returned invalid data.'
         );
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(`Error creating community: ${error.message}`);
+      }
       toast.error('Error creating community. Please try again.');
     }
   }
@@ -82,15 +85,15 @@ export function CreateCommunityForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-2/3 space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className='w-2/3 space-y-6'>
         <FormField
           control={form.control}
-          name="name"
+          name='name'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="Enter community name" {...field} />
+                <Input placeholder='Enter community name' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -98,12 +101,12 @@ export function CreateCommunityForm() {
         />
         <FormField
           control={form.control}
-          name="description"
+          name='description'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input placeholder="Enter community description" {...field} />
+                <Input placeholder='Enter community description' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -111,12 +114,12 @@ export function CreateCommunityForm() {
         />
         <FormField
           control={form.control}
-          name="image"
+          name='image'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Image URL (optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Enter community image URL" {...field} />
+                <Input placeholder='Enter community image URL' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -124,20 +127,20 @@ export function CreateCommunityForm() {
         />
         <FormField
           control={form.control}
-          name="isPrivate"
+          name='isPrivate'
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center space-x-2">
+            <FormItem className='flex flex-row items-center space-x-2'>
               <Checkbox
                 checked={field.value}
                 onCheckedChange={(checked) => {
                   field.onChange(checked === true);
                 }}
               />
-              <FormLabel className="cursor-pointer">Private</FormLabel>
+              <FormLabel className='cursor-pointer'>Private</FormLabel>
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={!isFormValid}>
+        <Button type='submit' disabled={!isFormValid}>
           Submit
         </Button>
       </form>

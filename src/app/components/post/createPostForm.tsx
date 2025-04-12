@@ -77,7 +77,10 @@ export function CreatePostForm(props: CreatePostFormProps) {
       } else {
         toast.error('Failed to create post. Post returned null or undefined.');
       }
-    } catch (error) {
+    } catch (error:unknown) {
+      if (error instanceof Error) {
+        toast.error(`Error creating post: ${error.message}`);
+      }
       toast.error('Error creating post. Please try again.');
     }
   };

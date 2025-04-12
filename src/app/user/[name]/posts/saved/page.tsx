@@ -20,12 +20,12 @@ const UserSavedPosts = async ({
   params,
   searchParams,
 }: {
-  params: { name: string; page: string };
+  params: Promise<{ name: string; page: string }>;
 
-  searchParams?: {
+  searchParams?: Promise<{
     sort?: string;
     activeTab?: string;
-  };
+  }>;
 }) => {
   const { name } = await params;
   const { sort } = (await searchParams) || {};
@@ -72,7 +72,7 @@ const UserSavedPosts = async ({
         {postData && postData?.posts.length > 0 ? (
           <SortProvider initialSort={initialPostsSort} contentType='posts'>
             <div className='max-w-[700px] w-full items-center flex px-4'>
-              <SortingControls title='Posts' />
+              <SortingControls/>
             </div>
             <LoadMore
               loadMoreAction={loadMoreUserPosts}

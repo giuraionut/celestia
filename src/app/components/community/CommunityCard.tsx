@@ -27,7 +27,7 @@ const CommunityCard = async ({
         className='flex items-center gap-4 text-primary/50 hover:text-primary'
       >
         <Image
-          src={community.image}
+          src={community.image || '/defaultCommunity.png'}
           className='w-10 h-10 rounded-full object-contain'
           alt={community.name}
           width={100}

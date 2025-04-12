@@ -184,6 +184,7 @@ const Header = memo(
   }
 );
 
+Header.displayName = 'Header';
 const Content = memo(
   ({
     comment,
@@ -210,6 +211,7 @@ const Content = memo(
     );
   }
 );
+Content.displayName = 'Content';
 const Footer = memo(
   ({
     comment,
@@ -256,7 +258,7 @@ const Footer = memo(
           description: (error as Error).message,
         });
       }
-    }, [comment, editorContent]);
+    }, [comment, editorContent, updateCommentInTree]);
 
     const handleReplyComment = useCallback(async () => {
       if (context.sessionStatus === 'unauthenticated') {
@@ -292,7 +294,7 @@ const Footer = memo(
           description: (error as Error).message,
         });
       }
-    }, [comment, editorContent]);
+    }, [comment, editorContent, context.sessionStatus, updateCommentInTree]);
 
     const handleDeleteComment = useCallback(async () => {
       try {
@@ -305,7 +307,7 @@ const Footer = memo(
           description: (error as Error).message,
         });
       }
-    }, [comment]);
+    }, [comment, context, updateCommentInTree]);
 
     return (
       <div className={cn('ml-12 flex flex-col gap-4', className)}>
@@ -346,9 +348,12 @@ const Footer = memo(
           <button
             disabled={comment.isDeleted}
             onClick={() => {
-              context.sessionStatus === 'authenticated'
-                ? setIsReplying(!isReplying)
-                : setIsLoginModalOpen(true);
+              // Use if/else for conditional function calls
+              if (context.sessionStatus === 'authenticated') {
+                setIsReplying(!isReplying); // This is a function call
+              } else {
+                setIsLoginModalOpen(true); // This is also a function call
+              }
             }}
             className={cn(
               'text-sm transition px-2 py-1 rounded-sm cursor-pointer',
@@ -400,3 +405,5 @@ const Footer = memo(
     );
   }
 );
+Footer.displayName = 'Footer';
+CommentNode.displayName = 'CommentNode';

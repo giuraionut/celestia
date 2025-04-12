@@ -57,29 +57,6 @@ export const readCommunityById = async (
     }
 };
 
-// export const readCommunityByName = async (
-//     name: string
-// ): Promise<ExtendedCommunity | null> => {
-//     "use cache";
-//     name = name.toLowerCase().trim();
-//     try {
-//         const result = await db.$queryRaw<Community[]>`
-//       SELECT * FROM Community 
-//       WHERE name COLLATE NOCASE = ${name}
-//       LIMIT 1
-//     `;
-//         if (!result.length) {
-//             return null;
-//         }
-//         const communityId = result[0].id;
-//         cacheTag(`community-${communityId}`);
-//         return readCommunityById(communityId);
-//     } catch (error) {
-//         handleServerError(error, "reading community by name.");
-//         return null;
-//     }
-// };
-
 export const findCommunitiesByName = async (
     name: string
 ): Promise<ExtendedCommunity[] | null> => {

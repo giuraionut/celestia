@@ -12,7 +12,6 @@ import {
 } from '@/actions/communityActions';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
-import { SearchBox } from './SearchBox';
 import { SidebarCommunities } from './SidebarCommunities';
 import { Separator } from '@/components/ui/separator';
 import UserProfileDropdown from './UserProfileDropdown';
