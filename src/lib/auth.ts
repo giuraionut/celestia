@@ -1,4 +1,4 @@
-import argon2 from "argon2"; 
+import argon2 from "argon2";
 import { AuthOptions, Session, User } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
@@ -62,6 +62,7 @@ export const authOptions: AuthOptions = {
     pages: {
         signIn: "/auth/signin",
     },
+    secret: process.env.NEXTAUTH_SECRET,
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID as string,
