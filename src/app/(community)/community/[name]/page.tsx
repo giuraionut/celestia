@@ -39,7 +39,7 @@ type CommunityPageProps = {
 const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
   try {
     const { name } = await params;
-    const resolvedSearchParams = await searchParams; 
+    const resolvedSearchParams = await searchParams;
     const { sort } = resolvedSearchParams || {};
     const initialSort = sort || 'newest';
     const decodedName = decodeURIComponent(name);

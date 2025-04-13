@@ -17,6 +17,7 @@ export const createCommunity = async (
         const userId = await requireSessionUserId("creating new community");
         if (!userId) return null;
         delete (community as { id?: string }).id; // Ensure no ID is provided
+        revalidateTag("communities"); // Revalidate the communities cache
         return await db.community.create({
             data: {
                 ...community,
@@ -82,7 +83,7 @@ export const findCommunityByName = async (
     try {
         const community = await db.community.findFirstOrThrow({
             where: { name: { contains: name } },
-            include: { author: true, posts: true, managers:true },
+            include: { author: true, posts: true, managers: true },
         });
         cacheTag(`community-${community.id}`);
         return community;
@@ -94,6 +95,7 @@ export const findCommunityByName = async (
 
 export const readCommunities = async (): Promise<ExtendedCommunity[] | null> => {
     "use cache";
+    cacheTag("communities");
     try {
         return await db.community.findMany({
             include: { author: true, posts: true },
