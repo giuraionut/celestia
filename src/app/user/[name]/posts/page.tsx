@@ -15,6 +15,7 @@ import { cn, getSortParams } from '@/lib/utils';
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
+import UserBanner from '@/app/components/shared/UserBanner';
 
 const UserPagePosts = async ({
   params,
@@ -54,17 +55,7 @@ const UserPagePosts = async ({
     <HolyGrail>
       <Left></Left>
       <Middle>
-        <div className='w-full p-4 flex items-center gap-4'>
-          <Avatar className={cn('cursor-pointer w-16 h-16')}>
-            <AvatarImage
-              className='rounded-full '
-              src={user.image || undefined}
-              alt={user.name || undefined}
-            />
-            <AvatarFallback>{user.name?.[0] || 'U'}</AvatarFallback>
-          </Avatar>
-          <h1 className='text-2xl font-bold'>{user.name}</h1>
-        </div>
+        <UserBanner user={user} />
         <UserProfileContentButtons
           userName={user.name || ''}
           className='w-full p-4 flex items-center gap-4'

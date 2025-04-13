@@ -17,6 +17,7 @@ import OverviewList from '@/app/components/shared/OverviewList';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
 import { OverviewItem, OverviewPost, OverviewComment } from '@/types/types';
+import UserBanner from '@/app/components/shared/UserBanner';
 
 interface UserOverviewPageProps {
   params: Promise<{ name: string }>;
@@ -43,9 +44,6 @@ const UserPage = async ({ params, searchParams }: UserOverviewPageProps) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let initialItems: any[] = overviewData?.items || [];
 
-  // Map the raw items to our OverviewItem union.
-  // If an item already has a type field of 'post' or 'comment', we assume it's correct.
-  // Otherwise, if the item has a community, assume it's a post; else, assume it's a comment.
   initialItems = initialItems.map((item) => {
     if (item.type === 'post' || item.type === 'comment') {
       return item as OverviewItem;
@@ -56,30 +54,17 @@ const UserPage = async ({ params, searchParams }: UserOverviewPageProps) => {
     return { ...item, type: 'comment' as const } as OverviewComment;
   });
 
-  // Convert initialOverviewCursor to a string (if applicable)
   const initialOverviewCursor = overviewData?.nextCursor;
   const initialCursorStr = initialOverviewCursor
     ? new Date(initialOverviewCursor).toISOString()
     : null;
   const overviewListKey = `overview-list-${initialOverviewSort}`;
 
-  console.log(initialItems, 'overviewData.items');
-
   return (
     <HolyGrail>
       <Left />
       <Middle>
-        <div className='w-full p-4 flex items-center gap-4'>
-          <Avatar className={cn('cursor-pointer w-16 h-16')}>
-            <AvatarImage
-              className='rounded-full'
-              src={user.image || undefined}
-              alt={user.name || undefined}
-            />
-            <AvatarFallback>{user.name?.[0] || 'U'}</AvatarFallback>
-          </Avatar>
-          <h1 className='text-2xl font-bold'>{user.name}</h1>
-        </div>
+        <UserBanner user={user} />
         <UserProfileContentButtons
           userName={user.name || ''}
           className='w-full p-4 flex items-center gap-4'

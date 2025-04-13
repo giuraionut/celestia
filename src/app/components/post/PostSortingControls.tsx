@@ -11,8 +11,9 @@ import {
 import { useSortContext } from './PostSortingContext';
 
 export function SortingControls() {
-  const { currentSort, setSortOption, availableSortOptions } = useSortContext();
-
+  const { currentSort, setSortOption, availableSortOptions, showSortOptions } =
+    useSortContext();
+  if (!showSortOptions) return null; // Return null if showSortOptions is false
   return (
     <div className='flex justify-between items-center gap-4'>
       <h1>{'Sort by'}</h1>

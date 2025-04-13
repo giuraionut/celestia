@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 // Define the available sort options
@@ -20,14 +26,20 @@ const BASE_SORT_OPTIONS: Record<string, SortOption> = {
 // Extended sort options for posts only
 const POST_SORT_OPTIONS: Record<string, SortOption> = {
   ...BASE_SORT_OPTIONS,
-  mostCommented: { label: 'Most Commented', sortBy: 'totalComments', sortOrder: 'desc' },
+  mostCommented: {
+    label: 'Most Commented',
+    sortBy: 'totalComments',
+    sortOrder: 'desc',
+  },
 };
 
 // Content type options
 export type ContentType = 'posts' | 'comments' | 'overview';
 
 // Get appropriate sort options based on content type
-export const getSortOptionsForContentType = (contentType: ContentType): Record<string, SortOption> => {
+export const getSortOptionsForContentType = (
+  contentType: ContentType
+): Record<string, SortOption> => {
   switch (contentType) {
     case 'posts':
       return POST_SORT_OPTIONS;
@@ -45,6 +57,7 @@ type SortContextType = {
   sortOrder: 'asc' | 'desc';
   setSortOption: (option: string) => void;
   availableSortOptions: Record<string, SortOption>;
+  showSortOptions?: boolean; // Optional prop to show/hide sort options
   isSortChanging: boolean;
   contentType: ContentType;
 };
@@ -61,51 +74,55 @@ export const useSortContext = () => {
 };
 
 // Provider component
-export const SortProvider = ({ 
-  children, 
-  initialSort = 'newest', 
+export const SortProvider = ({
+  children,
+  initialSort = 'newest',
   paramName = 'sort',
-  contentType = 'posts'
-}: { 
-  children: ReactNode; 
-  initialSort?: string; 
+  contentType = 'posts',
+  showSortOptions = true, // Default to true
+}: {
+  children: ReactNode;
+  initialSort?: string;
   paramName?: string;
   contentType?: ContentType;
+  showSortOptions?: boolean; // Optional prop to show/hide sort options
 }) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
   // Get available sort options based on content type
   const availableSortOptions = getSortOptionsForContentType(contentType);
-  
+
   // Get initial sort from URL or use the default
   const urlSort = searchParams.get(paramName);
-  
+
   // Ensure the initial sort is valid for this content type
-  const validInitialSort = urlSort && availableSortOptions[urlSort] 
-    ? urlSort 
-    : initialSort in availableSortOptions 
-      ? initialSort 
+  const validInitialSort =
+    urlSort && availableSortOptions[urlSort]
+      ? urlSort
+      : initialSort in availableSortOptions
+      ? initialSort
       : 'newest';
-  
+
   const [currentSort, setCurrentSort] = useState(validInitialSort);
   const [isSortChanging, setIsSortChanging] = useState(false);
-  
+
   // Determine the current sort option
-  const sortOption = availableSortOptions[currentSort] || availableSortOptions.newest;
-  
+  const sortOption =
+    availableSortOptions[currentSort] || availableSortOptions.newest;
+
   // Change sort option and update URL
   const setSortOption = (option: string) => {
     if (option === currentSort || !availableSortOptions[option]) return; // No change needed or invalid option
-    
+
     setIsSortChanging(true);
     setCurrentSort(option);
-    
+
     // Update URL query parameter while preserving other parameters
     const params = new URLSearchParams(searchParams.toString());
     params.set(paramName, option);
-    
+
     // Navigate to update the server component
     router.push(`${pathname}?${params.toString()}`);
   };
@@ -117,7 +134,7 @@ export const SortProvider = ({
       setIsSortChanging(false);
     }
   }, [searchParams, paramName, currentSort]);
-  
+
   return (
     <SortContext.Provider
       value={{
@@ -126,6 +143,7 @@ export const SortProvider = ({
         sortOrder: sortOption.sortOrder,
         setSortOption,
         availableSortOptions,
+        showSortOptions,
         isSortChanging,
         contentType,
       }}

@@ -77,7 +77,7 @@ const PostDropDownMenu = ({
         <EllipsisIcon className='cursor-pointer hover:bg-secondary rounded-lg' />
       </DropdownMenuTrigger>
       <DropdownMenuContent className='w-56'>
-        <DropdownMenuLabel>Post {postId}</DropdownMenuLabel>
+        <DropdownMenuLabel>Post Options</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={handleSavePost}>

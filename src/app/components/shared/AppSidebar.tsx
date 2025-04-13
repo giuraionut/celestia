@@ -25,7 +25,6 @@ export async function AppSidebar({
 
   const visitedCommunities = await fetchVisitedCommunities(session.user.id);
   const joinedCommunities = await fetchUserCommunities(session.user.id);
-  console.log('sideabbr');
   return (
     <Sidebar {...props}>
       <SidebarHeader className='mt-10'>

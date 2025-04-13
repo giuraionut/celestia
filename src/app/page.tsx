@@ -40,7 +40,10 @@ export default async function Home({ searchParams }: HomeProps) {
     <HolyGrail>
       <Left />
       <Middle>
-        <SortProvider initialSort={initialSort}>
+        <SortProvider
+          initialSort={initialSort}
+          showSortOptions={initialPosts.length > 0}
+        >
           <div className='max-w-[700px] w-full items-center flex p-4'>
             <SortingControls />
           </div>

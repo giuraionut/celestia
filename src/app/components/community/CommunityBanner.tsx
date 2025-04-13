@@ -29,15 +29,13 @@ const CommunityBanner = async ({
       )}
     >
       <div className='relative flex flex-col sm:flex-row gap-4 rounded-t-sm p-4 w-full'>
-        {community.image && (
-          <Image
-            src={community.image}
-            className='w-20 h-auto rounded-full object-cover ring-2 ring-accent-foreground'
-            alt={community.name}
-            width={200}
-            height={200}
-          />
-        )}
+        <Image
+          src={community.image || '/defaultCommunityImage.png'}
+          className='w-20 h-auto rounded-full object-cover ring-2 ring-accent-foreground'
+          alt={community.name}
+          width={200}
+          height={200}
+        />
 
         <div className='w-full flex flex-col'>
           <div className='flex flex-col'>

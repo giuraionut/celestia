@@ -15,6 +15,7 @@ export const createPost = async (post: Post): Promise<Post | null> => {
         if (!userId) return null;
         post.authorId = userId;
         delete (post as { id?: string }).id;
+        revalidateTag('posts');
         return await db.post.create({ data: post });
     }
     catch (error) {

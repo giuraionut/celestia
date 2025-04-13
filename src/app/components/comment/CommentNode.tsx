@@ -22,6 +22,7 @@ import { useSession } from 'next-auth/react';
 import { useCommentsContext } from './CommentsContext';
 import { LoginDialog } from '../shared/LoginDialog';
 import CommentVote from './CommentVote';
+import UserHoverCard from '../shared/UserHoverCard';
 interface TreeNodeProps {
   comment: ExtendedComment;
   path: number[];
@@ -152,10 +153,10 @@ const Header = memo(
     comment: ExtendedComment;
   }) => {
     return (
-      <div className={cn('flex items-center gap-4', className)}>
+      <div className={cn('flex items-center text-center gap-2', className)}>
         <Avatar
-          className='inline-flex size-[35px] select-none items-center justify-center overflow-hidden rounded-full
-         bg-foreground/10 align-middle cursor-pointer border-[1.5px] border-border transition-all duration-150 ease-in-out'
+          className='inline-flex size-[30px] select-none items-center justify-center overflow-hidden rounded-full
+         bg-foreground/10 align-middle border-[1.5px] border-border transition-all duration-150 ease-in-out'
         >
           <AvatarImage
             className='size-full rounded-[inherit] object-cover'
@@ -169,10 +170,8 @@ const Header = memo(
             {comment?.author?.name?.[0] || 'U'}
           </AvatarFallback>
         </Avatar>
-        <div className='flex items-center gap-2'>
-          <strong className='text-md font-semibold'>
-            {comment?.author?.name || 'Unknown User'} •
-          </strong>
+        <div className='flex items-center gap-2 text-sm'>
+          {comment.author && <UserHoverCard user={comment.author} />} •
           <small className='text-sm'>
             {formatDistanceToNow(new Date(comment.createdAt), {
               addSuffix: true,

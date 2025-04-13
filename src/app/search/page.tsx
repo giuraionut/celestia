@@ -29,9 +29,7 @@ const SearchPage = async ({
       <Middle>
         <div className='p-6 w-full mx-auto flex-1 h-full'>
           <div className='flex flex-col gap-4'>
-            {/* Display Search Results */}
             <PostList key={postListKey} posts={posts} userId={userId} />
-            {/* Load More */}
             {nextCursor && (
               <div className='mt-6 text-center'>
                 <a
@@ -45,11 +43,7 @@ const SearchPage = async ({
           </div>
         </div>
       </Middle>
-      <Right>
-        <div className='w-full h-32 rounded border m-4 sticky top-14 p-4 bg-red-300'>
-          Something {userId}
-        </div>
-      </Right>
+      <Right></Right>
     </HolyGrail>
   );
 };

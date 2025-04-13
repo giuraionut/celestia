@@ -25,6 +25,8 @@ import { getSessionUserId } from '@/actions/actionUtils';
 import LoadMorePostComments from '@/app/components/comment/LoadMorePostComments';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import CommunityHeader from '@/app/components/community/CommunityHeader';
+import UserHoverCard from '@/app/components/shared/UserHoverCard';
 
 // This is now an SSR Server Component
 const PostPage = async ({
@@ -78,26 +80,14 @@ const PostPage = async ({
       <Middle>
         <div className='max-w-[600px] flex flex-col gap-4 w-full p-4'>
           {community && (
-            <CommunityCard
-              isMemberOfCommunity={isMemberOfCommunity}
-              community={community}
-              content={false}
-              footer={false}
+            <CommunityHeader
+              name={community.name}
+              image={community.image}
+              textSize='text-md'
             />
           )}
-          <div className='flex items-center gap-1 flex-row'>
-            {authorName && (
-              <span className='text-xs'>
-                Posted by{' '}
-                <Link
-                  href={`/user/${authorName}`}
-                  className='text-primary/50 hover:text-primary transition-colors'
-                >
-                  {authorName}
-                </Link>
-              </span>
-            )}
-            {!authorName && <p className='text-xs'>Posted by {authorName}</p>}
+          <div className='flex items-center gap-1 flex-row text-xs'>
+            Posted by {post.author && <UserHoverCard user={post.author} />}
             <span className='text-xs'>
               {formatDistanceToNow(post.createdAt, { addSuffix: true })}
             </span>
