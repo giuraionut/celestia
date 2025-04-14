@@ -73,6 +73,7 @@ declare module '@prisma/client' {
      * Nested replies to this comment.
      */
     replies?: Comment[];
+    post?: ExtendedPost;
   };
 
   /**

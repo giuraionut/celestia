@@ -1,4 +1,3 @@
-// src/app/components/overview/OverviewList.tsx (assuming component location)
 import Link from 'next/link';
 import PostCard from '@/app/components/post/PostCard';
 import PostVote from '@/app/components/post/PostVote';
@@ -9,6 +8,8 @@ import CommentCard from '@/app/components/comment/CommentCard';
 import { formatDistanceToNow } from 'date-fns';
 import PostDropDownMenu from '@/app/components/post/PostDropDownMenu';
 import { OverviewItem, isOverviewPost, isOverviewComment } from '@/types/types';
+import UserHoverCard from './UserHoverCard';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface OverviewListProps {
   items: OverviewItem[];
@@ -17,75 +18,109 @@ interface OverviewListProps {
 
 export default function OverviewList({ items, userId }: OverviewListProps) {
   return (
-    <div className="w-full">
+    <div className='w-full'>
       {items.map((item, index) => {
-        // Use the type guard for cleaner differentiation
         if (isOverviewPost(item)) {
-          // item is now correctly typed as OverviewPost
-          const userVote = item.votes.find((vote) => vote.userId === userId) || null; // Assuming votes is always an array
-          const isSaved = item.savedBy.some((saved) => saved.userId === userId); // Assuming savedBy is always an array
-          const isHidden = item.hiddenBy.some((hidden) => hidden.userId === userId); // Assuming hiddenBy is always an array
-
-          // Defensive check for community (if it can truly be null)
-          const communityName = item.community?.name ?? 'unknown';
-          const communityImage = item.community?.image ?? ''; // Provide default image
+          const userVote =
+            item.votes.find((vote) => vote.userId === userId) || null;
+          const isSaved = item.savedBy.some((saved) => saved.userId === userId);
+          const isHidden = item.hiddenBy.some(
+            (hidden) => hidden.userId === userId
+          );
 
           return (
             <div
-              key={`post-${item.id}-${index}`} // Use item.id for a stable key
-              className="h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-sm p-4 border"
+              key={`post-${item.id}-${index}`}
+              className='h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-sm p-4'
             >
               <CommunityHeader
-                name={communityName}
-                image={communityImage}
+                name={item.community!.name}
+                image={item.community!.image}
+                textSize='text-md'
               />
-              <Link
-                href={`/community/${communityName}/post/${item.id}/comments`}
-                className="block"
-              >
-                {/* Ensure PostCard expects an object compatible with OverviewPost */}
-                <PostCard post={item} />
-              </Link>
-              <div className="flex flex-row justify-between items-center">
-                <PostDropDownMenu postId={item.id} isSaved={isSaved} isHidden={isHidden} />
-                <div className="flex flex-row gap-1 items-center">
-                   {/* Ensure PostVote expects an object compatible with OverviewPost */}
-                  <PostVote post={item} vote={userVote} userId={userId} />
-                  <span className="flex flex-row gap-2 items-center">
-                    {/* totalComments should exist directly on item now */}
-                    {item.totalComments ?? 0} <MessageSquareIcon />
+              <div className='flex items-center gap-1 flex-row justify-between'>
+                <div className='flex items-center gap-1 flex-row text-xs'>
+                  Posted by{' '}
+                  {item.author && <UserHoverCard user={item.author} />}
+                  <span className='text-xs'>
+                    {formatDistanceToNow(item.createdAt, { addSuffix: true })}
                   </span>
                 </div>
+                <PostDropDownMenu
+                  postId={item.id}
+                  isSaved={isSaved}
+                  isHidden={isHidden}
+                />
               </div>
-              <div className="text-xs">
-                {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+              <Link
+                href={`/community/${item.community!.name}/post/${
+                  item.id
+                }/comments`}
+                className='block'
+              >
+                <PostCard post={item} />
+              </Link>
+              <div className='flex flex-row justify-between items-center'>
+                <PostVote post={item} vote={userVote} userId={userId} />
+                <span className='flex flex-row gap-2 items-center'>
+                  {item.totalComments} <MessageSquareIcon />
+                </span>
               </div>
               <Separator />
             </div>
           );
         } else if (isOverviewComment(item)) {
-           // item is now correctly typed as OverviewComment
-           // Defensive checks for post and community name
-           const communityName = item.post?.community?.name ?? 'unknown';
-           const postId = item.post?.id ?? 'unknown-post';
-
+          const communityName = item.post?.community?.name ?? 'unknown';
+          const postId = item.post?.id ?? 'unknown-post';
+          const userVote =
+            item.votes?.find((vote) => vote.userId === userId) || null;
           return (
-            <Link
-              key={`comment-${item.id}-${index}`} // Use item.id for a stable key
-              className="h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 rounded-sm hover:bg-accent p-4 border" // Added padding/border for consistency
-              href={`/community/${communityName}/post/${postId}/comments/${item.id}`}
+            <div
+              key={`comment-${item.id}-${index}`}
+              className='h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 rounded-sm hover:bg-accent p-4'
             >
-               {/* Ensure CommentCard expects an object compatible with OverviewComment */}
-              <CommentCard comment={item} />
-              {/* Optionally add timestamp or other info here if needed */}
-               <div className="text-xs text-muted-foreground mt-1">
-                Commented {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })} on post in c/{communityName}
+              <div className='flex items-center gap-1 flex-row p-1 text-muted-foreground'>
+                <CommunityHeader
+                  name={item.post.community!.name}
+                  image={item.post.community!.image}
+                  textSize='text-md'
+                />
+                <span>•</span>
+                <Link
+                  href={`/community/${communityName}/post/${postId}`}
+                  className='hover:underline'
+                >
+                  {item.post.title || `Post ${postId}`}{' '}
+                </Link>
               </div>
-              <Separator className="mt-2"/>
-            </Link>
+
+              <div className='flex items-center gap-1 flex-row text-xs text-muted-foreground'>
+                {item.author ? (
+                  <UserHoverCard user={item.author} />
+                ) : (
+                  <span className='italic'>[deleted user]</span>
+                )}
+                <span>•</span>
+                <span title={new Date(item.createdAt).toLocaleString()}>
+                  {' '}
+                  {formatDistanceToNow(new Date(item.createdAt), {
+                    addSuffix: true,
+                  })}
+                </span>
+              </div>
+
+              <Link
+                href={`/community/${communityName}/post/${postId}/comments/${item.id}`}
+                className='mt-1 block'
+              >
+                <CommentCard comment={item} className='' userVote={userVote} />
+              </Link>
+
+              <Separator className='mt-2' />
+            </div>
           );
         }
-        return null; // Should not happen if items only contain valid OverviewItems
+        return null;
       })}
     </div>
   );
