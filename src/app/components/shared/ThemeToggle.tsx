@@ -12,10 +12,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-export function ThemeToggle() {
+export function ThemeToggle({ dropdown = false }: { dropdown?: boolean }) {
   const { setTheme } = useTheme();
 
-  return (
+  return dropdown ? (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant='ghost' size='icon'>
@@ -44,5 +44,26 @@ export function ThemeToggle() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  ) : (
+    <div className='flex flex-col'>
+      <Button
+        className='w-full justify-start'
+        variant='ghost'
+        onClick={() => {
+          setTheme('light');
+        }}
+      >
+        Light
+      </Button>
+      <Button
+        className='w-full justify-start'
+        variant='ghost'
+        onClick={() => {
+          setTheme('dark');
+        }}
+      >
+        Dark
+      </Button>
+    </div>
   );
 }

@@ -61,7 +61,7 @@ export function CreatePostForm(props: CreatePostFormProps) {
       updatedAt: new Date(),
       communityId: community ? community.id : data.community,
       authorId: '',
-      cover: '',
+      cover: data.image || '',
       isDeleted: false,
       totalComments: 0,
       totalUpvotes: 0,

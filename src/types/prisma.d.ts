@@ -103,5 +103,6 @@ declare module '@prisma/client' {
      */
     posts: Post[] | ExtendedPost[];
     managers?: User[];
+    members?: User[];
   };
 }

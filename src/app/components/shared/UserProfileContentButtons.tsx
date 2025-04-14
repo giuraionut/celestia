@@ -17,11 +17,11 @@ const buttons = [
     href: '/comments',
   },
   {
-    name: 'Saved',
+    name: 'Saved Posts',
     href: '/posts/saved',
   },
   {
-    name: 'Hidden',
+    name: 'Hidden Posts',
     href: '/posts/hidden',
   },
 ];

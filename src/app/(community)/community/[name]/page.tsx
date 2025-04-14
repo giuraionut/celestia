@@ -1,5 +1,6 @@
 import {
   findCommunityByName,
+  isUserManagerOfCommunity,
   isUserMemberOfCommunity,
   logCommunityVisit,
 } from '@/actions/communityActions';
@@ -29,6 +30,7 @@ import { loadMorePosts } from '@/actions/loadMoreActions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
+import UserHoverCard from '@/app/components/shared/UserHoverCard';
 
 type CommunityPageProps = {
   params: Promise<{ name: string }>;
@@ -45,31 +47,33 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
     const decodedName = decodeURIComponent(name);
     const sortParams = getSortParams(initialSort);
 
-    // Fetch community data (available to all users)
     const community = await findCommunityByName(decodedName);
     if (!community) {
       return <div>Community not found.</div>;
     }
 
-    const isPrivate = community.isPrivate;
-
-    if (isPrivate) {
-      return <div>This community is private.</div>;
-    }
-    // Get the session user ID (if any)
     const userId = await getSessionUserId();
+    const isPrivate = community.isPrivate;
+    const isMemberOfCommunity = userId
+      ? await isUserMemberOfCommunity(community.id, userId)
+      : false;
+    const isManagerOfCommunity = userId
+      ? await isUserManagerOfCommunity(community.id, userId)
+      : false;
 
-    // For actions that require authentication, check if a user is logged in.
+    if (isPrivate && !isMemberOfCommunity && !isManagerOfCommunity) {
+      return (
+        <div>
+          This community is private. You need to be a member or manager to view
+          it.
+        </div>
+      );
+    }
+
     if (userId) {
       await logCommunityVisit(community.id, userId);
     }
 
-    // Only check membership if the user is authenticated
-    const isMemberOfCommunity = userId
-      ? await isUserMemberOfCommunity(community.id, userId)
-      : false;
-
-    // Fetch initial posts
     const postData = await readPosts({
       communityId: community.id,
       limit: 5,
@@ -89,6 +93,7 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
             <CommunityBanner
               community={community}
               isMemberOfCommunity={isMemberOfCommunity}
+              isManagerOfCommunity={isManagerOfCommunity}
               userId={userId}
               className='mb-4'
             />
@@ -141,6 +146,11 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
                 Total Members
                 <span className='font-bold'>{community.totalMembers}</span>
               </span>
+              <span className='inline-flex gap-2'>
+                <UserIcon />
+                Total Managers
+                <span className='font-bold'>{community.totalManagers}</span>
+              </span>
               <Separator />
               <span className='inline-flex gap-2'>
                 <User2Icon />
@@ -148,11 +158,7 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
               </span>
               <span className='ml-8 flex flex-col gap-2'>
                 {community.managers?.map((manager) => (
-                  <Link
-                    href={`/user/${manager.name}`}
-                    key={manager.id}
-                    className='inline-flex gap-2 items-center transition-all text-primary/50 hover:text-primary'
-                  >
+                  <UserHoverCard key={manager.id} user={manager}>
                     <Avatar>
                       <AvatarImage
                         className='rounded-full '
@@ -163,8 +169,7 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
                         {(manager.name ?? '?')[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <span>{manager.name}</span>
-                  </Link>
+                  </UserHoverCard>
                 ))}
               </span>
             </div>

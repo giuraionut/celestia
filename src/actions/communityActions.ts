@@ -168,7 +168,6 @@ export const isUserMemberOfCommunity = async (
     communityId: string,
     userId?: string
 ): Promise<boolean> => {
-    // Use provided userId or fetch it; if not authenticated, return false.
     const effectiveUserId = userId ?? await getSessionUserId();
     if (!effectiveUserId) return false;
 
@@ -187,7 +186,48 @@ export const isUserMemberOfCommunity = async (
     }
 };
 
+export const isUserManagerOfCommunity = async (
+    communityId: string,
+    userId?: string
+): Promise<boolean> => {
+    const effectiveUserId = userId ?? await getSessionUserId();
+    if (!effectiveUserId) return false;
 
+    try {
+        const community = await db.community.findFirst({
+            where: {
+                id: communityId,
+                managers: { some: { id: effectiveUserId } },
+            },
+            select: { id: true },
+        });
+        return Boolean(community);
+    } catch (error) {
+        handleServerError(error, "checking if user is a manager of the community.");
+        return false;
+    }
+};
+
+export const canViewCommunity = async (
+    communityId: string,
+    userId?: string
+): Promise<boolean> => {
+    const effectiveUserId = userId ?? await getSessionUserId();
+    if (!effectiveUserId) return false;
+
+    try {
+        const community = await db.community.findFirst({
+            where: { id: communityId },
+            select: { isPrivate: true },
+        });
+        if (community?.isPrivate && (!await isUserMemberOfCommunity(communityId, effectiveUserId) ||
+            !await isUserManagerOfCommunity(communityId, effectiveUserId))) return false;
+        return true;
+    } catch (error) {
+        handleServerError(error, "checking if user can view the community.");
+        return false;
+    }
+}
 
 
 export const logCommunityVisit = async (

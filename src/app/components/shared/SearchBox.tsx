@@ -307,7 +307,7 @@ export const SearchBox = ({
                             <Image
                               src={option.image}
                               alt={option.name}
-                              className='w-6 h-6 rounded-full object-cover'
+                              className='w-6 h-6 rounded-full object-cover flex-shrink-0'
                               width={24}
                               height={24}
                             />

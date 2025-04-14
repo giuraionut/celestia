@@ -8,16 +8,20 @@ import { User } from '@prisma/client';
 import { format } from 'date-fns';
 import { CakeIcon } from 'lucide-react';
 import Link from 'next/link';
-import React from 'react';
-const UserHoverCard = ({ user }: { user: User }) => {
+import React, { PropsWithChildren } from 'react';
+const UserHoverCard = ({
+  user,
+  children,
+}: { user: User } & PropsWithChildren) => {
   return (
     <div>
       <HoverCard>
         <HoverCardTrigger asChild>
           <Link
             href={`/user/${user.name}`}
-            className='text-primary/50 hover:text-primary transition-colors'
+            className='text-primary/50 hover:text-primary transition-colors flex items-center gap-2'
           >
+            {children}
             {user.name}
           </Link>
         </HoverCardTrigger>

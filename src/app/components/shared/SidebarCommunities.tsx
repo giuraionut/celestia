@@ -88,20 +88,23 @@ export function SidebarCommunities({
                     >
                       <SidebarMenuItem>
                         <SidebarMenuButton asChild isActive={false}>
-                          <div className='flex items-center gap-2'>
-                            {community.image && (
-                              <Image
-                                src={community.image}
-                                alt={community.name}
-                                width={100}
-                                height={100}
-                                className='w-8 h-8 rounded-full object-contain'
-                              />
-                            )}
-                            <Link href={`/community/${community.name}`}>
+                          <Link
+                            href={`/community/${community.name}`}
+                            className='h-12'
+                          >
+                            <div className='flex items-center gap-2 p-2'>
+                              {community.image && (
+                                <Image
+                                  src={community.image}
+                                  alt={community.name}
+                                  width={32}
+                                  height={32}
+                                  className='w-8 h-8 rounded-full object-cover ring-2 ring-accent-foreground flex-shrink-0'
+                                />
+                              )}
                               {community.name}
-                            </Link>
-                          </div>
+                            </div>
+                          </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     </motion.div>
