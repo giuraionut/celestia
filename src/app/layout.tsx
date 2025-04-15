@@ -4,7 +4,7 @@ import './globals.css';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from 'next-themes';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import Header from './components/shared/header';
+import Header from './components/shared/Header';
 import { SessionProvider } from './components/shared/SessionProvider';
 const geistSans = Geist({
   variable: '--font-geist-sans',
