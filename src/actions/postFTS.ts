@@ -190,7 +190,6 @@ export async function getSearchSuggestions(
   const sanitizedQuery = partialQuery.trim().replace(/'/g, "''");
 
   try {
-    // Join PostFTS with Post and Community to get the community name.
     const results = await prisma.$queryRawUnsafe<{
       id: string;
       title: string;
@@ -208,7 +207,7 @@ export async function getSearchSuggestions(
       LIMIT ?
     `, `${sanitizedQuery}*`, limit);
 
-    const maxLength = 100; // Example max length for the snippet
+    const maxLength = 100; 
     return results.map(r => ({
       id: r.id,
       title: r.title,

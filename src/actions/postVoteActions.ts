@@ -15,19 +15,15 @@ export async function voteOnPost(postId: string, value: VoteType): Promise<Vote 
     const existingVote = await findVoteByUserAndTarget(postId, userId, "postId");
 
     if (existingVote) {
-      // Switching vote type.
       await updateVote(existingVote.id, value);
-      // Adjust vote counts: decrement previous type, then increment new type.
       await updatePostVoteCounts(postId, existingVote.type, 'decrement');
       await updatePostVoteCounts(postId, value, 'increment');
-      // Revalidate and update score.
       revalidateTag('posts');
       revalidateTag('fts-posts');
       revalidateTag(`post-${postId}`);
       await updatePostVoteScore(postId);
       return existingVote;
     } else {
-      // No vote exists: create a new vote.
       const newVote = await createVote(postId, userId, value, "postId");
       await updatePostVoteCounts(postId, value, 'increment');
       revalidateTag('posts');
@@ -44,10 +40,8 @@ export async function voteOnPost(postId: string, value: VoteType): Promise<Vote 
 
 export async function deletePostVote(postId: string, voteId: string): Promise<Vote | null> {
   try {
-    // Delete the vote.
     const deletedVote = await deleteVote(voteId);
     if (deletedVote?.postId) {
-      // Decrement the appropriate vote count.
       await updatePostVoteCounts(postId, deletedVote.type, 'decrement');
       revalidateTag('posts');
       revalidateTag(`post-${postId}`);

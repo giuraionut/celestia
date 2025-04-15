@@ -3,7 +3,6 @@ import { HolyGrail, Left, Middle, Right } from '../components/shared/HolyGrail';
 import { getSessionUserId } from '@/actions/actionUtils';
 import PostList from '../components/post/PostList';
 import { Metadata } from 'next';
-import { generateUserPageMetadata } from '@/lib/metadataUtils';
 interface SearchPageProps {
   searchParams: Promise<{ q?: string; cursor?: string }>;
 }
@@ -33,7 +32,7 @@ const SearchPage = async ({ searchParams }: SearchPageProps) => {
       <Middle>
         <div className='p-6 w-full mx-auto flex-1 h-full'>
           <div className='flex flex-col gap-4'>
-            <PostList key={postListKey} posts={posts} userId={userId} />
+            <PostList key={postListKey} posts={posts} userId={userId} view='compact'/>
             {nextCursor && (
               <div className='mt-6 text-center'>
                 <a

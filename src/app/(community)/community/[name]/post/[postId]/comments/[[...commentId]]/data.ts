@@ -17,7 +17,6 @@ export async function getCommunityData(post: ExtendedPost, userId: string) {
         readCommunityById(post.communityId),
     ]);
 
-    // Log community visit if user exists
     if (community && userId) {
         await logCommunityVisit(userId, community.id);
     }

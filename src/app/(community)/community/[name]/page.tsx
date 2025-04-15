@@ -32,6 +32,8 @@ import { Separator } from '@/components/ui/separator';
 import UserHoverCard from '@/app/components/shared/UserHoverCard';
 import { generateCommunityMetadata } from '@/lib/metadataUtils';
 import { Metadata } from 'next';
+import EmptyContent from '@/app/components/shared/EmptyContent';
+import ErrorContent from '@/app/components/shared/ErrorContent';
 
 type CommunityPageProps = {
   params: Promise<{ name: string }>;
@@ -59,8 +61,12 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
     const sortParams = getSortParams(initialSort);
 
     const community = await findCommunityByName(decodedName);
+
     if (!community) {
-      return <div>Community not found.</div>;
+      return (
+        // <EmptyContent message='Looks like the community you are looking for does not exist.' />
+        <ErrorContent message='Something went wrong while loading the community page.' />
+      );
     }
 
     const userId = await getSessionUserId();
@@ -191,9 +197,7 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
   } catch (error) {
     console.error('Error loading community page:', error);
     return (
-      <div className='text-center'>
-        There was an error loading the community. Please try again later.
-      </div>
+      <ErrorContent message='Something went wrong while loading the community page.' />
     );
   }
 };

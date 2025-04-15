@@ -104,15 +104,11 @@ export async function loadMoreUserComments({
     <CommentList
       key={cursor || 'initial'}
       comments={comments}
-      userId={actualUserId} // Fix: use actualUserId instead of userId
+      userId={actualUserId}
     />,
     nextCursor || null,
   ] as const;
 }
-
-// --- Define the type for items returned by readCommentsAndPostsByUserId ---
-// Adjust this based on the EXACT structure returned by your Prisma query,
-// including which relations are optional or always present.
 
 export const loadMoreUserPostsAndComments = async ({
   cursor,
@@ -128,7 +124,6 @@ export const loadMoreUserPostsAndComments = async ({
   const actualUserId = userId || (await getSessionUserId());
   if (!actualUserId) throw new Error('User not found');
 
-  // Assuming readCommentsAndPostsByUserId returns { items: FetchedItem[], nextCursor: Date | null }
   const result = await readCommentsAndPostsByUserId({
     userId: actualUserId,
     cursor,
@@ -139,36 +134,25 @@ export const loadMoreUserPostsAndComments = async ({
 
   if (!result || !result.items) return [null, null] as const;
 
-  // Use the specific FetchedItem type here instead of 'any'
   const items: OverviewItem[] = result.items.map(
     (item: FetchedItem): OverviewItem => {
-      // Use 'in' operator for structural checks (safer than just checking truthiness)
-      // Add checks for essential differentiating properties
       if ('title' in item && 'communityId' in item) {
-        // item is likely ExtendedPost-like structure
-        // Cast to OverviewPost after adding/defaulting properties
         return {
-          ...item, // Spread the original item
+          ...item,
           type: 'post',
-          // Provide defaults using nullish coalescing
           votes: item.votes ?? [],
           savedBy: item.savedBy ?? [],
           hiddenBy: item.hiddenBy ?? [],
           community: item.community ?? null,
-          // Handle totalComments, prefer _count if available
           totalComments: item._count?.comments ?? item.totalComments ?? 0,
-        } as OverviewPost; // Assert the final shape matches OverviewPost
+        } as OverviewPost;
       } else if ('postId' in item && 'content' in item) {
-        // item is likely Comment-like structure
-        // Cast to OverviewComment after adding/defaulting properties
         return {
-          ...item, // Spread the original item
+          ...item,
           type: 'comment',
-          // Provide default for post relation
           post: item.post ?? null,
-        } as OverviewComment; // Assert the final shape matches OverviewComment
+        } as OverviewComment;
       } else {
-        // This block should ideally be unreachable if FetchedItem is accurate
         console.error(
           'Unknown item structure in loadMoreUserPostsAndComments:',
           item

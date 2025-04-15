@@ -79,7 +79,6 @@ export const savePost = async (postId: string): Promise<SavedPost | null> => {
         revalidateTag(`saved-posts-${userId}`);
         revalidateTag(`posts`);
 
-        // Create a new SavedPost record connecting the user and the post.
         return await db.savedPost.create({
             data: {
                 user: { connect: { id: userId } },
@@ -196,7 +195,6 @@ export const readSavedPostsByUserId = async ({
 
         console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
 
-        // Cast the result to a type that includes the "post" relation.
         const savedPosts = (await db.savedPost.findMany(queryOptions)) as Array<
             SavedPost & {
                 post: Post & {
@@ -271,7 +269,6 @@ export const readHiddenPostsByUserId = async ({
 
         console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
 
-        // Cast the result to a type that includes the "post" relation.
         const savedPosts = (await db.hiddenPost.findMany(queryOptions)) as Array<
             HiddenPost & {
                 post: Post & {
@@ -288,7 +285,6 @@ export const readHiddenPostsByUserId = async ({
         const hasMore = savedPosts.length > limit;
         const nextCursor = hasMore ? savedPosts[limit - 1].id : undefined;
 
-        // Map to the post itself
         const posts = savedPosts.slice(0, limit).map((saved) => saved.post);
 
         return {
@@ -321,24 +317,23 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
     'use cache'
     cacheTag(`post-${id}`);
     try {
-        // await new Promise((resolve) => setTimeout(resolve, 20000));
 
         const post = await db.post.findUnique({
             where: { id },
             include: {
-                author: true, // Include author details
-                community: true, // Include community details
+                author: true,
+                community: true,
                 savedBy: true,
                 hiddenBy: true,
                 comments: {
                     where: { parentId: null },
                     include: {
-                        author: true, // Include author of each comment
-                        votes: true, // Include votes for each comment
-                        replies: true, // Include immediate replies
+                        author: true,
+                        votes: true,
+                        replies: true,
                     },
                 },
-                votes: true, // Include votes for the post
+                votes: true,
             },
         });
 
@@ -346,7 +341,7 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
 
         const commentsWithDetails = await Promise.all(
             post.comments.map(async (comment: ExtendedComment) => {
-                const detailedComment = await readComment(comment.id); // Fetch detailed comment with replies
+                const detailedComment = await readComment(comment.id);
                 if (detailedComment) {
                     detailedComment.replies = await fetchRepliesRecursively(detailedComment.id);
                 }
@@ -367,7 +362,6 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
 };
 
 
-// Type definitions
 export interface ReadPostsParams {
     communityId?: string;
     cursor?: string;
@@ -386,79 +380,65 @@ export const readPosts = async ({
     'use cache';
     cacheTag('posts');
     try {
-        // Use the specific Prisma union type for orderBy
         let orderBy: Prisma.PostOrderByWithRelationInput | Prisma.PostOrderByWithRelationInput[];
 
-        // Handle special sorting cases
         if (['createdAt', 'title', 'updatedAt'].includes(sortBy)) {
-            // Ensure sortBy is a valid key recognized by Prisma for Post
-            // TypeScript might need an assertion or a stricter type for sortBy
-            // if it can't infer it's 'createdAt' | 'title' | 'updatedAt' here.
-            // A simple approach for now:
             orderBy = { [sortBy]: sortOrder };
         }
         else if (sortBy === 'voteCount') {
-            // Assumes 'voteScore' exists on your Post model
             orderBy = [
                 {
                     voteScore: sortOrder,
                 },
-                { createdAt: 'desc' }, // Secondary sort
+                { createdAt: 'desc' },
             ];
         }
         else if (sortBy === 'totalComments') {
-            // Order by the count of related comments
             orderBy = [
                 {
                     comments: {
                         _count: sortOrder,
                     },
                 },
-                { createdAt: 'desc' }, // Secondary sort
+                { createdAt: 'desc' },
             ];
         }
-        // Default fallback
         else {
             orderBy = { createdAt: 'desc' };
         }
 
-        // No need to redefine the query options separately if only used once
         const posts = await db.post.findMany({
             where: communityId ? { communityId } : undefined,
             include: {
                 author: true,
                 votes: true,
-                comments: true, // Consider using _count instead if you only need the count
+                comments: true,
                 community: true,
-                savedBy: true, // Might impact performance if large relations
-                hiddenBy: true, // Might impact performance if large relations
+                savedBy: true,
+                hiddenBy: true,
                 _count: {
                     select: {
-                        // votes: true, // Use voteScore if pre-calculated
                         comments: true,
                     },
                 },
             },
             take: limit + 1,
             ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-            orderBy, // Pass the correctly typed orderBy variable
+            orderBy,
         });
 
-        // Optional Chaining in case posts is null/undefined (though findMany usually returns [])
         posts?.forEach(post => cacheTag(`post-${post.id}`));
 
-        // Check length *before* slicing
         const hasMore = posts.length > limit;
-        // Get the ID from the *last* item intended for the *next* page
-        const nextCursor = hasMore ? posts[limit -1 ].id : undefined; // Correct index is limit - 1
+        const nextCursor = hasMore ? posts[limit - 1].id : undefined;
 
         return {
-            posts: posts.slice(0, limit), // Slice up to the limit
-            nextCursor // Use the calculated nextCursor
+            posts: posts.slice(0, limit),
+            nextCursor
         };
     } catch (error) {
         handleServerError(error, 'reading posts.');
-        return null; // Return null on error as per function signature
+        return null;
     }
 };
 
@@ -482,7 +462,6 @@ export const readPostsByUserId = async ({
     cacheTag(`posts-${userId}`);
 
     try {
-        // Debug the incoming sort parameters
         console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
 
         const queryOptions: Prisma.PostFindManyArgs = {
@@ -498,42 +477,33 @@ export const readPostsByUserId = async ({
             take: limit + 1,
         };
 
-        // Handle cursor pagination properly
         if (cursor) {
             queryOptions.cursor = { id: cursor };
-            queryOptions.skip = 1; // Skip the cursor item
+            queryOptions.skip = 1;
         }
 
-        // Set up ordering based on the sort type
         if (['createdAt', 'title', 'updatedAt'].includes(sortBy)) {
-            // Simple field sorting
             queryOptions.orderBy = { [sortBy]: sortOrder };
         }
         else if (sortBy === 'voteCount') {
-            // Order by the stored voteScore field instead of counting votes.
             queryOptions.orderBy = { voteScore: sortOrder };
         }
         else if (sortBy === 'totalComments') {
-            // Order by the stored totalComments field.
             queryOptions.orderBy = { totalComments: sortOrder };
         }
         else {
-            // Default fallback
             queryOptions.orderBy = { createdAt: 'desc' };
         }
 
-        // Debug the final query structure
         console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
 
         const posts = await db.post.findMany(queryOptions);
 
         posts.map(post => cacheTag(`post-${post.id}`));
 
-        // Only set nextCursor if we actually have more items than the limit
         const hasMore = posts.length > limit;
         const nextCursor = hasMore ? posts[limit - 1].id : undefined;
 
-        // Return posts up to the limit (or all if less than limit)
         return {
             posts: posts.slice(0, limit),
             nextCursor: hasMore ? nextCursor : undefined
@@ -546,9 +516,6 @@ export const readPostsByUserId = async ({
 };
 
 
-
-
-// Updates either totalUpvotes or totalDownvotes based on vote type and action.
 export async function updatePostVoteCounts(
     postId: string,
     type: VoteType,
@@ -565,9 +532,7 @@ export async function updatePostVoteCounts(
     });
 }
 
-// Recalculates and updates the voteScore (totalUpvotes - totalDownvotes) for a given post.
 export async function updatePostVoteScore(postId: string): Promise<void> {
-    // Fetch current vote counts.
     const post = await db.post.findUnique({
         where: { id: postId },
         select: { totalUpvotes: true, totalDownvotes: true },
@@ -580,30 +545,6 @@ export async function updatePostVoteScore(postId: string): Promise<void> {
         data: { voteScore: newScore },
     });
 }
-
-
-// export const updatePostVotes = async (postId: string, voteType: VoteType): Promise<ExtendedPost | null> => {
-//     try {
-
-//         const totalUpvotes = await getTotalPostUpvotes(postId);
-//         const totalDownVotes = await getTotalPostDownvotes(postId);
-
-//         const res = await db.post.update({
-//             where: { id: postId },
-//             data: { totalDownvotes: totalDownVotes, totalUpvotes: totalUpvotes },
-//             include: {
-//                 author: true,
-//                 votes: true
-//             }
-//         });
-//         revalidateTag(`post-${postId}`);
-//         return res;
-//     }
-//     catch (error) {
-//         handleServerError(error, 'updating post vote.');
-//         return null;
-//     }
-// }
 
 export const ftsPosts = async (
     query: string,

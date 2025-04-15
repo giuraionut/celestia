@@ -18,7 +18,7 @@ const Header = async () => {
         </Link>
         <SidebarTrigger className='h-8 w-8' />
       </div>
-      <div className='flex-1 flex justify-center items-center border-l border-r h-10'>
+      <div className='flex-1 flex justify-center items-center border-l border-r h-15'>
         <Link href='/' className='ml-2 sm:hidden'>
           Logo
         </Link>

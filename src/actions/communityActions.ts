@@ -16,20 +16,20 @@ export const createCommunity = async (
     try {
         const userId = await requireSessionUserId("creating new community");
         if (!userId) return null;
-        delete (community as { id?: string }).id; // Ensure no ID is provided
-        revalidateTag("communities"); // Revalidate the communities cache
+        delete (community as { id?: string }).id;
+        revalidateTag("communities");
         return await db.community.create({
             data: {
                 ...community,
-                authorId: userId, // Set the creator as the author
+                authorId: userId,
                 members: {
-                    connect: { id: userId }, // Add creator as a member
+                    connect: { id: userId },
                 },
                 managers: {
-                    connect: { id: userId }, // Add creator as a manager
+                    connect: { id: userId },
                 },
-                totalMembers: 1, // Set initial member count
-                totalManagers: 1, // Set initial manager count
+                totalMembers: 1,
+                totalManagers: 1,
             },
             include: { author: true, posts: true, members: true, managers: true },
         });
@@ -81,10 +81,11 @@ export const findCommunityByName = async (
     "use cache";
     name = name.toLowerCase().trim();
     try {
-        const community = await db.community.findFirstOrThrow({
+        const community = await db.community.findFirst({
             where: { name: { contains: name } },
             include: { author: true, posts: true, managers: true },
         });
+        if (!community) return null;
         cacheTag(`community-${community.id}`);
         return community;
     } catch (error) {
@@ -112,7 +113,6 @@ export const deleteCommunity = async (
     try {
         const userId = await requireSessionUserId("deleting community");
         if (!userId) return null;
-        // Optionally: check if userId === community.authorId here.
         return await db.community.delete({ where: { id } });
     } catch (error) {
         handleServerError(error, "deleting community.");
@@ -236,7 +236,7 @@ export const logCommunityVisit = async (
 ) => {
     try {
         const effectiveUserId = userId ?? await getSessionUserId();
-        if (!effectiveUserId) return; // Unauthenticated users do not log visits.
+        if (!effectiveUserId) return;
         await db.recentlyVisitedCommunity.upsert({
             where: { userId_communityId: { userId: effectiveUserId, communityId } },
             update: { visitedAt: new Date() },

@@ -22,10 +22,8 @@ export async function readCommentsAndPostsByUserId({
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }) {
-  // Parse the cursor (we assume it's a createdAt timestamp string)
   const cursorDate = cursor ? new Date(cursor) : null;
 
-  // Fetch posts and comments concurrently
   const [postsResult, commentsResult] = await Promise.all([
     readPostsByUserId({ userId, limit: limit * 2, sortBy, sortOrder, cursor: undefined }),
     readCommentsByUserId({ userId, limit: limit * 2, sortBy, sortOrder, cursor: undefined }),
@@ -34,18 +32,15 @@ export async function readCommentsAndPostsByUserId({
   const posts = postsResult?.posts || [];
   const comments = commentsResult?.comments || [];
 
-  // Mark items with a type for easier UI handling
   const postsWithType = posts.map(item => ({ ...item, type: 'post' }));
   const commentsWithType = comments.map(item => ({ ...item, type: 'comment' }));
 
-  // Merge and sort by createdAt
   const merged = [...postsWithType, ...commentsWithType].sort((a, b) => {
     const aTime = new Date(a.createdAt).getTime();
     const bTime = new Date(b.createdAt).getTime();
     return sortOrder === 'desc' ? bTime - aTime : aTime - bTime;
   });
 
-  // If a cursor is provided, filter out items not past the cursor
   const filtered = cursorDate
     ? merged.filter(item => {
         const itemDate = new Date(item.createdAt);
@@ -53,7 +48,6 @@ export async function readCommentsAndPostsByUserId({
       })
     : merged;
 
-  // Paginate the result
   const paginatedItems = filtered.slice(0, limit);
   const nextCursor = paginatedItems.length === limit ? paginatedItems[paginatedItems.length - 1].createdAt : null;
 
