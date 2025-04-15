@@ -1,8 +1,6 @@
 import React from 'react';
 
-interface BlackholeProps extends React.SVGProps<SVGSVGElement> {}
-
-const Blackhole: React.FC<BlackholeProps> = (props) => {
+const Blackhole: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   const { className, width = 40, height = 20, ...rest } = props;
 
   return (

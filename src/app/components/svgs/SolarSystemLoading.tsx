@@ -50,9 +50,7 @@ const BASE_PULSE_FACTOR = 1.2;
 const PULSE_VARIATION = 0.15;
 const ORBIT_ROTATION_MAX = 15;
 
-interface LoaderProps extends React.SVGProps<SVGSVGElement> {}
-
-const SolarSystemLoading: React.FC<LoaderProps> = (props) => {
+const SolarSystemLoading: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   const { className, width = 64, height = 64, ...rest } = props;
 
   const svgRef = useRef<SVGSVGElement>(null);

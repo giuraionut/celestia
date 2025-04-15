@@ -1,5 +1,4 @@
 import React from 'react';
-import Blackhole from '../svgs/Blackhole';
 import { HolyGrail, Left, Middle, Right } from './HolyGrail';
 import Stars from '../svgs/Stars';
 

@@ -11,9 +11,8 @@ import {
   Middle,
   Right,
 } from '@/app/components/shared/HolyGrail';
-import { cn, getSortParams } from '@/lib/utils';
+import { getSortParams } from '@/lib/utils';
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
 import UserBanner from '@/app/components/shared/UserBanner';
 import { Metadata } from 'next';
@@ -45,7 +44,10 @@ const UserPageComments = async ({
   const commentsSortParams = getSortParams(initialCommentsSort);
 
   const user = await fetchUserProfileByName({ name: decodedName });
-  if (!user || user.isDeleted) return <EmptyContent message='Looks like the user you are looking for does not exist.' />;
+  if (!user || user.isDeleted)
+    return (
+      <EmptyContent message='Looks like the user you are looking for does not exist.' />
+    );
 
   const commentData = await readCommentsByUserId({
     userId: user.id,

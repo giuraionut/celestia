@@ -1,9 +1,6 @@
 import React from 'react';
 
-interface LogoProps extends React.SVGProps<SVGSVGElement> {
-}
-
-const Logo: React.FC<LogoProps> = (props) => {
+const Logo: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   const { className, width = 40, height = 40, ...rest } = props;
 
   return (

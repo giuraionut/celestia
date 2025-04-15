@@ -11,9 +11,8 @@ import {
   Middle,
   Right,
 } from '@/app/components/shared/HolyGrail';
-import { cn, getSortParams } from '@/lib/utils';
+import { getSortParams } from '@/lib/utils';
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
 import UserBanner from '@/app/components/shared/UserBanner';
 import { generateUserPageMetadata } from '@/lib/metadataUtils';
@@ -48,7 +47,10 @@ const UserSavedPosts = async ({
   const postsSortParams = getSortParams(initialPostsSort);
 
   const user = await fetchUserProfileByName({ name: decodedName });
-  if (!user || user.isDeleted) return <EmptyContent message='Looks like the user you are looking for does not exist.' />;
+  if (!user || user.isDeleted)
+    return (
+      <EmptyContent message='Looks like the user you are looking for does not exist.' />
+    );
 
   const postData = await readSavedPostsByUserId({
     userId: user.id,

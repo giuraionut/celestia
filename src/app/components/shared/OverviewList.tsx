@@ -9,7 +9,6 @@ import { formatDistanceToNow } from 'date-fns';
 import PostDropDownMenu from '@/app/components/post/PostDropDownMenu';
 import { OverviewItem, isOverviewPost, isOverviewComment } from '@/types/types';
 import UserHoverCard from './UserHoverCard';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface OverviewListProps {
   items: OverviewItem[];

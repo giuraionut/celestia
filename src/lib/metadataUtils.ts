@@ -1,4 +1,3 @@
-import { getSessionUserId } from '@/actions/actionUtils';
 import { fetchUserProfileByName } from '@/actions/authActions';
 import { findCommunityByName } from '@/actions/communityActions';
 import { readPost } from '@/actions/postActions';
@@ -34,7 +33,6 @@ export async function generateUserPageMetadata({
     const username = user.name || 'User';
     pageContext = pageContext || 'No Context';
     const capitalizedContext = pageContext
-    pageContext.charAt(0).toUpperCase() + pageContext.slice(1);
     return {
       title: `${username}'s ${capitalizedContext} | Celestia`,
       description: `View ${pageContext.toLowerCase()} by ${username} on Celestia.`,

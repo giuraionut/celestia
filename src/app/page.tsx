@@ -23,16 +23,16 @@ export const metadata: Metadata = {
 type ViewMode = 'large' | 'compact';
 
 interface HomeProps {
-  searchParams?: {
+  searchParams?: Promise<{
     // Removed Promise wrapping for easier access in Server Components
     sort?: string;
     view?: string; // Add view parameter
-  };
+  }>;
 }
 
 export default async function Home({ searchParams }: HomeProps) {
   // Directly use searchParams, Next.js handles the promise resolution for page props
-  const { sort, view } = searchParams || {};
+  const { sort, view } = await searchParams || {};
   const initialSort = sort || 'newest';
   const currentView: ViewMode = view === 'compact' ? 'compact' : 'large'; // Default to 'large'
 

@@ -1,8 +1,7 @@
 import React from 'react';
 
-interface StarsProps extends React.SVGProps<SVGSVGElement> {}
 
-const Stars: React.FC<StarsProps> = (props) => {
+const Stars: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   const { className, width = 40, height = 40, ...rest } = props;
 
   return (

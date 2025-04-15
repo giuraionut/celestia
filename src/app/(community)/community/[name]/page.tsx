@@ -32,7 +32,6 @@ import { Separator } from '@/components/ui/separator';
 import UserHoverCard from '@/app/components/shared/UserHoverCard';
 import { generateCommunityMetadata } from '@/lib/metadataUtils';
 import { Metadata } from 'next';
-import EmptyContent from '@/app/components/shared/EmptyContent';
 import ErrorContent from '@/app/components/shared/ErrorContent';
 
 type CommunityPageProps = {

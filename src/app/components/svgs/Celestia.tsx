@@ -1,8 +1,7 @@
 import React from 'react';
 
-interface CelestiaProps extends React.SVGProps<SVGSVGElement> {}
 
-const Celestia: React.FC<CelestiaProps> = (props) => {
+const Celestia: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   const { className, width = 40, height = 20, ...rest } = props;
 
   return (

@@ -1,9 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Community } from '@prisma/client';
 import React from 'react';
-import Image from 'next/image';
 import JoinCommunityButton from './JoinCommunityButton';
-import Link from 'next/link';
 import { getSessionUserId } from '@/actions/actionUtils';
 import CommunityHeader from './CommunityHeader';
 
