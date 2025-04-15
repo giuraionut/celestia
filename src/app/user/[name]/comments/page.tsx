@@ -16,18 +16,25 @@ import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
 import UserBanner from '@/app/components/shared/UserBanner';
+import { Metadata } from 'next';
+import { generateUserPageMetadata } from '@/lib/metadataUtils';
+import Blackhole from '@/app/components/svgs/Blackhole';
+import EmptyContent from '@/app/components/shared/EmptyContent';
 
+interface UserPageCommentsProps {
+  params: Promise<{ name: string }>;
+  searchParams?: Promise<{ sort?: string; activeTab?: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: UserPageCommentsProps): Promise<Metadata> {
+  return generateUserPageMetadata({ params: params, pageContext: 'Comments' });
+}
 const UserPageComments = async ({
   params,
   searchParams,
-}: {
-  params: Promise<{ name: string; page: string }>;
-
-  searchParams?: Promise<{
-    sort?: string;
-    activeTab?: string;
-  }>;
-}) => {
+}: UserPageCommentsProps) => {
   const { name } = await params;
   const resolvedSearchParams = await searchParams;
   const { sort } = resolvedSearchParams || {};
@@ -38,7 +45,7 @@ const UserPageComments = async ({
   const commentsSortParams = getSortParams(initialCommentsSort);
 
   const user = await fetchUserProfileByName({ name: decodedName });
-  if (!user || user.isDeleted) return <div>User not found</div>;
+  if (!user || user.isDeleted) return <EmptyContent message='Looks like the user you are looking for does not exist.' />;
 
   const commentData = await readCommentsByUserId({
     userId: user.id,
@@ -82,7 +89,13 @@ const UserPageComments = async ({
             </LoadMore>
           </SortProvider>
         ) : (
-          <div>No comments found.</div>
+          <div>
+            <Blackhole className='h-48 w-48 mx-auto' />
+            <p>
+              Looks like there are no comments, they were probably eaten by the
+              black hole.
+            </p>
+          </div>
         )}
       </Middle>
       <Right></Right>

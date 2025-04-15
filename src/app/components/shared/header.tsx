@@ -6,13 +6,15 @@ import { SearchBox } from './SearchBox';
 import UserProfileDropdown from './UserProfileDropdown';
 import CreatePostButton from '../post/CreatePostButton';
 import CreateCommunityButton from '../post/CreateCommunityButton';
-
+import Logo from '../svgs/Logo';
+import Celestia from '../svgs/Celestia';
 const Header = async () => {
   return (
-    <div className='border-b flex items-center sticky top-0 bg-sidebar z-20 h-10'>
+    <div className='border-b flex items-center sticky top-0 bg-sidebar z-20 h-15'>
       <div className='flex-[.5] justify-start h-10 items-center gap-2 hidden sm:flex'>
-        <Link href='/' className='ml-2'>
-          Logo
+        <Link href='/' className='ml-2 flex items-center gap-2'>
+          <Logo className='h-8 w-8' />
+          <Celestia className='h-9 w-24' />
         </Link>
         <SidebarTrigger className='h-8 w-8' />
       </div>
@@ -26,7 +28,7 @@ const Header = async () => {
       <div className='flex-[.5] justify-end h-10 items-center gap-2 hidden sm:flex'>
         <CreatePostButton />
         <CreateCommunityButton />
-        <UserProfileDropdown className='mr-2'/>
+        <UserProfileDropdown className='mr-2' />
       </div>
     </div>
   );

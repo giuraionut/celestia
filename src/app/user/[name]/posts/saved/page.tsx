@@ -16,18 +16,29 @@ import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
 import UserBanner from '@/app/components/shared/UserBanner';
+import { generateUserPageMetadata } from '@/lib/metadataUtils';
+import { Metadata } from 'next';
+import Blackhole from '@/app/components/svgs/Blackhole';
+import EmptyContent from '@/app/components/shared/EmptyContent';
+
+interface UserSavedPostsProps {
+  params: Promise<{ name: string }>;
+  searchParams?: Promise<{ sort?: string; activeTab?: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: UserSavedPostsProps): Promise<Metadata> {
+  return generateUserPageMetadata({
+    params: params,
+    pageContext: 'Saved Posts',
+  });
+}
 
 const UserSavedPosts = async ({
   params,
   searchParams,
-}: {
-  params: Promise<{ name: string; page: string }>;
-
-  searchParams?: Promise<{
-    sort?: string;
-    activeTab?: string;
-  }>;
-}) => {
+}: UserSavedPostsProps) => {
   const { name } = await params;
   const { sort } = (await searchParams) || {};
   const decodedName = decodeURIComponent(name);
@@ -37,7 +48,7 @@ const UserSavedPosts = async ({
   const postsSortParams = getSortParams(initialPostsSort);
 
   const user = await fetchUserProfileByName({ name: decodedName });
-  if (!user || user.isDeleted) return <div>User not found</div>;
+  if (!user || user.isDeleted) return <EmptyContent message='Looks like the user you are looking for does not exist.' />;
 
   const postData = await readSavedPostsByUserId({
     userId: user.id,
@@ -54,7 +65,7 @@ const UserSavedPosts = async ({
     <HolyGrail>
       <Left></Left>
       <Middle>
-      <UserBanner user={user} />
+        <UserBanner user={user} />
         <UserProfileContentButtons
           userName={user.name || ''}
           className='w-full p-4 flex items-center gap-4'
@@ -63,7 +74,7 @@ const UserSavedPosts = async ({
         {postData && postData?.posts.length > 0 ? (
           <SortProvider initialSort={initialPostsSort} contentType='posts'>
             <div className='max-w-[700px] w-full items-center flex px-4'>
-              <SortingControls/>
+              <SortingControls />
             </div>
             <LoadMore
               loadMoreAction={loadMoreUserPosts}
@@ -78,7 +89,13 @@ const UserSavedPosts = async ({
             </LoadMore>
           </SortProvider>
         ) : (
-          <div>No posts found.</div>
+          <div>
+            <Blackhole className='h-48 w-48 mx-auto' />
+            <p>
+              Looks like there are no saved posts, they were probably eaten by
+              the black hole.
+            </p>
+          </div>
         )}
       </Middle>
       <Right></Right>

@@ -7,10 +7,18 @@ import {
   Middle,
   Right,
 } from '@/app/components/shared/HolyGrail';
-
+import { Metadata } from 'next';
+import EmptyContent from '@/app/components/shared/EmptyContent';
+export const metadata: Metadata = {
+  title: 'Create Post | Celestia',
+  description: 'Create a new post.',
+};
 const CreatePost = async () => {
   const communities = await readCommunities();
-  if (!communities) return <div>Communities not found</div>;
+  if (!communities || communities.length === 0)
+    return (
+      <EmptyContent message='Looks like there are no communities which means you cannot create posts. Please create a community first.' />
+    );
   return (
     <HolyGrail>
       <Left />

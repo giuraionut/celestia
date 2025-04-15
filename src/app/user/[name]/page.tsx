@@ -12,16 +12,24 @@ import {
   Middle,
   Right,
 } from '@/app/components/shared/HolyGrail';
-import { cn, getSortParams } from '@/lib/utils';
+import { getSortParams } from '@/lib/utils';
 import OverviewList from '@/app/components/shared/OverviewList';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
 import { OverviewItem, OverviewPost, OverviewComment } from '@/types/types';
 import UserBanner from '@/app/components/shared/UserBanner';
+import { Metadata } from 'next';
+import { generateUserPageMetadata } from '@/lib/metadataUtils';
+import EmptyContent from '@/app/components/shared/EmptyContent';
 
 interface UserOverviewPageProps {
   params: Promise<{ name: string }>;
   searchParams?: Promise<{ sort?: string; activeTab?: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: UserOverviewPageProps): Promise<Metadata> {
+  return generateUserPageMetadata({ params: params, pageContext: 'Overview' });
 }
 
 const UserPage = async ({ params, searchParams }: UserOverviewPageProps) => {
@@ -33,7 +41,10 @@ const UserPage = async ({ params, searchParams }: UserOverviewPageProps) => {
   const overviewSortParams = getSortParams(initialOverviewSort);
 
   const user = await fetchUserProfileByName({ name: decodedName });
-  if (!user || user.isDeleted) return <div>User not found</div>;
+  if (!user || user.isDeleted)
+    return (
+      <EmptyContent message='Looks like the user you are looking for does not exist.' />
+    );
 
   const overviewData = await readCommentsAndPostsByUserId({
     userId: user.id,

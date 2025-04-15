@@ -2,15 +2,19 @@ import { ftsPosts } from '@/actions/postActions';
 import { HolyGrail, Left, Middle, Right } from '../components/shared/HolyGrail';
 import { getSessionUserId } from '@/actions/actionUtils';
 import PostList from '../components/post/PostList';
-
-const SearchPage = async ({
-  searchParams,
-}: {
+import { Metadata } from 'next';
+import { generateUserPageMetadata } from '@/lib/metadataUtils';
+interface SearchPageProps {
   searchParams: Promise<{ q?: string; cursor?: string }>;
-}) => {
+}
+
+export const metadata: Metadata = {
+  title: 'Search | Celestia',
+  description: 'See the latest posts and discussions.',
+};
+const SearchPage = async ({ searchParams }: SearchPageProps) => {
   const { q, cursor } = await searchParams;
 
-  // Fetch posts with a fallback to an empty array in case of error
   const { posts, nextCursor } = (q &&
     (await ftsPosts(
       q,

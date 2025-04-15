@@ -5,8 +5,12 @@ import {
   Middle,
   Right,
 } from '@/app/components/shared/HolyGrail';
+import { Metadata } from 'next';
 import React from 'react';
-
+export const metadata: Metadata = {
+  title: 'Create Community | Celestia',
+  description: 'Create a new community.',
+};
 const CreateCommunity = () => {
   return (
     <HolyGrail>

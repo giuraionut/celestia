@@ -11,23 +11,33 @@ import {
   Middle,
   Right,
 } from '@/app/components/shared/HolyGrail';
-import { cn, getSortParams } from '@/lib/utils';
+import { getSortParams } from '@/lib/utils';
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
 import UserBanner from '@/app/components/shared/UserBanner';
+import { Metadata } from 'next';
+import { generateUserPageMetadata } from '@/lib/metadataUtils';
+import Blackhole from '@/app/components/svgs/Blackhole';
+import EmptyContent from '@/app/components/shared/EmptyContent';
+
+interface UserHiddenPostsProps {
+  params: Promise<{ name: string }>;
+  searchParams?: Promise<{ sort?: string; activeTab?: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: UserHiddenPostsProps): Promise<Metadata> {
+  return generateUserPageMetadata({
+    params: params,
+    pageContext: 'Hidden Posts',
+  });
+}
 
 const UserHiddenPosts = async ({
   params,
   searchParams,
-}: {
-  params: Promise<{ name: string; page: string }>;
-
-  searchParams?: Promise<{
-    sort?: string;
-    activeTab?: string;
-  }>;
-}) => {
+}: UserHiddenPostsProps) => {
   const { name } = await params;
   const { sort } = (await searchParams) || {};
   const decodedName = decodeURIComponent(name);
@@ -37,7 +47,7 @@ const UserHiddenPosts = async ({
   const postsSortParams = getSortParams(initialPostsSort);
 
   const user = await fetchUserProfileByName({ name: decodedName });
-  if (!user || user.isDeleted) return <div>User not found</div>;
+  if (!user || user.isDeleted) return <EmptyContent message='Looks like the user you are looking for does not exist.' />;
 
   const postData = await readHiddenPostsByUserId({
     userId: user.id,
@@ -79,7 +89,13 @@ const UserHiddenPosts = async ({
             </LoadMore>
           </SortProvider>
         ) : (
-          <div>No posts found.</div>
+          <div>
+            <Blackhole className='h-48 w-48 mx-auto' />
+            <p>
+              Looks like there are no hidden posts, they were probably eaten by
+              the black hole.
+            </p>
+          </div>
         )}
       </Middle>
       <Right></Right>

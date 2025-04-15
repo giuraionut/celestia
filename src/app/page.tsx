@@ -7,8 +7,12 @@ import { SortProvider } from './components/post/PostSortingContext';
 import { SortingControls } from './components/post/PostSortingControls';
 import { getSortParams } from '@/lib/utils';
 import LoadMore from './components/shared/LoadMore';
+import { Metadata } from 'next';
 
-// Handle the search params to get the initial sort
+export const metadata: Metadata = {
+  title: 'Celestia',
+  description: 'See the latest posts and discussions.',
+};
 interface HomeProps {
   searchParams?: Promise<{
     sort?: string;
@@ -21,10 +25,8 @@ export default async function Home({ searchParams }: HomeProps) {
   const initialSort = sort || 'newest';
   const userId = await getSessionUserId();
 
-  // Get the sort parameters
   const sortParams = getSortParams(initialSort);
 
-  // Initial load of posts with the correct sorting
   const postData = await readPosts({
     limit: 5,
     sortBy: sortParams.sortBy,
@@ -34,7 +36,6 @@ export default async function Home({ searchParams }: HomeProps) {
   const { posts: initialPosts = [], nextCursor: initialCursor } =
     postData || {};
 
-  // Generate a unique key based on the sort option
   const postListKey = `post-list-${initialSort}`;
   return (
     <HolyGrail>
@@ -55,8 +56,8 @@ export default async function Home({ searchParams }: HomeProps) {
           </LoadMore>
         </SortProvider>
       </Middle>
-      <Right></Right>
+      <Right>
+      </Right>
     </HolyGrail>
   );
 }
-// Helper function to get sort parameters

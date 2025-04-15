@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import HeadingToolbar from './toolbars/HeadingToolbar';
+import SolarSystemLoading from '../svgs/SolarSystemLoading';
 export default function TiptapEditor({
   className,
   children,
@@ -36,7 +37,7 @@ export default function TiptapEditor({
   if (!editor) {
     return (
       <div className={`border border-border rounded-sm ${className || ''}`}>
-        <p>Loading editor...</p>
+        <SolarSystemLoading className='w-16 h-16' />
       </div>
     );
   }

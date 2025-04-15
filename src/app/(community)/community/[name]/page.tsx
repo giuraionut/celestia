@@ -29,8 +29,9 @@ import { getSortParams } from '@/lib/utils';
 import { loadMorePosts } from '@/actions/loadMoreActions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import Link from 'next/link';
 import UserHoverCard from '@/app/components/shared/UserHoverCard';
+import { generateCommunityMetadata } from '@/lib/metadataUtils';
+import { Metadata } from 'next';
 
 type CommunityPageProps = {
   params: Promise<{ name: string }>;
@@ -38,6 +39,16 @@ type CommunityPageProps = {
     sort?: string;
   }>;
 };
+
+export async function generateMetadata({
+  params,
+}: CommunityPageProps): Promise<Metadata> {
+  return generateCommunityMetadata({
+    params: params,
+    pageContext: 'Community',
+  });
+}
+
 const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
   try {
     const { name } = await params;

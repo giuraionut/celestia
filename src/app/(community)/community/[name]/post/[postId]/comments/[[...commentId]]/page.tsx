@@ -23,26 +23,33 @@ import { ExtendedComment } from '@prisma/client';
 import { CommentsProvider } from '@/app/components/comment/CommentsContext';
 import { getSessionUserId } from '@/actions/actionUtils';
 import LoadMorePostComments from '@/app/components/comment/LoadMorePostComments';
-import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import CommunityHeader from '@/app/components/community/CommunityHeader';
 import UserHoverCard from '@/app/components/shared/UserHoverCard';
+import { generatePostMetadata } from '@/lib/metadataUtils';
+import { Metadata } from 'next';
+import EmptyContent from '@/app/components/shared/EmptyContent';
 
-// This is now an SSR Server Component
-const PostPage = async ({
-  params,
-}: {
-  // --- Fix: Define params as a Promise ---
+interface PostPageProps {
   params: Promise<{ postId: string; commentId: string }>;
-}) => {
-  // --- Keep await params as it's correct for v15 ---
+}
+export async function generateMetadata({
+  params,
+}: PostPageProps): Promise<Metadata> {
+  return generatePostMetadata({
+    params: params,
+  });
+}
+
+const PostPage = async ({ params }: PostPageProps) => {
   const { postId, commentId } = await params;
   const userId = await getSessionUserId();
 
-  // Fetch the post and community data
   const post = await readPost(postId);
   if (!post) {
-    return <div>Post not found</div>;
+    return (
+      <EmptyContent message='Looks like the post you are looking for does not exist.' />
+    );
   }
 
   const [commentsData, community] = await Promise.all([
@@ -72,7 +79,6 @@ const PostPage = async ({
     const c = await fetchCommentsByPost({ postId: post.id, cursor });
     return [c?.comments || [], c?.nextCursor || null];
   }
-  const authorName = post.author?.name;
 
   return (
     <HolyGrail>

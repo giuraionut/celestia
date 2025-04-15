@@ -4,8 +4,6 @@ import JoinCommunityButton from './JoinCommunityButton';
 import { ExtendedCommunity } from '@prisma/client';
 import { getSessionUserId } from '@/actions/actionUtils';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import ManageCommunityButton from './ManageCommunityButton';
 import UserHoverCard from '../shared/UserHoverCard';
 

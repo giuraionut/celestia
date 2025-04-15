@@ -1,4 +1,3 @@
-// app/search/loading.tsx
 import {
   HolyGrail,
   Left,

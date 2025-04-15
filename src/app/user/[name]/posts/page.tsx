@@ -11,18 +11,31 @@ import {
   Middle,
   Right,
 } from '@/app/components/shared/HolyGrail';
-import { cn, getSortParams } from '@/lib/utils';
+import { getSortParams } from '@/lib/utils';
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileContentButtons from '@/app/components/shared/UserProfileContentButtons';
 import UserBanner from '@/app/components/shared/UserBanner';
+import { Metadata } from 'next';
+import { generateUserPageMetadata } from '@/lib/metadataUtils';
+import Blackhole from '@/app/components/svgs/Blackhole';
+import EmptyContent from '@/app/components/shared/EmptyContent';
+
+interface UserPagePostsProps {
+  params: Promise<{ name: string }>;
+  searchParams?: Promise<{ sort?: string; activeTab?: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: UserPagePostsProps): Promise<Metadata> {
+  return generateUserPageMetadata({ params: params, pageContext: 'Posts' });
+}
 
 const UserPagePosts = async ({
   params,
   searchParams,
 }: {
   params: Promise<{ name: string; page: string }>;
-
   searchParams?: Promise<{
     sort?: string;
     activeTab?: string;
@@ -38,7 +51,10 @@ const UserPagePosts = async ({
   const postsSortParams = getSortParams(initialPostsSort);
 
   const user = await fetchUserProfileByName({ name: decodedName });
-  if (!user || user.isDeleted) return <div>User not found</div>;
+  if (!user || user.isDeleted)
+    return (
+      <EmptyContent message='Looks like there are no communities which means you cannot create posts. Please create a community first.' />
+    );
 
   const postData = await readPostsByUserId({
     userId: user.id,
@@ -79,7 +95,13 @@ const UserPagePosts = async ({
             </LoadMore>
           </SortProvider>
         ) : (
-          <div>No posts found.</div>
+          <div>
+            <Blackhole className='h-48 w-48 mx-auto' />
+            <p>
+              Looks like there are no posts, they were probably eaten by the
+              black hole.
+            </p>
+          </div>
         )}
       </Middle>
       <Right></Right>

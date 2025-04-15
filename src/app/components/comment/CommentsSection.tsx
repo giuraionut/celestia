@@ -10,16 +10,12 @@ import CreateComment from './CreateComment';
 import { useCommentsContext } from './CommentsContext';
 import { Button } from '@/components/ui/button';
 import { LoginDialog } from '../shared/LoginDialog';
+import SolarSystemLoading from '../svgs/SolarSystemLoading';
 
 const CommentsSection = ({ post }: { post: ExtendedPost }) => {
   const { isFullDiscussion, baseUrl, currentCommentId } = useCurrentPath();
-  const {
-    comments,
-    updateCommentInTree,
-    addComment,
-    session,
-    sessionStatus,
-  } = useCommentsContext();
+  const { comments, updateCommentInTree, addComment, session, sessionStatus } =
+    useCommentsContext();
   const currentComment = comments.find(
     (comment) => comment.id === currentCommentId
   );
@@ -29,7 +25,7 @@ const CommentsSection = ({ post }: { post: ExtendedPost }) => {
   return (
     <>
       {sessionStatus === 'loading' ? (
-        <div>Loading...</div>
+        <SolarSystemLoading className='w-16 h-16' />
       ) : session?.user.id ? (
         <CreateComment post={post} updateTree={addComment} />
       ) : (

@@ -1,4 +1,3 @@
-// app/search/loading.tsx
 import { Skeleton } from '@/components/ui/skeleton';
 import { HolyGrail, Left, Middle, Right } from '../components/shared/HolyGrail';
 
