@@ -1,10 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "sqlite"
-  // url      = "file:./dev.db"
   url      = env("DATABASE_URL")
 }
 
@@ -62,7 +63,7 @@ model Account {
   updatedAt         DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id])
-  
+
   // If an account is deleted, you might decide to remove it,
   // but typically this is managed by NextAuth.
   isDeleted Boolean @default(false)

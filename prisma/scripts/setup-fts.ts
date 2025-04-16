@@ -1,13 +1,11 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import db from "@/lib/db";
 
 async function setupFTS() {
   try {
     console.log('Setting up FTS for posts...');
 
     // Step 1: Create the FTS5 virtual table using plainTextContent instead of content
-    await prisma.$executeRawUnsafe(`
+    await db.$executeRawUnsafe(`
       CREATE VIRTUAL TABLE IF NOT EXISTS PostFTS USING fts5(
         id,
         title,
@@ -21,7 +19,7 @@ async function setupFTS() {
     const triggers = ['post_ai', 'post_au', 'post_ad'];
     for (const trigger of triggers) {
       try {
-        await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${trigger};`);
+        await db.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${trigger};`);
       } catch (e: unknown) {
         console.log(`Note: Could not drop trigger ${trigger}: ${(e as Error).message}`);
       }
@@ -29,7 +27,7 @@ async function setupFTS() {
     console.log('✅ Checked existing triggers');
 
     // Step 3: Create insert trigger to index the new plainTextContent field
-    await prisma.$executeRawUnsafe(`
+    await db.$executeRawUnsafe(`
       CREATE TRIGGER post_ai AFTER INSERT ON Post
       WHEN NEW.isDeleted = 0
       BEGIN
@@ -41,7 +39,7 @@ async function setupFTS() {
 
     // Step 4: Create update triggers
     // Trigger for when a post is marked as deleted
-    await prisma.$executeRawUnsafe(`
+    await db.$executeRawUnsafe(`
       CREATE TRIGGER post_au_delete AFTER UPDATE ON Post
       WHEN NEW.isDeleted = 1 AND OLD.isDeleted = 0
       BEGIN
@@ -50,7 +48,7 @@ async function setupFTS() {
     `);
 
     // Trigger for when the title or plainTextContent is updated
-    await prisma.$executeRawUnsafe(`
+    await db.$executeRawUnsafe(`
       CREATE TRIGGER post_au_content AFTER UPDATE ON Post
       WHEN NEW.isDeleted = 0 AND (OLD.title != NEW.title OR OLD.plainTextContent != NEW.plainTextContent)
       BEGIN
@@ -60,7 +58,7 @@ async function setupFTS() {
     console.log('✅ Update triggers created');
 
     // Step 5: Create delete trigger
-    await prisma.$executeRawUnsafe(`
+    await db.$executeRawUnsafe(`
       CREATE TRIGGER post_ad AFTER DELETE ON Post
       BEGIN
         DELETE FROM PostFTS WHERE id = OLD.id;
@@ -69,8 +67,8 @@ async function setupFTS() {
     console.log('✅ Delete trigger created');
 
     // Step 6: Populate with existing data using plainTextContent
-    await prisma.$executeRawUnsafe(`DELETE FROM PostFTS;`);
-    await prisma.$executeRawUnsafe(`
+    await db.$executeRawUnsafe(`DELETE FROM PostFTS;`);
+    await db.$executeRawUnsafe(`
       INSERT INTO PostFTS(id, title, plainTextContent)
       SELECT id, title, plainTextContent FROM Post WHERE isDeleted = 0;
     `);
@@ -80,7 +78,7 @@ async function setupFTS() {
     
     // Optional: Test the search functionality
     const searchTerm = 'test';
-    const results = await prisma.$queryRawUnsafe(`
+    const results = await db.$queryRawUnsafe(`
       SELECT Post.* FROM Post
       JOIN PostFTS ON Post.id = PostFTS.id
       WHERE PostFTS MATCH ?
@@ -94,7 +92,7 @@ async function setupFTS() {
     console.error('Error setting up FTS:', error);
     throw error;
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 
