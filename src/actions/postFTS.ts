@@ -1,7 +1,8 @@
 import { PostSuggestion } from '@/types/types';
 import { Community, ExtendedPost, Post, PrismaClient, User, Vote } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import db from "@/lib/db";
+
 
 type RawSearchResult = Post & {
   highlight: string;
@@ -48,7 +49,7 @@ export async function searchPosts(
       // Use Prisma.sql for better type safety and parameter handling if possible
       // For $queryRawUnsafe, keep parameters separate
       const cursorParam = cursor; // Keep original cursor value
-      const cursorResult = await prisma.$queryRawUnsafe<{ rank: number }[]>(`
+      const cursorResult = await db.$queryRawUnsafe<{ rank: number }[]>(`
             SELECT CAST(bm25(PostFTS) * 100 AS INTEGER) as rank
             FROM PostFTS
             WHERE id = ?
@@ -71,7 +72,7 @@ export async function searchPosts(
 
     // --- Execute the main search query ---
     // Order of placeholders must match order of params added
-    const results = await prisma.$queryRawUnsafe<RawSearchResult[]>(`
+    const results = await db.$queryRawUnsafe<RawSearchResult[]>(`
           SELECT
             Post.*,
             highlight(PostFTS, 2, ?, ?) as highlight, -- highlight params
@@ -190,7 +191,7 @@ export async function getSearchSuggestions(
   const sanitizedQuery = partialQuery.trim().replace(/'/g, "''");
 
   try {
-    const results = await prisma.$queryRawUnsafe<{
+    const results = await db.$queryRawUnsafe<{
       id: string;
       title: string;
       snippet: string;
