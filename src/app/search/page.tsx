@@ -37,7 +37,7 @@ const SearchPage = async ({ searchParams }: SearchPageProps) => {
               <div className='mt-6 text-center'>
                 <a
                   href={`/search?q=${q}&cursor=${nextCursor}`}
-                  className='inline-block px-4 py-2 bg-blue-500 text-white rounded-sm hover:bg-blue-600'
+                  className='inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600'
                 >
                   Load More
                 </a>

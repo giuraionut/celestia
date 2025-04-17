@@ -26,7 +26,7 @@ const CreateCommunityButton = () => {
       <Link
         href='/community/create'
         onClick={handleClick}
-        className='flex flex-row gap-1 items-center hover:bg-primary/30 p-2 rounded transition-colors'
+        className='flex flex-row gap-1 items-center hover:bg-primary/30 p-2 rounded-lg transition-colors'
       >
         <PlusCircleIcon className='h-4 w-4' />
 

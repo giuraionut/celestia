@@ -36,14 +36,14 @@ export default function TiptapEditor({
 
   if (!editor) {
     return (
-      <div className={`border border-border rounded-sm ${className || ''}`}>
+      <div className={`border border-border rounded-lg ${className || ''}`}>
         <SolarSystemLoading className='w-16 h-16' />
       </div>
     );
   }
 
   return (
-    <div className='border border-border rounded-sm group p-4'>
+    <div className='border border-border rounded-lg group p-4'>
       <EditorContent editor={editor} />
       <div className='group-focus-within:flex hidden justify-between  items-center mt-4'>
         <HeadingToolbar editor={editor} />

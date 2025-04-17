@@ -18,7 +18,7 @@ const ManageCommunityPageLoading = () => {
           <div className='w-full'>
             <CommunityBannerSkeleton />
           </div>
-          <div className='w-full flex flex-col gap-4 border rounded-sm p-4'>
+          <div className='w-full flex flex-col gap-4 border rounded-lg p-4'>
             <Skeleton className='h-16 w-1/4' />
             <Skeleton className='h-8 w-1/6' />
             <Skeleton className='h-8 w-1/6' />

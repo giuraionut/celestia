@@ -315,7 +315,7 @@ const Footer = memo(
 
     return (
       <div className={cn('ml-12 flex flex-col gap-4', className)}>
-        <div className='flex items-center gap-2 rounded-sm'>
+        <div className='flex items-center gap-2 rounded-lg'>
           <CommentVote comment={comment} vote={userVote} />
           {session?.user.id === comment.authorId && (
             <>
@@ -323,7 +323,7 @@ const Footer = memo(
                 disabled={comment.isDeleted}
                 onClick={() => setIsEditing(!isEditing)}
                 className={cn(
-                  'text-sm transition px-2 py-1 rounded-sm cursor-pointer',
+                  'text-sm transition px-2 py-1 rounded-lg cursor-pointer',
                   {
                     'text-blue-500/70 hover:bg-blue-100/70': !comment.isDeleted,
                     'text-foreground/50 opacity-50': comment.isDeleted,
@@ -337,7 +337,7 @@ const Footer = memo(
                 disabled={comment.isDeleted}
                 onClick={() => handleDeleteComment()}
                 className={cn(
-                  'text-sm transition px-2 py-1 rounded-sm cursor-pointer',
+                  'text-sm transition px-2 py-1 rounded-lg cursor-pointer',
                   {
                     'text-red-500/70 hover:bg-red-100/70': !comment.isDeleted,
                     'text-foreground/50 opacity-50': comment.isDeleted,
@@ -360,7 +360,7 @@ const Footer = memo(
               }
             }}
             className={cn(
-              'text-sm transition px-2 py-1 rounded-sm cursor-pointer',
+              'text-sm transition px-2 py-1 rounded-lg cursor-pointer',
               {
                 'text-green-500/70 hover:bg-green-100/70': !comment.isDeleted,
                 'text-foreground/50 opacity-50': comment.isDeleted,

@@ -22,7 +22,7 @@ export default function CommentList({ comments, userId }: PostListProps) {
         return (
           <div
             key={`comment-${comment.id}`}
-            className='h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 rounded-sm hover:bg-accent p-4'
+            className='h-auto max-w-[600px] mx-auto flex flex-col gap-2 mb-4 rounded-lg hover:bg-accent p-4'
           >
             {comment.post && (
               <div className='flex items-center gap-1 flex-row p-1 text-muted-foreground'>

@@ -41,7 +41,7 @@ export default function HeadingToolbar({
           key={level}
           value={`heading${level}`}
           aria-label={`Toggle heading ${level}`}
-          className={cn('w-6 h-6 rounded-sm', {
+          className={cn('w-6 h-6 rounded-lg', {
             'bg-primary text-white': activeLevel === level,
           })}
           onClick={() => handleHeading(level)}

@@ -24,12 +24,12 @@ const CreatePostButton = () => {
   return (
     <>
       <Link
-        href="/post/create"
+        href='/post/create'
         onClick={handleClick}
-        className="flex flex-row gap-1 items-center hover:bg-primary/30 p-2 rounded transition-colors"
+        className='flex flex-row gap-1 items-center hover:bg-primary/30 p-2 transition-colors rounded-lg'
       >
-        <PlusCircleIcon className="h-4 w-4" />
-        <span className="text-xs font-bold">Post</span>
+        <PlusCircleIcon className='h-4 w-4' />
+        <span className='text-xs font-bold'>Post</span>
       </Link>
       <LoginDialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen} />
     </>

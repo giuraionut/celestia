@@ -29,20 +29,15 @@ export function SidebarCommunities({
   title,
 }: RecentlyVisitedCommunitiesProps) {
   const [isOpen, setIsOpen] = React.useState(true);
-  // This state will control the content visibility separately from the collapsible
   const [isVisible, setIsVisible] = React.useState(true);
 
-  // Handle the open/close state with a delay for exit animations
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      // When closing, we first set visibility to false, but keep the collapsible open
       setIsVisible(false);
-      // Then after the animation duration, we actually close the collapsible
       setTimeout(() => {
         setIsOpen(false);
-      }, 300); // Match this to your exit animation duration
+      }, 300); 
     } else {
-      // When opening, we set both immediately
       setIsOpen(true);
       setIsVisible(true);
     }
@@ -60,7 +55,7 @@ export function SidebarCommunities({
       <SidebarGroup>
         <SidebarGroupLabel
           asChild
-          className='group/label text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+          className='group/label text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg'
         >
           <CollapsibleTrigger className='cursor-pointer mb-2'>
             {title}
@@ -90,7 +85,7 @@ export function SidebarCommunities({
                         <SidebarMenuButton asChild isActive={false}>
                           <Link
                             href={`/community/${community.name}`}
-                            className='h-12'
+                            className='h-12 rounded-full'
                           >
                             <div className='flex items-center gap-2 p-2'>
                               {community.image && (

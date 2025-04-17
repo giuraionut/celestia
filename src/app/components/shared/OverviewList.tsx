@@ -30,7 +30,7 @@ export default function OverviewList({ items, userId }: OverviewListProps) {
           return (
             <div
               key={`post-${item.id}-${index}`}
-              className='h-auto max-w-[700px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-sm p-4'
+              className='h-auto max-w-[700px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-lg p-4'
             >
               <CommunityHeader
                 name={item.community!.name}
@@ -76,7 +76,7 @@ export default function OverviewList({ items, userId }: OverviewListProps) {
           return (
             <div
               key={`comment-${item.id}-${index}`}
-              className='h-auto max-w-[700px] mx-auto flex flex-col gap-2 mb-4 rounded-sm hover:bg-accent p-4'
+              className='h-auto max-w-[700px] mx-auto flex flex-col gap-2 mb-4 rounded-lg hover:bg-accent p-4'
             >
               <div className='flex items-center gap-1 flex-row p-1 text-muted-foreground'>
                 <CommunityHeader

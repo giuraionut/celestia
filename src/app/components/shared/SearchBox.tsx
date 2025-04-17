@@ -210,23 +210,23 @@ export const SearchBox = ({
     <div className={cn('flex space-x-2 w-full justify-center', className)}>
       <CommandPrimitive
         onKeyDown={handleKeyDown}
-        className='rounded-sm h-full w-full'
+        className='rounded-lg h-full w-full'
         shouldFilter={false}
       >
         {/* Input area */}
         <div
           data-slot='command-input-wrapper'
-          className='relative flex h-full w-full items-center rounded-sm'
+          className='relative flex h-full w-full items-center rounded-lg'
         >
           <div
             className={cn(
               'border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-l-sm border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
               'focus-within:border-l-ring focus-within:ring-ring/50 focus-within:ring-[3px]',
-              'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
+              'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive rounded-l-lg',
               className
             )}
           >
-            <div className='w-8 shrink-0 h-full flex items-center rounded-l-sm'>
+            <div className='w-8 shrink-0 h-full flex items-center rounded-l-lg'>
               <SearchIcon className='w-4 text-primary mx-auto' />
             </div>
             <CommandPrimitiveInput
@@ -266,7 +266,7 @@ export const SearchBox = ({
             type='button'
             disabled={inputValue.trim() === ''}
             onClick={handleSearch}
-            className='w-8 shrink-0 hover:bg-foreground bg-foreground/50 h-full rounded-r-sm cursor-pointer transition-colors'
+            className='w-8 shrink-0 hover:bg-foreground bg-foreground/50 h-full rounded-r-lg cursor-pointer transition-colors'
           >
             <SearchIcon className='w-4 mx-auto text-background' />
           </button>
@@ -276,7 +276,7 @@ export const SearchBox = ({
         <div className={cn('relative', { hidden: !shouldShowDropdown })}>
           <div
             className={cn(
-              'animate-in fade-in-0 zoom-in-95 absolute top-full left-0 z-10 w-full mt-2 rounded-sm border bg-background ',
+              'animate-in fade-in-0 zoom-in-95 absolute top-full left-0 z-10 w-full mt-2 rounded-lg border bg-background ',
               { hidden: !shouldShowDropdown }
             )}
           >
@@ -345,7 +345,7 @@ export const SearchBox = ({
                   )}
 
                   {noResults && (
-                    <CommandEmpty className='select-none rounded-sm px-2 py-3 text-center text-sm'>
+                    <CommandEmpty className='select-none rounded-lg px-2 py-3 text-center text-sm'>
                       No results found
                     </CommandEmpty>
                   )}

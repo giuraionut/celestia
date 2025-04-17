@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { ExtendedPost } from '@prisma/client';
-// import PostCard from './PostCard'; // Will be renamed
 import PostVote from './PostVote';
 import { Separator } from '@/components/ui/separator';
 import { MessageSquareIcon } from 'lucide-react';
@@ -53,7 +52,7 @@ export default function PostList({
         }/comments`;
 
         const commonWrapperClasses =
-          'max-w-[700px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-sm p-4';
+          'max-w-[700px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-lg p-4';
 
         return (
           <div key={post.id} className={commonWrapperClasses}>
@@ -92,7 +91,6 @@ export default function PostList({
                 className='flex flex-row gap-2 items-center hover:underline text-sm'
               >
                 {post.totalComments} <MessageSquareIcon className='h-4 w-4' />{' '}
-                <span className='hidden sm:inline'>Comments</span>{' '}
               </Link>
             </div>
             <Separator className='mt-2' />

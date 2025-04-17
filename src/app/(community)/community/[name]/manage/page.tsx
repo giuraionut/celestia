@@ -61,7 +61,7 @@ const CommunityMemberRow = ({
   const showManageButton = canManageRoles || canBanMember;
 
   return (
-    <div className='flex items-center justify-between gap-4 p-4 hover:bg-muted/50 rounded-sm'>
+    <div className='flex items-center justify-between gap-4 p-4 hover:bg-muted/50 rounded-lg'>
       <div className='flex items-center gap-3 flex-grow'>
         <Avatar className='h-9 w-9'>
           <AvatarImage src={member.image || ''} alt={member.name || 'User'} />
@@ -117,7 +117,7 @@ const ManageCommunityPage = async ({ params }: ManageCommunityPageProps) => {
       <HolyGrail>
         <Left />
         <Middle>
-          <Card className='w-full max-w-2xl mx-auto rounded-sm'>
+          <Card className='w-full max-w-2xl mx-auto rounded-lg'>
             <CardHeader>
               <CardTitle>Access Denied</CardTitle>
             </CardHeader>
@@ -153,7 +153,7 @@ const ManageCommunityPage = async ({ params }: ManageCommunityPageProps) => {
             community={community}
             className='mb-4'
           />
-          <Card className='w-full max-w-3xl mx-auto rounded-sm'>
+          <Card className='w-full max-w-3xl mx-auto rounded-lg'>
             <CardHeader>
               <CardTitle className='text-2xl'>Manage Community</CardTitle>
               <CardDescription>
