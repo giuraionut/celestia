@@ -1,4 +1,4 @@
-import { Post, Comment, Community, Vote, User, HiddenPost, SavedPost } from '@prisma/client';
+import { Post, Comment, Community, Vote, User, HiddenPost, SavedPost, BannedUserFromCommunity } from '@prisma/client';
 
 declare module '@prisma/client' {
   /**
@@ -105,5 +105,6 @@ declare module '@prisma/client' {
     posts: Post[] | ExtendedPost[];
     managers?: User[];
     members?: User[];
+    bannedUsers?: BannedUserFromCommunity[];
   };
 }

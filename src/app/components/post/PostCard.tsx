@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import { ExtendedPost } from '@prisma/client';
 import { cn, shortenText } from '@/lib/utils';
+import { Card } from '@/components/ui/card';
 
 interface PostCardProps {
   post: ExtendedPost;
@@ -13,15 +14,12 @@ const PostCard = ({ post, className }: PostCardProps) => {
 
   return (
     <article className={cn('flex flex-col gap-4 container', className, {})}>
-      {/* Header: Title & Author */}
       <header>
         <h1 className='text-lg font-bold'>{shortenText(post.title, 100)}</h1>
       </header>
 
-      {/* Image Section */}
       {post.cover && (
-        <div className='relative aspect-square  min-w-32 min-h-32 overflow-hidden rounded-sm ring'>
-          {/* Blurred Background Image */}
+        <Card className='relative aspect-square min-w-32 min-h-32 overflow-hidden ring'>
           <Image
             src={imageSrc}
             alt={post.title}
@@ -30,7 +28,6 @@ const PostCard = ({ post, className }: PostCardProps) => {
             className='object-cover blur scale-110 w-full h-full'
             aria-hidden='true'
           />
-          {/* Foreground Image */}
           <Image
             src={imageSrc}
             alt={post.title}
@@ -39,7 +36,7 @@ const PostCard = ({ post, className }: PostCardProps) => {
             sizes='(max-width: 600px) 100vw, 600px'
             className='object-contain h-full'
           />
-        </div>
+        </Card>
       )}
       {!post.cover && post.content && (
         <div>{shortenText(post.content, 100)}</div>

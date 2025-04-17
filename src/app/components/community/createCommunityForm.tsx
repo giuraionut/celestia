@@ -65,7 +65,6 @@ export function CreateCommunityForm() {
     try {
       const newCommunity = await createCommunity(community);
 
-      // Ensure newCommunity is valid before accessing its properties
       if (newCommunity && newCommunity.name) {
         toast.success(`Community created successfully: ${newCommunity.name}`);
       } else {

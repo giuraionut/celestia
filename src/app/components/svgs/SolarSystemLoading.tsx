@@ -1,4 +1,5 @@
 'use client';
+import { cn } from '@/lib/utils';
 import React, { useEffect, useRef } from 'react';
 
 const planetsData = [
@@ -162,7 +163,7 @@ const SolarSystemLoading: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
       height={height}
       // Apply className here. It should contain text color utilities.
       // Example: className="text-black dark:text-white"
-      className={className}
+      className={cn('mx-auto',className)}
       preserveAspectRatio='xMidYMid meet'
       aria-busy='true'
       role='progressbar'

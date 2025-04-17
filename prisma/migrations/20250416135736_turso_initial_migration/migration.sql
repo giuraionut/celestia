@@ -58,6 +58,30 @@ CREATE TABLE "Community" (
 );
 
 -- CreateTable
+CREATE TABLE "RemovedPostFromCommunity" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "postId" TEXT NOT NULL,
+    "communityId" TEXT NOT NULL,
+    "removedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "removedById" TEXT NOT NULL,
+    CONSTRAINT "RemovedPostFromCommunity_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "RemovedPostFromCommunity_communityId_fkey" FOREIGN KEY ("communityId") REFERENCES "Community" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "RemovedPostFromCommunity_removedById_fkey" FOREIGN KEY ("removedById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "BannedUserFromCommunity" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "communityId" TEXT NOT NULL,
+    "bannedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "bannedById" TEXT,
+    CONSTRAINT "BannedUserFromCommunity_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "BannedUserFromCommunity_communityId_fkey" FOREIGN KEY ("communityId") REFERENCES "Community" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "BannedUserFromCommunity_bannedById_fkey" FOREIGN KEY ("bannedById") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- CreateTable
 CREATE TABLE "RecentlyVisitedCommunity" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
@@ -176,6 +200,24 @@ CREATE UNIQUE INDEX "Community_name_key" ON "Community"("name");
 
 -- CreateIndex
 CREATE INDEX "Community_name_idx" ON "Community"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RemovedPostFromCommunity_postId_key" ON "RemovedPostFromCommunity"("postId");
+
+-- CreateIndex
+CREATE INDEX "RemovedPostFromCommunity_communityId_idx" ON "RemovedPostFromCommunity"("communityId");
+
+-- CreateIndex
+CREATE INDEX "RemovedPostFromCommunity_removedById_idx" ON "RemovedPostFromCommunity"("removedById");
+
+-- CreateIndex
+CREATE INDEX "BannedUserFromCommunity_communityId_idx" ON "BannedUserFromCommunity"("communityId");
+
+-- CreateIndex
+CREATE INDEX "BannedUserFromCommunity_bannedById_idx" ON "BannedUserFromCommunity"("bannedById");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "BannedUserFromCommunity_userId_communityId_key" ON "BannedUserFromCommunity"("userId", "communityId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "RecentlyVisitedCommunity_userId_communityId_key" ON "RecentlyVisitedCommunity"("userId", "communityId");

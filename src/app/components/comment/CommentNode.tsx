@@ -23,6 +23,7 @@ import { useCommentsContext } from './CommentsContext';
 import { LoginDialog } from '../shared/LoginDialog';
 import CommentVote from './CommentVote';
 import UserHoverCard from '../shared/UserHoverCard';
+import { Card } from '@/components/ui/card';
 interface TreeNodeProps {
   comment: ExtendedComment;
   path: number[];
@@ -63,7 +64,11 @@ export const CommentNode = ({
     setIsExpanded((prev) => !prev);
   }, []);
   return (
-    <li className={cn(`relative ml-2 mt-2 list-none`)}>
+    <li
+      className={cn(`relative mt-2 list-none`, {
+        'ml-2': hasParent,
+      })}
+    >
       <CommentNodeConnector
         path={path}
         selectedPath={selectedPath}
@@ -106,9 +111,9 @@ export const CommentNode = ({
               )}
             </div>
           )}
-          <div
+          <Card
             className={cn(
-              `border border-border rounded-sm bg-background p-2 flex flex-col gap-2`,
+              `bg-background p-2 flex flex-col gap-2`,
               {
                 'bg-secondary': comment.id === lastPathSegment,
               }
@@ -120,7 +125,7 @@ export const CommentNode = ({
               comment={comment}
               updateCommentInTree={updateCommentInTree}
             />
-          </div>
+          </Card>
         </div>
         <AnimatePresence>
           {comment.replies && comment.replies.length > 0 && isExpanded && (

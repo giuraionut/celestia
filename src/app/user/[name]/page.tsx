@@ -31,7 +31,6 @@ export async function generateMetadata({
 }: UserOverviewPageProps): Promise<Metadata> {
   return generateUserPageMetadata({ params: params, pageContext: 'Overview' });
 }
-
 const UserPage = async ({ params, searchParams }: UserOverviewPageProps) => {
   const { name } = await params;
   const resolvedSearchParams = await searchParams;
@@ -85,7 +84,7 @@ const UserPage = async ({ params, searchParams }: UserOverviewPageProps) => {
             initialSort={initialOverviewSort}
             contentType='overview'
           >
-            <div className='max-w-[700px] w-full flex items-center p-4'>
+            <div className='w-full flex items-center p-4'>
               <SortingControls />
             </div>
             <LoadMore

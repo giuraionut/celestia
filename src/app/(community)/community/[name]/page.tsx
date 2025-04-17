@@ -17,22 +17,14 @@ import PostList from '@/app/components/post/PostList';
 import CommunityBanner from '@/app/components/community/CommunityBanner';
 import { getSessionUserId } from '@/actions/actionUtils';
 import { SortProvider } from '@/app/components/post/PostSortingContext';
-import {
-  Cake,
-  GlobeIcon,
-  LockKeyholeIcon,
-  User2Icon,
-  UserIcon,
-} from 'lucide-react';
+
 import { SortingControls } from '@/app/components/post/PostSortingControls';
 import { getSortParams } from '@/lib/utils';
 import { loadMorePosts } from '@/actions/loadMoreActions';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import UserHoverCard from '@/app/components/shared/UserHoverCard';
 import { generateCommunityMetadata } from '@/lib/metadataUtils';
 import { Metadata } from 'next';
 import ErrorContent from '@/app/components/shared/ErrorContent';
+import CommunityOverviewCard from '@/app/components/community/CommunityOverviewCard';
 
 type CommunityPageProps = {
   params: Promise<{ name: string }>;
@@ -63,7 +55,6 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
 
     if (!community) {
       return (
-        // <EmptyContent message='Looks like the community you are looking for does not exist.' />
         <ErrorContent message='Something went wrong while loading the community page.' />
       );
     }
@@ -77,6 +68,19 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
       ? await isUserManagerOfCommunity(community.id, userId)
       : false;
 
+    const isMemberBanned =
+      community.bannedUsers?.some(
+        (bannedMember) => bannedMember.userId === userId
+      ) || false;
+    if (isMemberBanned) {
+      return (
+        <HolyGrail>
+          <Left></Left>
+          <Middle>You are banned from this community</Middle>
+          <Right></Right>
+        </HolyGrail>
+      );
+    }
     if (isPrivate && !isMemberOfCommunity && !isManagerOfCommunity) {
       return (
         <div>
@@ -108,9 +112,9 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
           <div className='w-full px-4'>
             <CommunityBanner
               community={community}
+              showButtons={true}
               isMemberOfCommunity={isMemberOfCommunity}
               isManagerOfCommunity={isManagerOfCommunity}
-              userId={userId}
               className='mb-4'
             />
             {initialPosts.length > 0 && (
@@ -136,60 +140,7 @@ const CommunityPage = async ({ params, searchParams }: CommunityPageProps) => {
           </div>
         </Middle>
         <Right>
-          <div className='sticky top-0 w-full p-4'>
-            <div className='flex flex-col gap-4 p-4 border rounded-sm'>
-              <span className='inline-flex gap-2'>
-                <Cake />
-                Created at
-                <span className='font-bold'>
-                  {community.createdAt.toDateString()}
-                </span>
-              </span>
-              {community.isPrivate && (
-                <span className='inline-flex gap-2'>
-                  <LockKeyholeIcon />
-                  <span className='font-bold'>Private</span>
-                </span>
-              )}
-              {!community.isPrivate && (
-                <span className='inline-flex gap-2'>
-                  <GlobeIcon />
-                  <span className='font-bold'>Public</span>
-                </span>
-              )}
-              <span className='inline-flex gap-2'>
-                <UserIcon />
-                Total Members
-                <span className='font-bold'>{community.totalMembers}</span>
-              </span>
-              <span className='inline-flex gap-2'>
-                <UserIcon />
-                Total Managers
-                <span className='font-bold'>{community.totalManagers}</span>
-              </span>
-              <Separator />
-              <span className='inline-flex gap-2'>
-                <User2Icon />
-                Managers
-              </span>
-              <span className='ml-8 flex flex-col gap-2'>
-                {community.managers?.map((manager) => (
-                  <UserHoverCard key={manager.id} user={manager}>
-                    <Avatar>
-                      <AvatarImage
-                        className='rounded-full '
-                        src={manager.image || ''}
-                        alt={manager.name || ''}
-                      />
-                      <AvatarFallback>
-                        {(manager.name ?? '?')[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                  </UserHoverCard>
-                ))}
-              </span>
-            </div>
-          </div>
+          <CommunityOverviewCard community={community} />
         </Right>
       </HolyGrail>
     );

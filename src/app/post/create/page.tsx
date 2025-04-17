@@ -23,7 +23,7 @@ const CreatePost = async () => {
     <HolyGrail>
       <Left />
       <Middle>
-        <div>Create Post</div>
+        <h1 className='text-2xl font-bold'>Create Post</h1>
         <CreatePostForm communities={communities} />
       </Middle>
       <Right></Right>

@@ -33,7 +33,7 @@ const CommentsSection = ({ post }: { post: ExtendedPost }) => {
       )}
 
       <CommentTreeProvider>
-        <div className='flex flex-col pl-4'>
+        <div className='flex flex-col'>
           <div className='flex justify-between'>
             {!isFullDiscussion && (
               <Link href={baseUrl} className='ml-2'>

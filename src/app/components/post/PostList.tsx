@@ -53,7 +53,7 @@ export default function PostList({
         }/comments`;
 
         const commonWrapperClasses =
-          'max-w-[600px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-sm p-4';
+          'max-w-[700px] mx-auto flex flex-col gap-2 mb-4 hover:bg-primary/10 rounded-sm p-4';
 
         return (
           <div key={post.id} className={commonWrapperClasses}>

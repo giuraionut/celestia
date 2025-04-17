@@ -1,18 +1,18 @@
 import { readPosts } from '@/actions/postActions';
-import PostList from './components/post/PostList';
-import { HolyGrail, Left, Middle, Right } from './components/shared/HolyGrail';
 import { loadMorePosts } from '@/actions/loadMoreActions';
 import { getSessionUserId } from '@/actions/actionUtils';
-import { SortProvider } from './components/post/PostSortingContext';
-import { SortingControls } from './components/post/PostSortingControls';
 import { getSortParams } from '@/lib/utils';
-import LoadMore from './components/shared/LoadMore';
 import { Metadata } from 'next';
 // Import Link for view switching (optional)
 import Link from 'next/link';
 import { Button } from '@/components/ui/button'; // For optional view switch controls
 import { LayoutGrid, List } from 'lucide-react'; // Icons for view switch controls
-import EmptyContent from './components/shared/EmptyContent';
+import PostList from '../components/post/PostList';
+import { SortProvider } from '../components/post/PostSortingContext';
+import { SortingControls } from '../components/post/PostSortingControls';
+import EmptyContent from '../components/shared/EmptyContent';
+import { HolyGrail, Left, Middle, Right } from '../components/shared/HolyGrail';
+import LoadMore from '../components/shared/LoadMore';
 
 export const metadata: Metadata = {
   title: 'Celestia',

@@ -84,7 +84,7 @@ const PostPage = async ({ params }: PostPageProps) => {
     <HolyGrail>
       <Left />
       <Middle>
-        <div className='max-w-[600px] flex flex-col gap-4 w-full p-4'>
+        <div className='max-w-[700px] flex flex-col gap-4 w-full p-4'>
           {community && (
             <CommunityHeader
               name={community.name}
@@ -127,7 +127,6 @@ const PostPage = async ({ params }: PostPageProps) => {
             <CommunityCard
               isMemberOfCommunity={isMemberOfCommunity}
               community={community}
-              className='border rounded-sm p-4 w-full h-full'
             />
           )}
         </div>

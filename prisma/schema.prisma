@@ -33,13 +33,15 @@ model User {
   joinedCommunities  Community[] @relation(name: "CommunityMembers")
   managedCommunities Community[] @relation(name: "CommunityManagers")
   createdCommunities Community[]
-
+  bannedFrom BannedUserFromCommunity[]
+  banActions BannedUserFromCommunity[] @relation("BannedByActions")
   hiddenPosts   HiddenPost[]
   savedPosts    SavedPost[]
   savedComments SavedComment[]
-
+  communityPostRemovalActions RemovedPostFromCommunity[] @relation("CommunityPostRemovals")
   // Soft delete flag: true indicates the user is inactive/deleted.
   isDeleted Boolean @default(false)
+
 }
 
 // -----------------------------------------------------------------------------
@@ -101,12 +103,53 @@ model Community {
   posts    Post[]
   members  User[] @relation(name: "CommunityMembers")
   managers User[] @relation(name: "CommunityManagers")
-
+  removedPosts RemovedPostFromCommunity[]
+  bannedUsers BannedUserFromCommunity[]
   totalPosts    Int @default(0)
   totalMembers  Int @default(0)
   totalManagers Int @default(0)
 
   @@index([name])
+}
+
+
+model RemovedPostFromCommunity {
+  id            String   @id @default(cuid())
+  postId        String   @unique // A post can only be removed once from its community
+  communityId   String   // Store for potential indexing/querying, though postId is unique link
+  removedAt     DateTime @default(now())
+  removedById   String   // User ID of the manager/author who removed it
+
+  // Relations
+  post          Post     @relation(fields: [postId], references: [id])
+  community     Community @relation(fields: [communityId], references: [id])
+  removedBy     User     @relation("CommunityPostRemovals", fields: [removedById], references: [id])
+
+  // Add indexes for potential lookups
+  @@index([communityId])
+  @@index([removedById])
+}
+
+
+model BannedUserFromCommunity{
+   id          String   @id @default(cuid())
+  userId      String
+  communityId String
+  bannedAt    DateTime @default(now())
+  // Optional: Track who performed the ban for audit purposes
+  bannedById  String?
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id])
+  community   Community @relation(fields: [communityId], references: [id])
+  // Optional: Relation to the user who banned
+  bannedBy    User?     @relation("BannedByActions", fields: [bannedById], references: [id])
+
+  // Ensure a user can only be banned once per community
+  @@unique([userId, communityId])
+  // Add indexes for efficient lookups
+  @@index([communityId])
+  @@index([bannedById])
 }
 
 // -----------------------------------------------------------------------------
@@ -152,6 +195,8 @@ model Post {
 
   hiddenBy HiddenPost[]
   savedBy  SavedPost[]
+  removedFromCommunity RemovedPostFromCommunity?
+
 
   @@index([title])
   @@index([createdAt])

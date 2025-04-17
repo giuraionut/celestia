@@ -48,7 +48,7 @@ const JoinCommunityButton = ({
 
   return (
     <>
-      <Button onClick={handleClick} disabled={isLoading} className='w-fit cursor-pointer'>
+      <Button onClick={handleClick} disabled={isLoading} className='cursor-pointer'>
         {isLoading ? 'Processing...' : isMember ? 'Leave' : 'Join'}
       </Button>
       <LoginDialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen} />

@@ -29,7 +29,7 @@ const UserHoverCard = ({
           <div className='flex gap-4 items-center'>
             <Avatar>
               <AvatarImage src={user.image || ''} />
-              <AvatarFallback>VC</AvatarFallback>
+              <AvatarFallback>{user.name?.[0] || 'U'}</AvatarFallback>
             </Avatar>
             <div className='flex flex-col'>
               <Link
