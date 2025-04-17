@@ -99,6 +99,7 @@ const PostPage = async ({ params }: PostPageProps) => {
             </span>
           </div>
           <PostCard post={post} />
+
           {commentsData && (
             <CommentsProvider
               initialCount={totalComments}

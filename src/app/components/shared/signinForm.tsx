@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { ClientSafeProvider, getProviders, signIn } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const FormSchema = z.object({
@@ -65,45 +65,45 @@ export default function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     setIsSubmitting(true);
-
-    try {
-      const res = await signIn('credentials', {
-        email: data.email,
-        password: data.password,
-        redirect: false, // Stay on the same page to handle errors
-      });
-
-      if (res?.ok) {
-        toast.success('Login successful');
-        if (onSuccess) {
-          onSuccess(); // Close the dialog after successful login
-        } else {
-          router.push('/'); // Only redirect if not in a dialog
-        }
-      } else if (res?.error) {
-        toast.error('Invalid email or password.', {
-          description: 'Please check your credentials and try again.',
+    startTransition(async () => {
+      try {
+        const res = await signIn('credentials', {
+          email: data.email,
+          password: data.password,
+          redirect: false,
         });
-      }
-    } catch (error: unknown) {
-      if (error instanceof z.ZodError) {
-        error.errors.forEach((err) => {
-          toast.error('Input error, verify the data', {
-            description: err.message,
+
+        if (res?.ok) {
+          toast.success('Login successful');
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            router.push('/');
+          }
+        } else if (res?.error) {
+          toast.error('Invalid email or password.', {
+            description: 'Please check your credentials and try again.',
           });
-        });
-      } else {
-        toast.error('Error', {
-          description: 'Could not sign in. Please try again later.',
-        });
-        console.error(error);
+        }
+      } catch (error: unknown) {
+        if (error instanceof z.ZodError) {
+          error.errors.forEach((err) => {
+            toast.error('Input error, verify the data', {
+              description: err.message,
+            });
+          });
+        } else {
+          toast.error('Error', {
+            description: 'Could not sign in. Please try again later.',
+          });
+          console.error(error);
+        }
+      } finally {
+        setIsSubmitting(false);
       }
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
-  // Filter out credential provider
   const socialProviders = providers
     ? Object.values(providers).filter(
         (provider) => provider.id !== 'credentials'

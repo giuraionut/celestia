@@ -1,4 +1,4 @@
-import { Post, Comment, Community, Vote, User, HiddenPost, SavedPost, BannedUserFromCommunity } from '@prisma/client';
+import { Post, Comment, Community, Vote, User, HiddenPost, SavedPost, BannedUserFromCommunity, RemovedPostFromCommunity } from '@prisma/client';
 
 declare module '@prisma/client' {
   /**
@@ -24,7 +24,7 @@ declare module '@prisma/client' {
     /**
      * The community the post belongs to.
      */
-    community?: Community;
+    community?: ExtendedCommunity;
     /**
      * The author who created the post.
      */
@@ -40,6 +40,7 @@ declare module '@prisma/client' {
     highlight?: string;
     hiddenBy?: HiddenPost[];
     savedBy?: SavedPost[];
+    removedFromCommunity?: RemovedPostFromCommunity | null;
   };
 
   /**
@@ -102,7 +103,7 @@ declare module '@prisma/client' {
     /**
      * The posts associated with the community.
      */
-    posts: Post[] | ExtendedPost[];
+    posts?: Post[] | ExtendedPost[];
     managers?: User[];
     members?: User[];
     bannedUsers?: BannedUserFromCommunity[];

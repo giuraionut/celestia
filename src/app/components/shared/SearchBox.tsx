@@ -202,7 +202,6 @@ export const SearchBox = ({
   const hasCommunities =
     Array.isArray(communitySuggestions) && communitySuggestions.length > 0;
   const noResults = hasSearched && !isLoading && !hasPosts && !hasCommunities;
-  // Consider both isPending from useTransition and your existing isLoading state
   const showLoading = isLoading || isPending;
   const shouldShowDropdown = isOpen && inputValue.trim() !== '' && hasSearched;
 

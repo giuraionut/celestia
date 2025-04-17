@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ExtendedCommunity, User } from '@prisma/client';
 import { MoreVertical } from 'lucide-react';
-import React from 'react';
+import React, { startTransition } from 'react';
 import { toast } from 'sonner';
 
 const CommunityMemberOptions = ({
@@ -34,22 +34,54 @@ const CommunityMemberOptions = ({
   canBanMember: boolean;
 }) => {
   const handlePromote = async () => {
-    await addManager(community.id, member.id);
-    toast.success(`User ${member.name} promoted to manager`);
+    startTransition(async () => {
+      try {
+        await addManager(community.id, member.id);
+        toast.success(`User ${member.name} promoted to manager`);
+      } catch (error) {
+        toast.error('Failed to promote user, try again later.', {
+          description: (error as Error).message,
+        });
+      }
+    });
   };
 
   const handleDemote = async () => {
-    await removeManager(community.id, member.id);
-    toast.success(`User ${member.name} demoted to member`);
+    startTransition(async () => {
+      try {
+        await removeManager(community.id, member.id);
+        toast.success(`User ${member.name} demoted to member`);
+      } catch (error) {
+        toast.error('Failed to demote user, try again later.', {
+          description: (error as Error).message,
+        });
+      }
+    });
   };
 
   const handleBan = async () => {
-    await banUser(community.id, member.id);
-    toast.success(`User ${member.name} banned from community`);
+    startTransition(async () => {
+      try {
+        await banUser(community.id, member.id);
+        toast.success(`User ${member.name} banned from community`);
+      } catch (error) {
+        toast.error('Failed to ban user, try again later.', {
+          description: (error as Error).message,
+        });
+      }
+    });
   };
   const handleUnban = async () => {
-    await unbanUser(community.id, member.id);
-    toast.success(`User ${member.name} unbanned from community`);
+    startTransition(async () => {
+      try {
+        await unbanUser(community.id, member.id);
+        toast.success(`User ${member.name} unbanned from community`);
+      } catch (error) {
+        toast.error('Failed to unban user, try again later.', {
+          description: (error as Error).message,
+        });
+      }
+    });
   };
   return (
     <DropdownMenu>

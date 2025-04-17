@@ -2,7 +2,13 @@
 import { cn } from '@/lib/utils';
 import type { ExtendedComment, Vote } from '@prisma/client';
 import { ChevronUp, ChevronDown } from 'lucide-react';
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  startTransition,
+} from 'react';
 import { LoginDialog } from '../shared/LoginDialog';
 import { deleteCommentVote, voteOnComment } from '@/actions/commentVoteActions';
 import { useCommentsContext } from './CommentsContext';
@@ -132,71 +138,77 @@ const CommentVote = ({
           : 'Voting...'
       );
 
-      try {
-        let newVoteIdFromServer: string | null = null;
+      startTransition(async () => {
+        try {
+          let newVoteIdFromServer: string | null = null;
 
-        if (isSameVote && currentOptimisticState.voteId) {
-          await deleteCommentVote(
-            baseComment.id,
-            currentOptimisticState.voteId
-          );
-        } else {
-          if (isSwitchingVote && currentOptimisticState.voteId) {
+          if (isSameVote && currentOptimisticState.voteId) {
             await deleteCommentVote(
               baseComment.id,
               currentOptimisticState.voteId
             );
-          }
-          const createdVote = await voteOnComment(baseComment.id, type);
-          if (!createdVote || !createdVote.id) {
-            throw new Error('Failed to create vote on server.');
-          }
-          newVoteIdFromServer = createdVote.id;
-        }
-
-        setOptimisticVote((prev) => ({ ...prev, voteId: newVoteIdFromServer }));
-        toast.success(
-          isSameVote
-            ? 'Vote removed!'
-            : type === 'UPVOTE'
-            ? 'Upvoted!'
-            : 'Downvoted!',
-          { id: toastId }
-        );
-
-        const finalVoteForContext: Vote | null = newVoteIdFromServer
-          ? {
-              id: newVoteIdFromServer,
-              type: type,
-              userId: currentUserId,
-              commentId: baseComment.id,
-              postId: baseComment.postId,
+          } else {
+            if (isSwitchingVote && currentOptimisticState.voteId) {
+              await deleteCommentVote(
+                baseComment.id,
+                currentOptimisticState.voteId
+              );
             }
-          : null;
-        const updatedVotesForContext = (baseComment.votes || []).filter(
-          (v) => v.userId !== currentUserId
-        );
-        if (finalVoteForContext)
-          updatedVotesForContext.push(finalVoteForContext);
-        const updatedCommentForContext: ExtendedComment = {
-          ...baseComment,
-          totalUpvotes: baseComment.totalUpvotes + upvoteDelta,
-          totalDownvotes: baseComment.totalDownvotes + downvoteDelta,
-          votes: updatedVotesForContext,
-        };
-        updateCommentInTree(updatedCommentForContext);
-      } catch (error) {
-        console.error('Vote failed:', error);
-        setOptimisticVote({
-          count:
-            commentRef.current.totalUpvotes - commentRef.current.totalDownvotes,
-          voteType: vote ? vote.type : null,
-          voteId: vote ? vote.id : null,
-        });
-        toast.error('Vote failed. Please try again.', { id: toastId });
-      } finally {
-        setIsVoting(false);
-      }
+            const createdVote = await voteOnComment(baseComment.id, type);
+            if (!createdVote || !createdVote.id) {
+              throw new Error('Failed to create vote on server.');
+            }
+            newVoteIdFromServer = createdVote.id;
+          }
+
+          setOptimisticVote((prev) => ({
+            ...prev,
+            voteId: newVoteIdFromServer,
+          }));
+          toast.success(
+            isSameVote
+              ? 'Vote removed!'
+              : type === 'UPVOTE'
+              ? 'Upvoted!'
+              : 'Downvoted!',
+            { id: toastId }
+          );
+
+          const finalVoteForContext: Vote | null = newVoteIdFromServer
+            ? {
+                id: newVoteIdFromServer,
+                type: type,
+                userId: currentUserId,
+                commentId: baseComment.id,
+                postId: baseComment.postId,
+              }
+            : null;
+          const updatedVotesForContext = (baseComment.votes || []).filter(
+            (v) => v.userId !== currentUserId
+          );
+          if (finalVoteForContext)
+            updatedVotesForContext.push(finalVoteForContext);
+          const updatedCommentForContext: ExtendedComment = {
+            ...baseComment,
+            totalUpvotes: baseComment.totalUpvotes + upvoteDelta,
+            totalDownvotes: baseComment.totalDownvotes + downvoteDelta,
+            votes: updatedVotesForContext,
+          };
+          updateCommentInTree(updatedCommentForContext);
+        } catch (error) {
+          console.error('Vote failed:', error);
+          setOptimisticVote({
+            count:
+              commentRef.current.totalUpvotes -
+              commentRef.current.totalDownvotes,
+            voteType: vote ? vote.type : null,
+            voteId: vote ? vote.id : null,
+          });
+          toast.error('Vote failed. Please try again.', { id: toastId });
+        } finally {
+          setIsVoting(false);
+        }
+      });
     },
     [session?.user?.id, updateCommentInTree, vote]
   );

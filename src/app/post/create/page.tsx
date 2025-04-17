@@ -1,6 +1,6 @@
 import React from 'react';
 import { readCommunities } from '@/actions/communityActions';
-import { CreatePostForm } from '@/app/components/post/createPostForm';
+import { CreatePostForm } from '@/app/components/post/CreatePostForm';
 import {
   HolyGrail,
   Left,

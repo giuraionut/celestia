@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { createUser } from '@/actions/authActions';
 import router from 'next/router';
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 
 const FormSchema = z.object({
   username: z.string().min(2, {
@@ -48,36 +48,38 @@ export default function SignUpForm() {
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     setIsSubmitting(true);
 
-    try {
-      const result = await createUser({
-        name: data.username,
-        email: data.email,
-        password: data.password,
-      });
+    startTransition(async () => {
+      try {
+        const result = await createUser({
+          name: data.username,
+          email: data.email,
+          password: data.password,
+        });
 
-      if (!result.success) {
-        toast.error('Failed to create account', {
-          description: result.message,
-        });
-      }
-      if (result.success) {
-        router.push('/api/auth/signin');
-      }
-    } catch (error: unknown) {
-      if (error instanceof z.ZodError) {
-        error.errors.forEach((err) => {
-          toast.error('Input error, verify the data', {
-            description: err.message,
+        if (!result.success) {
+          toast.error('Failed to create account', {
+            description: result.message,
           });
-        });
-      } else {
-        toast.error('Error', {
-          description: 'Could not create account. Please try again later.',
-        });
+        }
+        if (result.success) {
+          router.push('/api/auth/signin');
+        }
+      } catch (error: unknown) {
+        if (error instanceof z.ZodError) {
+          error.errors.forEach((err) => {
+            toast.error('Input error, verify the data', {
+              description: err.message,
+            });
+          });
+        } else {
+          toast.error('Error', {
+            description: 'Could not create account. Please try again later.',
+          });
+        }
+      } finally {
+        setIsSubmitting(false);
       }
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   return (

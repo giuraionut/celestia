@@ -1,4 +1,4 @@
-import { CreateCommunityForm } from '@/app/components/community/createCommunityForm';
+import { CreateCommunityForm } from '@/app/components/community/CreateCommunityForm';
 import {
   HolyGrail,
   Left,

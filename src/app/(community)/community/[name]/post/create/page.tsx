@@ -1,5 +1,5 @@
 import { findCommunityByName } from '@/actions/communityActions';
-import { CreatePostForm } from '@/app/components/post/createPostForm';
+import { CreatePostForm } from '@/app/components/post/CreatePostForm';
 import EmptyContent from '@/app/components/shared/EmptyContent';
 import {
   HolyGrail,

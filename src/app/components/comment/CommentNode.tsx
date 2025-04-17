@@ -1,5 +1,5 @@
 'use client';
-import { memo, useCallback, useState } from 'react';
+import { memo, startTransition, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { ExtendedComment, Comment } from '@prisma/client';
 import { cn } from '@/lib/utils';
@@ -112,12 +112,9 @@ export const CommentNode = ({
             </div>
           )}
           <Card
-            className={cn(
-              `bg-background p-2 flex flex-col gap-2`,
-              {
-                'bg-secondary': comment.id === lastPathSegment,
-              }
-            )}
+            className={cn(`bg-background p-2 flex flex-col gap-2`, {
+              'bg-secondary': comment.id === lastPathSegment,
+            })}
           >
             <Header comment={comment} />
             <Content comment={comment} />
@@ -251,17 +248,18 @@ const Footer = memo(
         totalDownvotes: comment.totalDownvotes,
         voteScore: 0,
       };
-
-      try {
-        await updateComment(editedComment);
-        updateCommentInTree({ ...comment, content: editorContent });
-        toast.success('Comment edited successfully');
-        setIsEditing(false);
-      } catch (error) {
-        toast.error('Failed to edit comment', {
-          description: (error as Error).message,
-        });
-      }
+      startTransition(async () => {
+        try {
+          await updateComment(editedComment);
+          updateCommentInTree({ ...comment, content: editorContent });
+          toast.success('Comment edited successfully');
+          setIsEditing(false);
+        } catch (error) {
+          toast.error('Failed to edit comment', {
+            description: (error as Error).message,
+          });
+        }
+      });
     }, [comment, editorContent, updateCommentInTree]);
 
     const handleReplyComment = useCallback(async () => {
@@ -282,35 +280,39 @@ const Footer = memo(
         totalDownvotes: comment.totalDownvotes,
         voteScore: 0,
       };
-      try {
-        const newReply = await addReply(reply, comment);
-        if (newReply) {
-          updateCommentInTree({
-            ...comment,
-            replies: [...(comment.replies || []), newReply],
+      startTransition(async () => {
+        try {
+          const newReply = await addReply(reply, comment);
+          if (newReply) {
+            updateCommentInTree({
+              ...comment,
+              replies: [...(comment.replies || []), newReply],
+            });
+          }
+
+          toast.success('Reply added successfully');
+          setIsReplying(false);
+        } catch (error) {
+          toast.error('Failed to add reply', {
+            description: (error as Error).message,
           });
         }
-
-        toast.success('Reply added successfully');
-        setIsReplying(false);
-      } catch (error) {
-        toast.error('Failed to add reply', {
-          description: (error as Error).message,
-        });
-      }
+      });
     }, [comment, editorContent, context.sessionStatus, updateCommentInTree]);
 
     const handleDeleteComment = useCallback(async () => {
-      try {
-        await deleteComment(comment);
-        updateCommentInTree({ ...comment, isDeleted: true });
-        context.decrementCommentCount();
-        toast.success('Comment deleted successfully');
-      } catch (error) {
-        toast.error('Failed to delete comment', {
-          description: (error as Error).message,
-        });
-      }
+      startTransition(async () => {
+        try {
+          await deleteComment(comment);
+          updateCommentInTree({ ...comment, isDeleted: true });
+          context.decrementCommentCount();
+          toast.success('Comment deleted successfully');
+        } catch (error) {
+          toast.error('Failed to delete comment', {
+            description: (error as Error).message,
+          });
+        }
+      });
     }, [comment, context, updateCommentInTree]);
 
     return (

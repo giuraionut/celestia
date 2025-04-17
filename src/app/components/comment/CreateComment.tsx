@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { startTransition, useState } from 'react';
 import { ExtendedPost, Comment, ExtendedComment } from '@prisma/client';
 import TiptapEditor from '../tiptap/TiptapEditor';
 import { cn } from '@/lib/utils';
 import { createComment } from '@/actions/commentActions';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function CreateComment({
   className,
@@ -32,12 +33,21 @@ export default function CreateComment({
       isDeleted: false,
       totalUpvotes: 0,
       totalDownvotes: 0,
-      voteScore: 0
+      voteScore: 0,
     };
 
-    const createdComment = await createComment(comment);
-    if (createdComment) updateTree(createdComment);
-    setCommentContent(''); // Clear after submitting
+    startTransition(async () => {
+      try {
+        const createdComment = await createComment(comment);
+        if (createdComment) updateTree(createdComment);
+        setCommentContent('');
+        toast.success('Comment created successfully');
+      } catch (error) {
+        toast.error('Failed to create comment', {
+          description: (error as Error).message,
+        });
+      }
+    });
   };
 
   return (

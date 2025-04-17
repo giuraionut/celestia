@@ -18,6 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Community } from '@prisma/client';
 import { createCommunity } from '@/actions/communityActions';
+import { startTransition } from 'react';
 
 const FormSchema = z.object({
   name: z.string().min(2, {
@@ -62,22 +63,24 @@ export function CreateCommunityForm() {
       totalPosts: 0,
     };
 
-    try {
-      const newCommunity = await createCommunity(community);
+    startTransition(async () => {
+      try {
+        const newCommunity = await createCommunity(community);
 
-      if (newCommunity && newCommunity.name) {
-        toast.success(`Community created successfully: ${newCommunity.name}`);
-      } else {
-        toast.error(
-          'Error: Community creation failed or returned invalid data.'
-        );
+        if (newCommunity && newCommunity.name) {
+          toast.success(`Community created successfully: ${newCommunity.name}`);
+        } else {
+          toast.error(
+            'Error: Community creation failed or returned invalid data.'
+          );
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          toast.error(`Error creating community: ${error.message}`);
+        }
+        toast.error('Error creating community. Please try again.');
       }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        toast.error(`Error creating community: ${error.message}`);
-      }
-      toast.error('Error creating community. Please try again.');
-    }
+    });
   }
 
   const isFormValid = form.formState.isValid && !form.formState.isSubmitting;

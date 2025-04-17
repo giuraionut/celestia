@@ -47,7 +47,10 @@ const UserHiddenPosts = async ({
   const postsSortParams = getSortParams(initialPostsSort);
 
   const user = await fetchUserProfileByName({ name: decodedName });
-  if (!user || user.isDeleted) return <EmptyContent message='Looks like the user you are looking for does not exist.' />;
+  if (!user || user.isDeleted)
+    return (
+      <EmptyContent message='Looks like the user you are looking for does not exist.' />
+    );
 
   const postData = await readHiddenPostsByUserId({
     userId: user.id,
@@ -57,6 +60,10 @@ const UserHiddenPosts = async ({
   });
   const { posts: initialPosts = [], nextCursor: initialPostCursor } =
     postData || {};
+    
+  const filteredPosts = initialPosts.filter(
+    (post) => !post.isDeleted && !post.removedFromCommunity
+  );
 
   const postListKey = `post-list-${initialPostsSort}`;
 
@@ -70,7 +77,7 @@ const UserHiddenPosts = async ({
           className='w-full p-4 flex items-center gap-4'
           page='hidden'
         />
-        {postData && postData?.posts.length > 0 ? (
+        {postData && filteredPosts.length > 0 ? (
           <SortProvider initialSort={initialPostsSort} contentType='posts'>
             <div className='max-w-[700px] w-full items-center flex px-4'>
               <SortingControls />
@@ -82,7 +89,7 @@ const UserHiddenPosts = async ({
             >
               <PostList
                 key={postListKey}
-                posts={initialPosts}
+                posts={filteredPosts}
                 userId={user.id}
                 showHidden={true}
               />

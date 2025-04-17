@@ -11,7 +11,7 @@ interface PostCardProps {
 
 const PostCard = ({ post, className }: PostCardProps) => {
   const imageSrc = post.cover || '/fallback-image.png';
-
+  if(post.isDeleted || post.removedFromCommunity) return <div>Post was deleted.</div>;
   return (
     <article className={cn('flex flex-col gap-4 container', className, {})}>
       <header>

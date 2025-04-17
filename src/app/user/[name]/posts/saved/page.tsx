@@ -63,6 +63,10 @@ const UserSavedPosts = async ({
 
   const postListKey = `post-list-${initialPostsSort}`;
 
+  const filteredPosts = initialPosts.filter(
+    (post) => !post.isDeleted && !post.removedFromCommunity
+  );
+
   return (
     <HolyGrail>
       <Left></Left>
@@ -73,7 +77,7 @@ const UserSavedPosts = async ({
           className='w-full p-4 flex items-center gap-4'
           page='saved'
         />
-        {postData && postData?.posts.length > 0 ? (
+        {postData && filteredPosts.length > 0 ? (
           <SortProvider initialSort={initialPostsSort} contentType='posts'>
             <div className='max-w-[700px] w-full items-center flex px-4'>
               <SortingControls />
@@ -85,7 +89,7 @@ const UserSavedPosts = async ({
             >
               <PostList
                 key={postListKey}
-                posts={initialPosts}
+                posts={filteredPosts}
                 userId={user.id}
               />
             </LoadMore>

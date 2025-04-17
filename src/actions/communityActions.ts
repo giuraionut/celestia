@@ -1,6 +1,6 @@
 'use server';
 
-import { Community, ExtendedCommunity } from "@prisma/client";
+import { BannedUserFromCommunity, Community, ExtendedCommunity, RemovedPostFromCommunity, User } from "@prisma/client";
 import { getSessionUserId, handleServerError, requireSessionUserId } from "./actionUtils";
 import db from "@/lib/db";
 import { revalidateTag } from "next/cache";
@@ -40,158 +40,190 @@ export const createCommunity = async (
 };
 
 
-// Example Server Action (needs error handling & auth)
-export async function banUser(communityId: string, userIdToBan: string) {
-    const currentUserId = await requireSessionUserId("banning user from community");
-    if (!currentUserId) return;
-    const community = await db.community.findUnique({
-        where: { id: communityId },
-        include: { managers: { select: { id: true } } }
-    });
-    if (!community) throw new Error("Community not found");
+export async function banUser(communityId: string, userIdToBan: string): Promise<BannedUserFromCommunity | null> {
+    try {
+        const currentUserId = await requireSessionUserId("banning user from community");
+        if (!currentUserId) return null;
+        const community = await db.community.findUnique({
+            where: { id: communityId },
+            include: { managers: { select: { id: true } } }
+        });
+        if (!community) throw new Error("Community not found");
 
-    const isManager = community.authorId === currentUserId || community.managers.some(m => m.id === currentUserId);
-    if (!isManager) throw new Error("Not authorized");
+        const isManager = community.authorId === currentUserId || community.managers.some(m => m.id === currentUserId);
+        if (!isManager) throw new Error("Not authorized");
 
-    // Prevent banning self or author? (optional business logic)
-    if (userIdToBan === currentUserId || userIdToBan === community.authorId) {
-        throw new Error("Cannot ban this user");
-    }
-
-    await db.bannedUserFromCommunity.create({
-        data: {
-            userId: userIdToBan,
-            communityId: communityId,
-            bannedById: currentUserId, // Optional tracking
+        if (userIdToBan === currentUserId || userIdToBan === community.authorId) {
+            throw new Error("Cannot ban this user");
         }
-    });
-    revalidateTag(`community-${community.id}`)
 
-    // Maybe disconnect from members:
-    // await db.community.update({ where: { id: communityId }, data: { members: { disconnect: { id: userIdToBan } } } });
-}
-
-// Example Server Action (needs error handling & auth)
-export async function unbanUser(communityId: string, userIdToUnban: string) {
-    // ... Authorization check similar to banUser ...
-    const currentUserId = await requireSessionUserId("banning user from community");
-    if (!currentUserId) return;
-    await db.bannedUserFromCommunity.delete({
-        where: {
-            userId_communityId: { // Use the @@unique constraint name
-                userId: userIdToUnban,
-                communityId: communityId
+        const bannedUser = await db.bannedUserFromCommunity.create({
+            data: {
+                userId: userIdToBan,
+                communityId: communityId,
+                bannedById: currentUserId,
             }
-        }
-    });
-    revalidateTag(`community-${communityId}`)
-
+        });
+        revalidateTag(`community-${community.id}`)
+        return bannedUser;
+    }
+    catch (error) {
+        handleServerError(error, "banning user from community.");
+        return null;
+    }
 }
 
-export async function addManager(communityId: string, userIdToAdd: string) {
-    const currentUserId = await requireSessionUserId("banning user from community");
-    if (!currentUserId) return;
-    const community = await db.community.findUnique({
-        where: { id: communityId },
-        include: { managers: { select: { id: true } } }
-    });
-    if (!community) throw new Error("Community not found");
-
-    const isManagerOrAuthor = community.authorId === currentUserId || community.managers.some(m => m.id === currentUserId);
-    if (!isManagerOrAuthor) throw new Error("Not authorized");
-
-    // Prevent adding self or author again (optional)
-    if (userIdToAdd === currentUserId || userIdToAdd === community.authorId) {
-        throw new Error("Cannot add this user as manager");
-    }
-
-    await db.community.update({
-        where: { id: communityId },
-        data: {
-            managers: {
-                connect: { id: userIdToAdd } // Connect the user to the managers relation
+export async function unbanUser(communityId: string, userIdToUnban: string): Promise<BannedUserFromCommunity | null> {
+    try {
+        const currentUserId = await requireSessionUserId("banning user from community");
+        if (!currentUserId) return null;
+        const unbannedUser = await db.bannedUserFromCommunity.delete({
+            where: {
+                userId_communityId: {
+                    userId: userIdToUnban,
+                    communityId: communityId
+                }
             }
-        }
-    });
-    revalidateTag(`community-${community.id}`)
+        });
+        revalidateTag(`community-${communityId}`)
+        return unbannedUser;
+    }
+    catch (error) {
+        handleServerError(error, "banning user from community.");
+        return null;
+    }
 }
 
-// Example Server Action (needs error handling & auth)
-export async function removeManager(communityId: string, userIdToRemove: string) {
-    const currentUserId = await requireSessionUserId("banning user from community");
-    if (!currentUserId) return;
-    const community = await db.community.findUnique({
-        where: { id: communityId },
-        include: { managers: { select: { id: true } } }
-    });
-    if (!community) throw new Error("Community not found");
+export async function addManager(communityId: string, userIdToAdd: string): Promise<User | null> {
+    try {
+        const currentUserId = await requireSessionUserId("banning user from community");
+        if (!currentUserId) return null;
+        const community = await db.community.findUnique({
+            where: { id: communityId },
+            include: { managers: { select: { id: true } } }
+        });
+        if (!community) throw new Error("Community not found");
 
-    const isManagerOrAuthor = community.authorId === currentUserId || community.managers.some(m => m.id === currentUserId);
-    if (!isManagerOrAuthor) throw new Error("Not authorized");
+        const isManagerOrAuthor = community.authorId === currentUserId || community.managers.some(m => m.id === currentUserId);
+        if (!isManagerOrAuthor) throw new Error("Not authorized");
 
-    // IMPORTANT: Prevent removing the original author
-    if (userIdToRemove === community.authorId) {
-        throw new Error("Cannot remove the community creator");
-    }
+        if (userIdToAdd === currentUserId || userIdToAdd === community.authorId) {
+            throw new Error("Cannot add this user as manager");
+        }
 
-    await db.community.update({
-        where: { id: communityId },
-        data: {
-            managers: {
-                disconnect: { id: userIdToRemove } // Disconnect the user
+        const updatedCommunity = await db.community.update({
+            where: { id: communityId },
+            include: { managers: true },
+            data: {
+                managers: {
+                    connect: { id: userIdToAdd }
+                }
             }
-        }
-    });
-    revalidateTag(`community-${community.id}`)
-
-}
-
-// Example Server Action (needs error handling & auth)
-export async function removePostFromCommunity(postId: string, communityId: string) {
-    // 1. Verify post exists and belongs to the community
-    const currentUserId = await requireSessionUserId("banning user from community");
-    if (!currentUserId) return;
-    const post = await db.post.findUnique({ where: { id: postId } });
-    if (!post || post.communityId !== communityId) {
-        throw new Error("Post not found or does not belong to this community.");
+        });
+        revalidateTag(`community-${community.id}`)
+        return updatedCommunity.managers.find((m) => m.id === userIdToAdd) || null;
     }
-
-    // 2. Authorization check (is currentUserId manager or author of the COMMUNITY)
-    const community = await db.community.findUnique({
-        where: { id: communityId },
-        select: { authorId: true, managers: { select: { id: true } } }
-    });
-    if (!community) throw new Error("Community not found");
-
-    const isCommunityAdmin = community.authorId === currentUserId || community.managers.some(m => m.id === currentUserId);
-    if (!isCommunityAdmin) throw new Error("Not authorized");
-
-    // 3. Create the removal record (use upsert to handle potential race conditions/retries)
-    await db.removedPostFromCommunity.upsert({
-        where: { postId: postId }, // Since postId is unique in this table
-        create: {
-            postId: postId,
-            communityId: communityId,
-            removedById: currentUserId,
-        },
-        update: { // If it somehow already exists, just update timestamp/remover
-            removedAt: new Date(),
-            removedById: currentUserId,
-        }
-    });
-    revalidateTag(`community-${communityId}`)
-
+    catch (error) {
+        handleServerError(error, "banning user from community.");
+        return null;
+    }
 }
 
-// Example Server Action
-export async function restorePostToCommunity(postId: string, communityId: string) {
-    const currentUserId = await requireSessionUserId("banning user from community");
-    if (!currentUserId) return;
+export async function removeManager(communityId: string, userIdToRemove: string): Promise<User | null> {
+    try {
+        const currentUserId = await requireSessionUserId("banning user from community");
+        if (!currentUserId) return null;
 
-    await db.removedPostFromCommunity.delete({
-        where: { postId: postId }
-    });
-    revalidateTag(`community-${communityId}`)
+        const community = await db.community.findUnique({
+            where: { id: communityId },
+            include: { managers: { select: { id: true } } }
+        });
+        if (!community) throw new Error("Community not found");
+
+        const isManagerOrAuthor = community.authorId === currentUserId || community.managers.some(m => m.id === currentUserId);
+        if (!isManagerOrAuthor) throw new Error("Not authorized");
+
+        // IMPORTANT: Prevent removing the original author
+        if (userIdToRemove === community.authorId) {
+            throw new Error("Cannot remove the community creator");
+        }
+
+        const updatedCommunity = await db.community.update({
+            where: { id: communityId },
+            include: { managers: true },
+
+            data: {
+                managers: {
+                    disconnect: { id: userIdToRemove }
+                }
+            }
+        });
+        revalidateTag(`community-${community.id}`)
+        return updatedCommunity.managers.find((m) => m.id === userIdToRemove) || null;
+    }
+    catch (error) {
+        handleServerError(error, "banning user from community.");
+        return null;
+
+    }
+}
+
+export async function removePostFromCommunity(postId: string, communityId: string): Promise<RemovedPostFromCommunity | null> {
+    try {
+        const currentUserId = await requireSessionUserId("banning user from community");
+        if (!currentUserId) return null;
+
+        const post = await db.post.findUnique({ where: { id: postId } });
+        if (!post || post.communityId !== communityId) {
+            throw new Error("Post not found or does not belong to this community.");
+        }
+
+        const community = await db.community.findUnique({
+            where: { id: communityId },
+            select: { authorId: true, managers: { select: { id: true } } }
+        });
+        if (!community) throw new Error("Community not found");
+
+        const isCommunityAdmin = community.authorId === currentUserId || community.managers.some(m => m.id === currentUserId);
+        if (!isCommunityAdmin) throw new Error("Not authorized");
+
+        const removedPost = await db.removedPostFromCommunity.upsert({
+            where: { postId: postId },
+            create: {
+                postId: postId,
+                communityId: communityId,
+                removedById: currentUserId,
+            },
+            update: {
+                removedAt: new Date(),
+                removedById: currentUserId,
+            }
+        });
+        revalidateTag(`community-${communityId}`)
+        return removedPost;
+    }
+    catch (error) {
+        handleServerError(error, "banning user from community.");
+        return null;
+    }
+}
+
+export async function restorePostToCommunity(postId: string, communityId: string): Promise<RemovedPostFromCommunity | null> {
+    try {
+        const currentUserId = await requireSessionUserId("banning user from community");
+        if (!currentUserId) return null;
+
+        const removedPost = await db.removedPostFromCommunity.delete({
+            where: { postId: postId }
+        });
+        revalidateTag(`community-${communityId}`)
+        return removedPost
+    }
+    catch (error) {
+        handleServerError(error, "banning user from community.");
+        return null;
+
+    }
 
 }
 export const readCommunityById = async (
@@ -238,7 +270,10 @@ export const findCommunityByName = async (
     try {
         const community = await db.community.findFirst({
             where: { name: { contains: name } },
-            include: { author: true, posts: true, managers: true, members: true, bannedUsers: true },
+            include: {
+                author: true, posts:
+                    { include: { removedFromCommunity: true, author: true } }, managers: true, members: true, bannedUsers: true
+            },
         });
         if (!community) return null;
         cacheTag(`community-${community.id}`);

@@ -28,6 +28,8 @@ export default function PostList({
   const validPosts = posts.filter(
     (post) =>
       post.community &&
+      !post.isDeleted &&
+      !post.removedFromCommunity &&
       (showHidden ||
         !userId ||
         !post.hiddenBy?.some((hidden) => hidden.userId === userId))

@@ -166,7 +166,7 @@ export const readSavedPostsByUserId = async ({
         console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
 
         const queryOptions: Prisma.SavedPostFindManyArgs = {
-            where: { userId },
+            where: { userId},
             include: {
                 post: {
                     include: {
@@ -175,6 +175,7 @@ export const readSavedPostsByUserId = async ({
                         comments: true,
                         community: true,
                         savedBy: true,
+                        removedFromCommunity: true,
                         hiddenBy: true,
                     },
                 },
@@ -193,8 +194,6 @@ export const readSavedPostsByUserId = async ({
             queryOptions.orderBy = { createdAt: 'desc' };
         }
 
-        console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
-
         const savedPosts = (await db.savedPost.findMany(queryOptions)) as Array<
             SavedPost & {
                 post: Post & {
@@ -202,7 +201,6 @@ export const readSavedPostsByUserId = async ({
                     votes: Vote[];
                     comments: Comment[];
                     community: Community;
-
                 };
             }
         >;
@@ -211,8 +209,6 @@ export const readSavedPostsByUserId = async ({
 
         const hasMore = savedPosts.length > limit;
         const nextCursor = hasMore ? savedPosts[limit - 1].id : undefined;
-
-        // Map to the post itself
         const posts = savedPosts.slice(0, limit).map((saved) => saved.post);
 
         return {
@@ -249,6 +245,7 @@ export const readHiddenPostsByUserId = async ({
                         comments: true,
                         community: true,
                         hiddenBy: true,
+                        removedFromCommunity: true,
                         savedBy: true
                     },
                 },
@@ -319,12 +316,16 @@ export const readPost = async (id: string): Promise<ExtendedPost | null> => {
     try {
 
         const post = await db.post.findUnique({
-            where: { id },
+            where: {
+                id,
+                // removedFromCommunity: null 
+            },
             include: {
                 author: true,
                 community: true,
                 savedBy: true,
                 hiddenBy: true,
+                removedFromCommunity: true,
                 comments: {
                     where: { parentId: null },
                     include: {
@@ -413,7 +414,12 @@ export const readPosts = async ({
                 author: true,
                 votes: true,
                 comments: true,
-                community: true,
+                removedFromCommunity: true,
+                community: {
+                    include: {
+                        managers: true,
+                    }
+                },
                 savedBy: true,
                 hiddenBy: true,
                 _count: {
@@ -473,6 +479,7 @@ export const readPostsByUserId = async ({
                 community: true,
                 savedBy: true,
                 hiddenBy: true,
+                removedFromCommunity: true
             },
             take: limit + 1,
         };

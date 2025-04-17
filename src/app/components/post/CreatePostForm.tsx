@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { startTransition } from 'react';
 
 const FormSchema = z.object({
   title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
@@ -66,23 +67,26 @@ export function CreatePostForm(props: CreatePostFormProps) {
       totalComments: 0,
       totalUpvotes: 0,
       totalDownvotes: 0,
-      voteScore: 0
+      voteScore: 0,
     };
+    startTransition(async () => {
+      try {
+        const newPost = await createPost(post);
 
-    try {
-      const newPost = await createPost(post);
-
-      if (newPost) {
-        toast.success(`Post created successfully: ${newPost.title}`);
-      } else {
-        toast.error('Failed to create post. Post returned null or undefined.');
+        if (newPost) {
+          toast.success(`Post created successfully: ${newPost.title}`);
+        } else {
+          toast.error(
+            'Failed to create post. Post returned null or undefined.'
+          );
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          toast.error(`Error creating post: ${error.message}`);
+        }
+        toast.error('Error creating post. Please try again.');
       }
-    } catch (error:unknown) {
-      if (error instanceof Error) {
-        toast.error(`Error creating post: ${error.message}`);
-      }
-      toast.error('Error creating post. Please try again.');
-    }
+    });
   };
 
   const isFormValid = form.formState.isValid && !form.formState.isSubmitting;

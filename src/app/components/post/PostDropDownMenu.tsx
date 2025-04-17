@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { EllipsisIcon } from 'lucide-react';
-import React from 'react';
+import React, { startTransition } from 'react';
 import { toast } from 'sonner';
 
 const PostDropDownMenu = ({
@@ -30,46 +30,50 @@ const PostDropDownMenu = ({
   isHidden: boolean;
 }) => {
   const handleSavePost = async () => {
-    if (isSaved) {
-      try {
-        await unsavePost(postId);
-        toast.success(`Post unsaved successfully`);
-      } catch (error: unknown) {
-        toast.error('Failed to save post', {
-          description: (error as Error).message,
-        });
+    startTransition(async () => {
+      if (isSaved) {
+        try {
+          await unsavePost(postId);
+          toast.success(`Post unsaved successfully`);
+        } catch (error: unknown) {
+          toast.error('Failed to save post', {
+            description: (error as Error).message,
+          });
+        }
+      } else {
+        try {
+          await savePost(postId);
+          toast.success(`Post saved successfully`);
+        } catch (error: unknown) {
+          toast.error('Failed to save post', {
+            description: (error as Error).message,
+          });
+        }
       }
-    } else {
-      try {
-        await savePost(postId);
-        toast.success(`Post saved successfully`);
-      } catch (error: unknown) {
-        toast.error('Failed to save post', {
-          description: (error as Error).message,
-        });
-      }
-    }
+    });
   };
   const handleHidePost = async () => {
-    if (isHidden) {
-      try {
-        await unhidePost(postId);
-        toast.success(`Post unhidden successfully`);
-      } catch (error: unknown) {
-        toast.error('Failed to hide post', {
-          description: (error as Error).message,
-        });
+    startTransition(async () => {
+      if (isHidden) {
+        try {
+          await unhidePost(postId);
+          toast.success(`Post unhidden successfully`);
+        } catch (error: unknown) {
+          toast.error('Failed to hide post', {
+            description: (error as Error).message,
+          });
+        }
+      } else {
+        try {
+          await hidePost(postId);
+          toast.success(`Post hidden successfully`);
+        } catch (error: unknown) {
+          toast.error('Failed to hide post', {
+            description: (error as Error).message,
+          });
+        }
       }
-    } else {
-      try {
-        await hidePost(postId);
-        toast.success(`Post hidden successfully`);
-      } catch (error: unknown) {
-        toast.error('Failed to hide post', {
-          description: (error as Error).message,
-        });
-      }
-    }
+    });
   };
   return (
     <DropdownMenu>

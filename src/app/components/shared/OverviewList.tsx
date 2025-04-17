@@ -93,7 +93,8 @@ export default function OverviewList({ items, userId }: OverviewListProps) {
                 </Link>
               </div>
 
-              <div className='flex items-center gap-1 flex-row text-xs text-muted-foreground'>
+              <div className='flex items-center gap-1 flex-row text-xs'>
+                Comment by{' '}
                 {item.author ? (
                   <UserHoverCard user={item.author} />
                 ) : (

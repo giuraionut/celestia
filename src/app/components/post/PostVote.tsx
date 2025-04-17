@@ -2,7 +2,13 @@
 import { cn } from '@/lib/utils';
 import { ExtendedPost, Vote } from '@prisma/client';
 import { ChevronUp, ChevronDown } from 'lucide-react';
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  startTransition,
+} from 'react';
 import { LoginDialog } from '../shared/LoginDialog';
 import { deletePostVote, voteOnPost } from '@/actions/postVoteActions';
 import { toast } from 'sonner';
@@ -113,57 +119,59 @@ const PostVote = ({
           ? 'Changing vote...'
           : 'Voting...'
       );
+      startTransition(async () => {
+        try {
+          let newVoteIdFromServer: string | null = null;
 
-      try {
-        let newVoteIdFromServer: string | null = null;
-
-        if (isSameVote && previousOptimisticState.voteId) {
-          await deletePostVote(post.id, previousOptimisticState.voteId);
-          toast.success('Vote removed!', { id: toastId });
-        } else {
-          if (isSwitchingVote && previousOptimisticState.voteId) {
+          if (isSameVote && previousOptimisticState.voteId) {
             await deletePostVote(post.id, previousOptimisticState.voteId);
-          }
-
-          const newVoteResult = await voteOnPost(post.id, type);
-          if (newVoteResult) {
-            newVoteIdFromServer =
-              typeof newVoteResult === 'object' && newVoteResult?.id
-                ? newVoteResult.id
-                : typeof newVoteResult === 'string'
-                ? newVoteResult
-                : null;
-            if (
-              newVoteIdFromServer &&
-              newVoteIdFromServer !== previousOptimisticState.voteId
-            ) {
-              setOptimisticVote((prev) => ({
-                ...prev,
-                voteId: newVoteIdFromServer,
-              }));
-            }
-            toast.success(
-              type === 'UPVOTE'
-                ? 'Upvoted successfully!'
-                : 'Downvoted successfully!',
-              { id: toastId }
-            );
+            toast.success('Vote removed!', { id: toastId });
           } else {
-            throw new Error('Failed to process vote on server.');
+            if (isSwitchingVote && previousOptimisticState.voteId) {
+              await deletePostVote(post.id, previousOptimisticState.voteId);
+            }
+
+            const newVoteResult = await voteOnPost(post.id, type);
+            if (newVoteResult) {
+              newVoteIdFromServer =
+                typeof newVoteResult === 'object' && newVoteResult?.id
+                  ? newVoteResult.id
+                  : typeof newVoteResult === 'string'
+                  ? newVoteResult
+                  : null;
+              if (
+                newVoteIdFromServer &&
+                newVoteIdFromServer !== previousOptimisticState.voteId
+              ) {
+                setOptimisticVote((prev) => ({
+                  ...prev,
+                  voteId: newVoteIdFromServer,
+                }));
+              }
+              toast.success(
+                type === 'UPVOTE'
+                  ? 'Upvoted successfully!'
+                  : 'Downvoted successfully!',
+                { id: toastId }
+              );
+            } else {
+              throw new Error('Failed to process vote on server.');
+            }
           }
+        } catch (error) {
+          console.error('Vote failed:', error);
+          setOptimisticVote(previousOptimisticState);
+          toast.error('Something went wrong. Please try again.', {
+            id: toastId,
+          });
+        } finally {
+          setIsVoting(false);
         }
-      } catch (error) {
-        console.error('Vote failed:', error);
-        setOptimisticVote(previousOptimisticState);
-        toast.error('Something went wrong. Please try again.', { id: toastId });
-      } finally {
-        setIsVoting(false);
-      }
+      });
     },
     [userId, isVoting, optimisticVote, post.id]
   );
 
-  // Ref for the debounced function
   const debouncedVoteRef = useRef<DebouncedFunction<VoteFn> | null>(null);
 
   useEffect(() => {
@@ -181,13 +189,16 @@ const PostVote = ({
     <div className={cn('flex items-center gap-1 sm:gap-2')}>
       <button
         onClick={() => triggerVote('UPVOTE')}
-        disabled={isVoting || post.isDeleted}
+        disabled={isVoting || post.isDeleted || !!post.removedFromCommunity}
         aria-label='Upvote'
         className={cn(
-          'p-1 rounded hover:bg-accent transition-colors disabled:opacity-50 cursor-pointer',
-          optimisticVote.voteType === 'UPVOTE'
-            ? 'text-blue-500 bg-blue-100 dark:bg-blue-900/50'
-            : 'text-primary/60 hover:text-blue-500'
+          'p-1 rounded transition-colors disabled:opacity-50 text-primary/60',
+          {
+            'text-blue-500 bg-blue-100 dark:bg-blue-900/50':
+              optimisticVote.voteType === 'UPVOTE',
+            'hover:text-blue-500 cursor-pointer':
+              !post.isDeleted && !!!post.removedFromCommunity,
+          }
         )}
       >
         <ChevronUp
@@ -202,15 +213,19 @@ const PostVote = ({
       <span className='font-medium text-sm min-w-[20px] text-center tabular-nums'>
         {optimisticVote.count}
       </span>
+
       <button
         onClick={() => triggerVote('DOWNVOTE')}
-        disabled={isVoting || post.isDeleted}
+        disabled={isVoting || post.isDeleted || !!post.removedFromCommunity}
         aria-label='Downvote'
         className={cn(
-          'p-1 rounded hover:bg-accent transition-colors disabled:opacity-50  cursor-pointer',
-          optimisticVote.voteType === 'DOWNVOTE'
-            ? 'text-red-500 bg-red-100 dark:bg-red-900/50'
-            : 'text-primary/60 hover:text-red-500'
+          'p-1 rounded transition-colors disabled:opacity-50 text-primary/60',
+          {
+            'text-red-500 bg-red-100 dark:bg-red-900/50':
+              optimisticVote.voteType === 'DOWNVOTE',
+            'hover:text-red-500 cursor-pointer':
+              !post.isDeleted && !!!post.removedFromCommunity,
+          }
         )}
       >
         <ChevronDown
