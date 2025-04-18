@@ -3,7 +3,7 @@ import { findCommunityByName } from '@/actions/communityActions';
 import CommunityBanner from '@/app/components/community/CommunityBanner';
 import CommunityMemberRow from '@/app/components/community/CommunityMemberRow';
 import CommunityOverviewCard from '@/app/components/community/CommunityOverviewCard';
-import CommunityPostRow from '@/app/components/community/CommunityPostRow';
+import CommunityManageContentButtons from '@/app/components/shared/CommunityManageContentButtons';
 import {
   HolyGrail,
   Left,
@@ -79,7 +79,12 @@ const ManageCommunityPage = async ({ params }: ManageCommunityPageProps) => {
             community={community}
             className='mb-4'
           />
-          <Card className='w-full max-w-3xl mx-auto rounded-lg'>
+          <CommunityManageContentButtons
+            communityName={community.name}
+            page={'users'}
+          />
+
+          <Card className='w-full max-w-3xl mx-auto rounded-lg mt-4'>
             <CardHeader>
               <CardTitle className='text-2xl'>Manage Community</CardTitle>
               <CardDescription>
@@ -117,34 +122,6 @@ const ManageCommunityPage = async ({ params }: ManageCommunityPageProps) => {
                   No members found in this community yet.
                 </div>
               )}
-            </CardContent>
-          </Card>
-          <Card className='w-full max-w-3xl mx-auto rounded-lg mt-4'>
-            <CardHeader>
-              <CardTitle className='text-2xl'>Posts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <h3 className='text-lg font-semibold mb-4'>
-                Posts ({community.posts?.length || 0})
-              </h3>
-              {community.posts?.length === 0 && (
-                <div className='text-center text-muted-foreground py-6'>
-                  No posts found in this community yet.
-                </div>
-              )}
-              {community &&
-                community.posts &&
-                community.posts?.length > 0 &&
-                community.posts.map((post) => (
-                  <CommunityPostRow
-                    key={post.id}
-                    community={community}
-                    post={post}
-                    canManagePosts={
-                      isCurrentUserAuthor || isCurrentUserAManager
-                    }
-                  />
-                ))}
             </CardContent>
           </Card>
         </div>

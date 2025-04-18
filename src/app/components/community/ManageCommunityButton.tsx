@@ -6,7 +6,7 @@ import React from 'react';
 const ManageCommunityButton = ({communityName}:{communityName:string}) => {
   return (
     <Button asChild className='cursor-pointer'>
-      <Link href={`/community/${communityName}/manage`}> Manage</Link>
+      <Link href={`/community/${communityName}/posts/manage`}> Manage</Link>
     </Button>
   );
 };
