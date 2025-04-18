@@ -20,9 +20,7 @@ export default function SearchPageLoading() {
           ))}
         </div>
       </Middle>
-      <Right>
-        <Skeleton className='h-48 w-full mx-auto rounded-lg m-4 top-14' />
-      </Right>
+      <Right />
     </HolyGrail>
   );
 }

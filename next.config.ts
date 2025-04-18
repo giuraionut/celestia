@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
-
+const { version } = require("./package.json")
 const nextConfig: NextConfig = {
-  
+  env: {
+    version
+  },
   /* config options here */
   experimental: {
     useCache: true
@@ -14,7 +16,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  
+
 };
 
 export default nextConfig;

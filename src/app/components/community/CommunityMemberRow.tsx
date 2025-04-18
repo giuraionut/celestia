@@ -40,7 +40,11 @@ export default function CommunityMemberRow({
     <div className='flex items-center justify-between gap-4 p-4 hover:bg-muted/50 rounded-lg'>
       <div className='flex items-center gap-3 flex-grow'>
         <Avatar className='h-9 w-9'>
-          <AvatarImage src={member.image || ''} alt={member.name || 'User'} />
+          <AvatarImage
+            src={member.image || ''}
+            alt={member.name || 'User'}
+            className='rounded-full'
+          />
           <AvatarFallback>
             {member.name ? member.name.charAt(0).toUpperCase() : '?'}
           </AvatarFallback>

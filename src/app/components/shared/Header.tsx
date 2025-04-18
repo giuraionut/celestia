@@ -8,6 +8,7 @@ import CreatePostButton from '../post/CreatePostButton';
 import CreateCommunityButton from '../post/CreateCommunityButton';
 import Logo from '../svgs/Logo';
 import Celestia from '../svgs/Celestia';
+import AppVersion from './AppVersion';
 const Header = async () => {
   return (
     <div className='border-b flex items-center sticky top-0 bg-sidebar z-20 h-15'>
@@ -17,6 +18,8 @@ const Header = async () => {
           <Celestia className='h-9 w-24' />
         </Link>
         <SidebarTrigger className='h-8 w-8' />
+        <AppVersion />
+
       </div>
       <div className='flex-1 flex justify-center items-center border-l border-r h-15'>
         <Link href='/' className='ml-2 sm:hidden'>
