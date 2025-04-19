@@ -163,10 +163,9 @@ export const readSavedPostsByUserId = async ({
     cacheTag(`saved-posts-${userId}`);
 
     try {
-        console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
 
         const queryOptions: Prisma.SavedPostFindManyArgs = {
-            where: { userId},
+            where: { userId },
             include: {
                 post: {
                     include: {
@@ -233,7 +232,6 @@ export const readHiddenPostsByUserId = async ({
     cacheTag(`hidden-posts-${userId}`);
 
     try {
-        console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
 
         const queryOptions: Prisma.HiddenPostFindManyArgs = {
             where: { userId },
@@ -468,7 +466,6 @@ export const readPostsByUserId = async ({
     cacheTag(`posts-${userId}`);
 
     try {
-        console.log(`Sorting request: ${sortBy} - ${sortOrder}`);
 
         const queryOptions: Prisma.PostFindManyArgs = {
             where: { authorId: userId },

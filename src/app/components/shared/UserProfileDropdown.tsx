@@ -35,6 +35,7 @@ const UserProfileDropdown = async ({
 }) => {
   const session = await getServerSession(authOptions);
   const user = session?.user;
+
   if (!user)
     return (
       <Button variant={'default'} asChild className='h-8'>
@@ -46,7 +47,6 @@ const UserProfileDropdown = async ({
 
   return (
     <DropdownMenu>
-      {/* Keep your DropdownMenuTrigger as before or use the improved Button version */}
       <DropdownMenuTrigger asChild>
         <Button
           variant='ghost'
