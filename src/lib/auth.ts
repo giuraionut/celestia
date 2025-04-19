@@ -1,42 +1,24 @@
 import argon2 from "argon2";
-import { AuthOptions, User as NextAuthUser, Account as NextAuthAccount, Profile } from "next-auth"; // Import Profile type
+import { AuthOptions, User as NextAuthUser, Account as NextAuthAccount, } from "next-auth"; 
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import db from "./db"; // Assuming './db' exports your Prisma Client instance
+import db from "./db";
 import { User as PrismaUser } from "@prisma/client";
-// Import toast selectively if needed server-side (generally not recommended in auth logic)
-// import { toast } from "sonner"; // Usually for client-side feedback
 
-// --- Type Augmentation for JWT ---
 declare module "next-auth/jwt" {
     interface JWT {
         id: string;
         name?: string | null;
         email?: string | null;
         picture?: string | null;
-        // Add any other custom fields you want in the token
-    }
-}
-
-// --- Type Augmentation for Session User ---
-// Add 'id' to the default session user type
-declare module "next-auth" {
-    interface Session {
-        user: {
-            id: string; // Add the id field
-        } & NextAuthUser; // Keep existing fields (name, email, image)
     }
 }
 
 
-// --- Helper Types ---
-// Use built-in types where possible, define specific ones if needed
 type ProviderUserInfo = Pick<NextAuthUser, 'email' | 'name' | 'image'>;
-// Define a more specific type for account info needed in fetchOrCreateUser
 type ProviderAccountInfo = Pick<NextAuthAccount, 'provider' | 'providerAccountId' | 'type' | 'access_token' | 'refresh_token' | 'expires_at' | 'id_token' | 'scope' | 'session_state' | 'token_type'>;
 
 
-// --- Database User/Account Handling ---
 /**
  * Finds an existing user by email or creates a new one using provider details,
  * then ensures the specific OAuth provider account is linked to the user.
@@ -50,9 +32,8 @@ type ProviderAccountInfo = Pick<NextAuthAccount, 'provider' | 'providerAccountId
  */
 const fetchOrCreateUser = async (
     userProfile: ProviderUserInfo,
-    account: ProviderAccountInfo // Use the specific type
+    account: ProviderAccountInfo 
 ): Promise<PrismaUser> => {
-    // Destructure with safety checks for potentially null profile values
     const email = userProfile.email;
     const providerName = userProfile.name;
     const providerImage = userProfile.image;
@@ -230,6 +211,7 @@ export const authOptions: AuthOptions = {
          * - Initial sign in: `user` object from `authorize` or OAuth is available.
          * - Subsequent requests: Only `token` is available initially.
          */
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         async jwt({ token, user, account, profile, trigger, session }) {
 
             if (user?.id) {
