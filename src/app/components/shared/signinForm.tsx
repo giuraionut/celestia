@@ -16,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { ClientSafeProvider, getProviders, signIn } from 'next-auth/react';
 import { startTransition, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import ProviderIcon from './ProviderIcon';
 import SolarSystemLoading from '../svgs/SolarSystemLoading';
 
@@ -33,7 +32,6 @@ const FormSchema = z.object({
 });
 
 export default function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
-  const router = useRouter();
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {

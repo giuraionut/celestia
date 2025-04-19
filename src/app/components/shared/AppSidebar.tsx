@@ -23,13 +23,11 @@ export async function AppSidebar({
   const session = await getServerSession(authOptions);
   if (!session || !session.user) return null;
 
-  const visitedCommunities = await fetchVisitedCommunities(session.user.id);
-  const joinedCommunities = await fetchUserCommunities(session.user.id);
+  const visitedCommunities = await fetchVisitedCommunities();
+  const joinedCommunities = await fetchUserCommunities();
   return (
     <Sidebar {...props}>
-      <SidebarHeader className='mt-10'>
-       
-      </SidebarHeader>
+      <SidebarHeader className='mt-10'></SidebarHeader>
       <SidebarContent className='flex flex-col gap-4'>
         <SidebarCommunities
           communities={visitedCommunities}
@@ -46,7 +44,9 @@ export async function AppSidebar({
       <SidebarFooter>
         <UserProfileDropdown
           side='right'
-          className={cn('w-full p-2 hover:bg-primary/10 rounded transition-colors cursor-pointer sm:hidden')}
+          className={cn(
+            'w-full p-2 hover:bg-primary/10 rounded transition-colors cursor-pointer sm:hidden'
+          )}
           position='sidebar'
         />
       </SidebarFooter>

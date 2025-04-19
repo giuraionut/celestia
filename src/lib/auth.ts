@@ -1,41 +1,23 @@
-// src/lib/auth.ts (or your auth options file)
 
 import argon2 from "argon2";
-import { AuthOptions, DefaultSession, User as NextAuthUser, Account as NextAuthAccount, Profile as NextAuthProfile } from "next-auth"; // Import necessary types
-import { JWT } from "next-auth/jwt";
-import { AdapterUser } from "next-auth/adapters"; // Import AdapterUser
+import { AuthOptions, User as NextAuthUser, Account as NextAuthAccount, } from "next-auth"; // Import necessary types
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import db from "./db"; // Your Prisma client instance
-import { User as PrismaUser } from "@prisma/client"; // Use Prisma type alias
+import db from "./db";
+import { User as PrismaUser } from "@prisma/client";
 
-// --- Type Augmentation for NextAuth ---
-// Add custom fields (like the database ID) to the session and JWT
-declare module "next-auth" {
-    interface Session {
-        user: {
-            id: string | undefined; // Add the database User ID (CUID)
-        } & DefaultSession["user"]; // Include default fields like name, email, image
-    }
-    // Extend the User object passed around internally if needed (e.g., after authorize/signIn)
-    interface User {
-        id: string; // Ensure the internal User object always expects our DB ID
-    }
-}
+
 
 declare module "next-auth/jwt" {
     interface JWT {
-        id: string; // Add the database User ID (CUID) to the token payload
-        // Add other standard claims or custom fields if desired
+        id: string;
         name?: string | null;
         email?: string | null;
-        picture?: string | null; // Standard claim for profile picture
+        picture?: string | null;
     }
 }
-// --- End Type Augmentation ---
 
 
-// Define clearer input types using Pick (optional but good practice)
 type ProviderUserInfo = Pick<NextAuthUser, 'email' | 'name' | 'image'>;
 type ProviderAccountInfo = Pick<NextAuthAccount, 'provider' | 'providerAccountId' | 'type' | 'access_token' | 'refresh_token' | 'expires_at' | 'id_token' | 'scope' | 'session_state' | 'token_type'>;
 
@@ -72,9 +54,6 @@ const fetchOrCreateUser = async (
                     },
                 });
             } else {
-                // User exists - **UPDATE name/image from provider (as per your original logic)**
-                // WARNING: This will overwrite changes made in settings on subsequent OAuth logins.
-                // Remove or condition this update if you want settings changes to persist.
                 console.log(`[Auth] Found existing user for email: ${email} (ID: ${localUser.id}). Updating name/image from provider.`);
                 localUser = await tx.user.update({ // Assign updated user back to localUser
                     where: { id: localUser.id },
@@ -84,7 +63,6 @@ const fetchOrCreateUser = async (
 
             const userId = localUser.id;
 
-            // Check/Link Account using findFirst (since no compound unique index was specified)
             const existingAccount = await tx.account.findFirst({
                 where: { userId: userId, provider: provider, providerAccountId: providerAccountId },
                 select: { id: true }
@@ -109,7 +87,7 @@ const fetchOrCreateUser = async (
                 });
             }
 
-            return localUser; // Return the Prisma user object (created or found/updated)
+            return localUser;
         });
         return userInDb;
     } catch (error) {
@@ -122,22 +100,20 @@ const fetchOrCreateUser = async (
 // --- Main Auth Options ---
 export const authOptions: AuthOptions = {
     pages: {
-        signIn: "/auth/signin", // Your custom sign-in page
+        signIn: "/auth/signin",
     },
-    secret: process.env.NEXTAUTH_SECRET, // Essential for JWT
+    secret: process.env.NEXTAUTH_SECRET,
     session: {
-        strategy: "jwt", // Use JSON Web Tokens for session management
+        strategy: "jwt",
     },
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID as string,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-            authorization: { /* Your Google params */ },
         }),
         CredentialsProvider({
             name: "Credentials",
             credentials: {
-                // Define the expected shape HERE
                 email: { label: "Email", type: "email", placeholder: "jsmith@example.com" },
                 password: { label: "Password", type: "password" }
             },
@@ -151,7 +127,6 @@ export const authOptions: AuthOptions = {
                 const isValid = await argon2.verify(user.password, password);
                 if (!isValid) throw new Error("Invalid credentials");
 
-                // Return object matching NextAuth User type, crucially including the DB ID
                 return {
                     id: user.id, // The database CUID
                     name: user.name,
@@ -170,39 +145,32 @@ export const authOptions: AuthOptions = {
             console.log('[SignIn] Start:', { userId: user?.id, accountProvider: account?.provider });
 
             if (account?.provider === "credentials") {
-                // User object from `authorize` already has the correct DB ID (CUID).
                 console.log('[SignIn Credentials] Allowing sign-in for user:', user?.id);
                 return true; // Allow sign-in
             }
 
-            if (account && profile && user) { // OAuth provider flow
+            if (account && profile && user) {
                 try {
-                    // Prepare user info from the provider profile
                     const providerUserInfo: ProviderUserInfo = {
                         email: profile.email,
-                        name: profile.name ?? user.name, // Prefer profile data
+                        name: profile.name ?? user.name,
                         image: profile.image ?? user.image,
                     };
 
-                    // Run fetchOrCreateUser to get/create DB user and link account
                     const prismaUser = await fetchOrCreateUser(providerUserInfo, account);
 
-                    // *** CRITICAL STEP ***
-                    // Ensure the `user` object passed to the JWT callback has the *database* ID.
                     user.id = prismaUser.id;
-                    // The rest of the `user` object's fields (name, email, image) will be
-                    // correctly populated in the JWT callback from the DB anyway.
+
 
                     console.log(`[SignIn OAuth] User processed. DB ID assigned: ${user.id}. Provider: ${account.provider}`);
-                    return true; // Allow sign-in
+                    return true;
 
                 } catch (error) {
                     console.error("[SignIn OAuth] Error during fetchOrCreateUser:", error);
-                    return false; // Prevent sign-in if DB operations fail
+                    return false;
                 }
             }
 
-            // Default deny if conditions aren't met
             console.warn("[SignIn] Denying sign-in due to missing account/profile/user.");
             return false;
         },
@@ -231,7 +199,7 @@ export const authOptions: AuthOptions = {
                 console.log('session', session);
                 try {
                     const dbUser = await db.user.findUnique({
-                        where: { id: token.id }, // Use the correct DB ID (CUID) from token
+                        where: { id: token.id },
                         select: { name: true, email: true, image: true }
                     });
                     console.log("DBUSER", dbUser);
@@ -257,7 +225,6 @@ export const authOptions: AuthOptions = {
          * It MUST receive the token to access potentially updated data.
          */
         async session({ session, token }) {
-            // console.log('[Session Callback] Received token:', token);
             if (token?.id) {
                 const fresh = await db.user.findUnique({
                     where: { id: token.id },
@@ -272,18 +239,16 @@ export const authOptions: AuthOptions = {
                         id: token.id,
                     };
                 } else {
-                    session.user.id = token.id; // The DB ID (CUID)
+                    session.user.id = token.id;
                     session.user.name = token.name;
                     session.user.email = token.email;
                     session.user.image = token.picture;
                 }
             } else {
                 console.error("[Session Callback] Token or token.id missing. Session user might be incomplete.");
-                // Make session user structure consistent even if empty
                 session.user = { ...session.user, id: undefined, name: null, email: null, image: null };
             }
-            // console.log('[Session Callback] Returning final session object:', session);
-            return session; // Return the session object populated from the token
+            return session;
         },
     },
 };

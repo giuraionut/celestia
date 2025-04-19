@@ -31,9 +31,7 @@ export const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg fill='currentColor' viewBox='0 0 16 16' {...props}>
-    /* GitHub SVG path */
-  </svg>
+  <svg fill='currentColor' viewBox='0 0 16 16' {...props}></svg>
 );
 type ProviderIconProps = {
   provider: string;

@@ -63,58 +63,56 @@ export const setPassword = async ({
     email,
     currentPassword,
     newPassword,
-  }: {
+}: {
     email: string;
     currentPassword?: string;
     newPassword: string;
-  }): Promise<{ success: boolean; message: string }> => {
+}): Promise<{ success: boolean; message: string }> => {
     try {
-      if (!email || !newPassword) {
-        return { success: false, message: 'Email and new password are required.' };
-      }
-  
-      // 1) Lookup the user
-      const user = await db.user.findUnique({ where: { email } });
-      if (!user) {
-        return { success: false, message: 'User not found.' };
-      }
-  
-      // 2) If they already have a password, require & verify it
-      if (user.password) {
-        if (!currentPassword) {
-          return {
-            success: false,
-            message: 'Current password is required to set a new password.',
-          };
+        if (!email || !newPassword) {
+            return { success: false, message: 'Email and new password are required.' };
         }
-        const isMatch = await argon2.verify(user.password, currentPassword);
-        if (!isMatch) {
-          return { success: false, message: 'Current password is incorrect.' };
+
+        // 1) Lookup the user
+        const user = await db.user.findUnique({ where: { email } });
+        if (!user) {
+            return { success: false, message: 'User not found.' };
         }
-      }
-  
-      // 3) Hash & store the new password
-      const hashed = await argon2.hash(newPassword);
-      await db.user.update({
-        where: { email },
-        data: { password: hashed },
-      });
-  
-      return { success: true, message: 'Password updated successfully.' };
+
+        // 2) If they already have a password, require & verify it
+        if (user.password) {
+            if (!currentPassword) {
+                return {
+                    success: false,
+                    message: 'Current password is required to set a new password.',
+                };
+            }
+            const isMatch = await argon2.verify(user.password, currentPassword);
+            if (!isMatch) {
+                return { success: false, message: 'Current password is incorrect.' };
+            }
+        }
+
+        // 3) Hash & store the new password
+        const hashed = await argon2.hash(newPassword);
+        await db.user.update({
+            where: { email },
+            data: { password: hashed },
+        });
+
+        return { success: true, message: 'Password updated successfully.' };
     } catch (err: unknown) {
-      console.error('Error in setPassword:', err);
-      return { success: false, message: 'Internal server error.' };
+        console.error('Error in setPassword:', err);
+        return { success: false, message: 'Internal server error.' };
     }
-  };
+};
 // Get connected providers for a user
-export const getConnectedProviders = async ({
-}: {
-    }): Promise<{
-        success: boolean;
-        providers?: { provider: string; createdAt: Date }[];
-        hasPassword?: boolean;
-        message?: string;
-    }> => {
+export const getConnectedProviders = async (): Promise<{
+    success: boolean;
+    providers?: { provider: string; createdAt: Date }[];
+    hasPassword?: boolean;
+    message?: string;
+}> => {
 
     const userId = await requireSessionUserId('updating the user profile.');
     if (!userId) return { success: false, message: 'User not authenticated.' };
@@ -169,7 +167,7 @@ export const updateUserProfile = async ({
                 image
             },
         });
-        
+
         if (!updatedUser) {
             return { success: false, message: 'Failed to update user profile.' };
         }

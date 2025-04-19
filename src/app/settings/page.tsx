@@ -35,7 +35,7 @@ async function getUserSettingsData() {
   }
 
   const [providerDataResult, user] = await Promise.all([
-    getConnectedProviders({ userId: session.user.id }),
+    getConnectedProviders(),
     fetchAuthenticatedUser(),
   ]);
 

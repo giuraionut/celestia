@@ -437,7 +437,9 @@ export const logCommunityVisit = async (
     }
 };
 
-export const fetchVisitedCommunities = async (userId: string) => {
+export const fetchVisitedCommunities = async () => {
+    const userId = await requireSessionUserId("fetching visited communities");
+    if (!userId) return [];
     try {
         const ids = await db.recentlyVisitedCommunity.findMany({
             where: { userId },
@@ -455,7 +457,9 @@ export const fetchVisitedCommunities = async (userId: string) => {
 };
 
 
-export const fetchUserCommunities = async (userId: string) => {
+export const fetchUserCommunities = async () => {
+    const userId = await requireSessionUserId("fetching visited communities");
+    if (!userId) return [];
     try {
         return await db.community.findMany({
             where: { members: { some: { id: userId } }, bannedUsers: { none: { userId } } },

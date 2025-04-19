@@ -5,9 +5,7 @@ import { HolyGrail, Left, Middle, Right } from '../components/shared/HolyGrail';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card'; // Assuming path is correct
 import { Separator } from '@/components/ui/separator'; // Assuming path is correct
 import { Skeleton } from '@/components/ui/skeleton'; // Assuming path is correct

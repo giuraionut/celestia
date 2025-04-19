@@ -1,7 +1,6 @@
-// src/app/settings/UpdateAvatarForm.tsx
 'use client';
 
-import React, { useState, useTransition, useRef } from 'react';
+import React, {  useTransition, useRef } from 'react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
