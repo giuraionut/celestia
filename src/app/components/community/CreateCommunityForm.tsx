@@ -32,7 +32,7 @@ const FormSchema = z.object({
     .url({ message: 'Please provide a valid URL for the image.' })
     .optional()
     .or(z.literal('')),
-  isPrivate: z.boolean().default(false),
+  isPrivate: z.boolean(),
 });
 
 export function CreateCommunityForm() {

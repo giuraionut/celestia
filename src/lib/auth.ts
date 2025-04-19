@@ -184,6 +184,8 @@ export const authOptions: AuthOptions = {
          * - On update trigger, receives `trigger: "update"` and client `session` data. Refetches from DB to update token.
          * - On regular requests, receives only `token`. Returns it (potentially after validation).
          */
+        
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         async jwt({ token, user, account, profile, trigger, session }) {
 
             if (user) {
