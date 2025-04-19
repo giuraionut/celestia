@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import SignInForm from './signinForm';
+import SignInForm from './SignInForm';
 
 export function LoginDialog({
   open,

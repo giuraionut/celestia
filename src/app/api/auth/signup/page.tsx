@@ -1,5 +1,4 @@
 import React from 'react';
-import SignUpForm from '../../../components/shared/SignUpForm';
 import Link from 'next/link';
 import {
   HolyGrail,
@@ -7,6 +6,7 @@ import {
   Middle,
   Right,
 } from '@/app/components/shared/HolyGrail';
+import SignUpForm from '@/app/components/shared/SignUpForm';
 
 const SignUpPage = async () => {
   return (
