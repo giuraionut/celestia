@@ -1,33 +1,47 @@
-
 import argon2 from "argon2";
-import { AuthOptions, User as NextAuthUser, Account as NextAuthAccount, } from "next-auth"; // Import necessary types
+import { AuthOptions, User as NextAuthUser, Account as NextAuthAccount, Profile } from "next-auth"; // Import Profile type
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import db from "./db";
+import db from "./db"; // Assuming './db' exports your Prisma Client instance
 import { User as PrismaUser } from "@prisma/client";
-import { toast } from "sonner";
+// Import toast selectively if needed server-side (generally not recommended in auth logic)
+// import { toast } from "sonner"; // Usually for client-side feedback
 
-
-
+// --- Type Augmentation for JWT ---
 declare module "next-auth/jwt" {
     interface JWT {
         id: string;
         name?: string | null;
         email?: string | null;
         picture?: string | null;
+        // Add any other custom fields you want in the token
+    }
+}
+
+// --- Type Augmentation for Session User ---
+// Add 'id' to the default session user type
+declare module "next-auth" {
+    interface Session {
+        user: {
+            id: string; // Add the id field
+        } & NextAuthUser; // Keep existing fields (name, email, image)
     }
 }
 
 
+// --- Helper Types ---
+// Use built-in types where possible, define specific ones if needed
 type ProviderUserInfo = Pick<NextAuthUser, 'email' | 'name' | 'image'>;
+// Define a more specific type for account info needed in fetchOrCreateUser
 type ProviderAccountInfo = Pick<NextAuthAccount, 'provider' | 'providerAccountId' | 'type' | 'access_token' | 'refresh_token' | 'expires_at' | 'id_token' | 'scope' | 'session_state' | 'token_type'>;
 
+
+// --- Database User/Account Handling ---
 /**
  * Finds an existing user by email or creates a new one using provider details,
  * then ensures the specific OAuth provider account is linked to the user.
  * This operation is performed within a database transaction for atomicity.
- * Persisted user profile data (name, image) is NOT overwritten by provider
- * data if the user already exists.
+ * User profile data (name, image) is only set on creation, not overwritten.
  *
  * @param userProfile - User profile data from the OAuth provider (must include email).
  * @param account - OAuth account details from NextAuth.
@@ -36,16 +50,17 @@ type ProviderAccountInfo = Pick<NextAuthAccount, 'provider' | 'providerAccountId
  */
 const fetchOrCreateUser = async (
     userProfile: ProviderUserInfo,
-    account: ProviderAccountInfo
+    account: ProviderAccountInfo // Use the specific type
 ): Promise<PrismaUser> => {
-    const { email, name: providerName, image: providerImage } = userProfile;
+    // Destructure with safety checks for potentially null profile values
+    const email = userProfile.email;
+    const providerName = userProfile.name;
+    const providerImage = userProfile.image;
     const { provider, providerAccountId, type } = account;
 
     if (!email) {
-        console.error("OAuth Error: Email is missing from provider profile.");
-        throw new Error("Email is required for OAuth sign-in.");
+        throw new Error(`Email is required for ${provider} sign-in.`);
     }
-
     try {
         const userInDb = await db.$transaction(async (tx) => {
             let localUser = await tx.user.findUnique({
@@ -53,6 +68,7 @@ const fetchOrCreateUser = async (
             });
 
             if (!localUser) {
+                console.log(`[Auth] Creating new user for email: ${email}`);
                 localUser = await tx.user.create({
                     data: {
                         email,
@@ -61,16 +77,22 @@ const fetchOrCreateUser = async (
                         emailVerified: new Date(),
                     },
                 });
+            } else {
+                console.log(`[Auth] Found existing user for email: ${email}, ID: ${localUser.id}`);
             }
-
             if (!localUser) {
-                throw new Error("Failed to find or create user within transaction.");
+                throw new Error("Database error: Failed to find or create user.");
             }
 
             const userId = localUser.id;
 
-            const existingAccount = await tx.account.findFirst({
-                where: { userId: userId, provider: provider, providerAccountId: providerAccountId },
+            const existingAccount = await tx.account.findUnique({
+                where: {
+                    provider_providerAccountId: {
+                        provider: provider,
+                        providerAccountId: providerAccountId,
+                    }
+                },
                 select: { id: true }
             });
 
@@ -90,27 +112,24 @@ const fetchOrCreateUser = async (
                         token_type: account.token_type,
                     },
                 });
+            } else {
+                await tx.account.update({ where: { id: existingAccount.id }, data: { access_token: account.access_token, refresh_token: account.refresh_token } });
             }
 
             return localUser;
         });
+
+        console.log(`[Auth] fetchOrCreateUser completed successfully for email: ${email}`);
         return userInDb;
+
     } catch (error) {
         console.error("[Auth] Error in fetchOrCreateUser transaction:", error);
-        throw new Error("Database operation failed during sign-in.");
+        throw new Error("Database operation failed during sign-in account handling.");
     }
 };
 
 
-// --- Main Auth Options ---
 export const authOptions: AuthOptions = {
-    pages: {
-        signIn: "/auth/signin",
-    },
-    secret: process.env.NEXTAUTH_SECRET,
-    session: {
-        strategy: "jwt",
-    },
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -119,39 +138,66 @@ export const authOptions: AuthOptions = {
         CredentialsProvider({
             name: "Credentials",
             credentials: {
-                email: { label: "Email", type: "email", placeholder: "jsmith@example.com" },
+                email: { label: "Email", type: "email" },
                 password: { label: "Password", type: "password" }
             },
+            /**
+             * authorize: Verifies credentials against your database.
+             * MUST return the user object on success (without password) or null on failure.
+             * Throwing an error here will also signify failure.
+             */
             async authorize(credentials) {
-                const { email, password } = credentials || {};
-                if (!email || !password) throw new Error("Email and password required");
+                if (!credentials?.email || !credentials?.password) {
+                    return null;
+                }
+                const { email, password } = credentials;
 
-                const user = await db.user.findUnique({ where: { email } });
-                if (!user || !user.password) throw new Error("Invalid credentials");
+                try {
+                    const user = await db.user.findUnique({ where: { email } });
+                    if (!user || !user.password) {
+                        console.log(`[Auth] Authorize failed: No user found or no password set for ${email}.`);
+                        return null;
+                    }
 
-                const isValid = await argon2.verify(user.password, password);
-                if (!isValid) throw new Error("Invalid credentials");
+                    const isValid = await argon2.verify(user.password, password);
 
-                return {
-                    id: user.id, // The database CUID
-                    name: user.name,
-                    email: user.email,
-                    image: user.image,
-                };
+                    if (!isValid) {
+                        console.log(`[Auth] Authorize failed: Invalid password for ${email}.`);
+                        return null;
+                    }
+
+                    console.log(`[Auth] Authorize successful for ${email}.`);
+                    return {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        image: user.image,
+                    };
+                } catch (error) {
+                    console.error("[Auth] Error during credentials authorization:", error);
+                    return null;
+                }
             },
         }),
     ],
+    session: {
+        strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60,
+        updateAge: 24 * 60 * 60,
+    },
+    pages: {
+        signIn: "/auth/signin",
+    },
     callbacks: {
         /**
-         * signIn: Called after successful authentication (OAuth) or authorize (Credentials).
-         * Responsible for linking accounts and ensuring the user object passed forward has the DB ID.
+         * signIn: Controls if a sign-in attempt should be allowed to proceed.
+         * Runs AFTER successful OAuth or authorize().
          */
         async signIn({ user, account, profile }) {
-            if (account?.provider === "credentials") {
-                return true;
-            }
+            console.log(`[Auth] signIn callback invoked. Provider: ${account?.provider}, User ID from Auth: ${user?.id}`);
 
-            if (account && profile && user) {
+            if (account && profile && user && account.provider !== 'credentials') {
+                console.log(`[Auth] signIn: Handling OAuth provider: ${account.provider}`);
                 try {
                     const providerUserInfo: ProviderUserInfo = {
                         email: profile.email,
@@ -159,96 +205,73 @@ export const authOptions: AuthOptions = {
                         image: profile.image ?? user.image,
                     };
 
+                    if (!providerUserInfo.email) {
+                        console.error(`[Auth] signIn: OAuth profile for ${account.provider} missing email. Blocking sign-in.`);
+                        return false;
+                    }
+
                     const prismaUser = await fetchOrCreateUser(providerUserInfo, account);
-
                     user.id = prismaUser.id;
-
-
+                    console.log(`[Auth] signIn: OAuth process success for ${user.email}, DB User ID: ${user.id}. Allowing sign-in.`);
                     return true;
 
                 } catch (error) {
-                    toast.error('Something went wrong, please try again later.', {
-                        description: (error as Error).message,
-                    });
+                    console.error("[Auth] signIn: Error during OAuth fetchOrCreateUser:", error);
                     return false;
                 }
             }
 
-            console.warn("[SignIn] Denying sign-in due to missing account/profile/user.");
-            return false;
+            return !!user;
+
         },
 
         /**
-         * jwt: Called whenever a JWT is created or updated.
-         * - On initial sign-in, receives `user`. Populates token with DB ID and essential info.
-         * - On update trigger, receives `trigger: "update"` and client `session` data. Refetches from DB to update token.
-         * - On regular requests, receives only `token`. Returns it (potentially after validation).
+         * jwt: Modifies the JWT before it's saved.
+         * - Initial sign in: `user` object from `authorize` or OAuth is available.
+         * - Subsequent requests: Only `token` is available initially.
          */
-        
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         async jwt({ token, user, account, profile, trigger, session }) {
 
-            if (user) {
+            if (user?.id) {
                 token.id = user.id;
                 token.name = user.name;
                 token.email = user.email;
                 token.picture = user.image;
             }
 
-            if (trigger === "update" && token.id) {
-
+            if (trigger === "update" && session?.name && token.id) {
+                console.log(`[Auth] jwt: Session update trigger received for user ID: ${token.id}`);
                 try {
-
-                    const dbUser = await db.user.findUnique({
-                        where: { id: token.id },
-                        select: { name: true, email: true, image: true }
-                    });
+                    const dbUser = await db.user.findUnique({ where: { id: token.id }, select: { name: true, email: true, image: true } });
                     if (dbUser) {
+                        console.log("[Auth] jwt: Updating token with fresh data from DB.");
                         token.name = dbUser.name;
                         token.email = dbUser.email;
                         token.picture = dbUser.image;
                     } else {
-                        toast.error('Something went wrong, please try again later.');
+                        console.warn(`[Auth] jwt: User ${token.id} not found during session update.`);
                     }
                 } catch (error) {
-                    toast.error('Something went wrong, please try again later.', {
-                        description: (error as Error).message,
-                    });
+                    console.error(`[Auth] jwt: Error refetching user during session update for ${token.id}:`, error);
                 }
-
             }
 
             return token;
         },
 
         /**
-         * session: Called whenever a session is accessed (getServerSession, useSession).
-         * Creates the session object that is returned to the client/server component.
-         * It MUST receive the token to access potentially updated data.
+         * session: Creates the session object returned to the client.
+         * Receives the potentially modified JWT (`token`).
          */
         async session({ session, token }) {
+
             if (token?.id) {
-                const fresh = await db.user.findUnique({
-                    where: { id: token.id },
-                    select: { name: true, email: true, image: true },
-                });
-                if (fresh) {
-                    session.user = {
-                        ...session.user,
-                        name: fresh.name,
-                        email: fresh.email,
-                        image: fresh.image,
-                        id: token.id,
-                    };
-                } else {
-                    session.user.id = token.id;
-                    session.user.name = token.name;
-                    session.user.email = token.email;
-                    session.user.image = token.picture;
-                }
+                session.user.id = token.id;
+                session.user.name = token.name;
+                session.user.email = token.email;
+                session.user.image = token.picture;
             } else {
-                toast.error("Something went wrong, please try again later.");
-                session.user = { ...session.user, id: undefined, name: null, email: null, image: null };
+                session.user = { ...session.user, id: '', name: null, email: null, image: null };
             }
             return session;
         },

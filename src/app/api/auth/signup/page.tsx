@@ -1,5 +1,5 @@
 import React from 'react';
-import SignUpForm from '../../../components/shared/signupForm';
+import SignUpForm from '../../../components/shared/SignUpForm';
 import Link from 'next/link';
 import {
   HolyGrail,
