@@ -32,8 +32,6 @@ const CommunityManageContentButtons = ({
         const isActive =
           (button.href === '/' && (page === undefined || page === '')) ||
           page === hrefPage;
-        console.log('hrefPage',hrefPage)
-        console.log('isActive',isActive)
         return (
           <Button
             key={button.name}

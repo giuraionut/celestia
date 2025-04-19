@@ -167,7 +167,6 @@ export async function getSearchSuggestions(
   if (!partialQuery || partialQuery.trim() === '') {
     return [];
   }
-  console.log("-----------------GET SEARCH SUGGESTIONS---------------");
   const sanitizedQuery = partialQuery.trim().replace(/'/g, "''");
 
   try {

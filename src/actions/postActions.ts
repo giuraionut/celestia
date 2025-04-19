@@ -262,8 +262,6 @@ export const readHiddenPostsByUserId = async ({
             queryOptions.orderBy = { createdAt: 'desc' };
         }
 
-        console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
-
         const savedPosts = (await db.hiddenPost.findMany(queryOptions)) as Array<
             HiddenPost & {
                 post: Post & {
@@ -499,8 +497,6 @@ export const readPostsByUserId = async ({
             queryOptions.orderBy = { createdAt: 'desc' };
         }
 
-        console.log('Final query structure:', JSON.stringify(queryOptions, null, 2));
-
         const posts = await db.post.findMany(queryOptions);
 
         posts.map(post => cacheTag(`post-${post.id}`));
@@ -578,7 +574,6 @@ export const searchSuggestionPosts = async (
     'use cache'
     try {
         const results = await getSearchSuggestions(query, limit, snippetTags);
-        console.log('results', results);
         return results;
     } catch (error) {
         handleServerError(error, 'searching posts.');

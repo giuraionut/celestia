@@ -25,7 +25,6 @@ export const createComment = async (comment: Comment): Promise<ExtendedComment |
 
         revalidateTag(`comments-${comment.postId}`)
         revalidateTag(`post-${comment.postId}`);
-        console.log("CREATED COMMENT", newComment);
         return newComment;
     }
     catch (error) {
@@ -71,7 +70,6 @@ export const updateComment = async (comment: Comment): Promise<ExtendedComment |
 export const readComment = async (commentId: string): Promise<ExtendedComment | null> => {
     'use cache'
     try {
-        console.log(commentId);
         const parentComment = await db.comment.findFirst({
             where: { id: commentId },
             include: {

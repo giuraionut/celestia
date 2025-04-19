@@ -49,17 +49,11 @@ export default function LoadMore({
 
       setIsPending(true);
       try {
-        console.log('Loading more with params:', {
-          cursor,
-          sortBy,
-          sortOrder,
-          userId,
-        });
         const [newContent, nextCursor] = await loadMoreAction({
           cursor,
           sortBy,
           sortOrder,
-          ...(userId ? { userId } : {}), // Only include userId if it exists
+          ...(userId ? { userId } : {}),
         });
 
         setContent((prev) => [...prev, newContent]);

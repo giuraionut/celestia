@@ -11,7 +11,6 @@ interface PostListProps {
 }
 
 export default function CommentList({ comments, userId }: PostListProps) {
-  console.log('comment list');
   return (
     <div className='w-full'>
       {comments.map((comment: ExtendedComment) => {

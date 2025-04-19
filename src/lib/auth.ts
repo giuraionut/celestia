@@ -5,6 +5,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import db from "./db";
 import { User as PrismaUser } from "@prisma/client";
+import { toast } from "sonner";
 
 
 
@@ -22,9 +23,16 @@ type ProviderUserInfo = Pick<NextAuthUser, 'email' | 'name' | 'image'>;
 type ProviderAccountInfo = Pick<NextAuthAccount, 'provider' | 'providerAccountId' | 'type' | 'access_token' | 'refresh_token' | 'expires_at' | 'id_token' | 'scope' | 'session_state' | 'token_type'>;
 
 /**
- * fetchOrCreateUser: Finds or creates a user and links the OAuth account.
- * NOTE: As provided, this updates user name/image from provider on *every* login.
- * Consider modifying this if you want user settings to persist over provider data.
+ * Finds an existing user by email or creates a new one using provider details,
+ * then ensures the specific OAuth provider account is linked to the user.
+ * This operation is performed within a database transaction for atomicity.
+ * Persisted user profile data (name, image) is NOT overwritten by provider
+ * data if the user already exists.
+ *
+ * @param userProfile - User profile data from the OAuth provider (must include email).
+ * @param account - OAuth account details from NextAuth.
+ * @returns The PrismaUser record (found or created).
+ * @throws Error if email is missing or if the database transaction fails.
  */
 const fetchOrCreateUser = async (
     userProfile: ProviderUserInfo,
@@ -40,11 +48,11 @@ const fetchOrCreateUser = async (
 
     try {
         const userInDb = await db.$transaction(async (tx) => {
-            let localUser = await tx.user.findUnique({ where: { email } });
+            let localUser = await tx.user.findUnique({
+                where: { email },
+            });
 
             if (!localUser) {
-                // Create user using provider details
-                console.log(`[Auth] Creating new user for email: ${email}`);
                 localUser = await tx.user.create({
                     data: {
                         email,
@@ -53,12 +61,10 @@ const fetchOrCreateUser = async (
                         emailVerified: new Date(),
                     },
                 });
-            } else {
-                console.log(`[Auth] Found existing user for email: ${email} (ID: ${localUser.id}). Updating name/image from provider.`);
-                localUser = await tx.user.update({ // Assign updated user back to localUser
-                    where: { id: localUser.id },
-                    data: { name: providerName, image: providerImage }
-                });
+            }
+
+            if (!localUser) {
+                throw new Error("Failed to find or create user within transaction.");
             }
 
             const userId = localUser.id;
@@ -69,7 +75,6 @@ const fetchOrCreateUser = async (
             });
 
             if (!existingAccount) {
-                console.log(`[Auth] Linking ${provider} account for user ID: ${userId}`);
                 await tx.account.create({
                     data: {
                         userId: userId,
@@ -142,11 +147,8 @@ export const authOptions: AuthOptions = {
          * Responsible for linking accounts and ensuring the user object passed forward has the DB ID.
          */
         async signIn({ user, account, profile }) {
-            console.log('[SignIn] Start:', { userId: user?.id, accountProvider: account?.provider });
-
             if (account?.provider === "credentials") {
-                console.log('[SignIn Credentials] Allowing sign-in for user:', user?.id);
-                return true; // Allow sign-in
+                return true;
             }
 
             if (account && profile && user) {
@@ -162,11 +164,12 @@ export const authOptions: AuthOptions = {
                     user.id = prismaUser.id;
 
 
-                    console.log(`[SignIn OAuth] User processed. DB ID assigned: ${user.id}. Provider: ${account.provider}`);
                     return true;
 
                 } catch (error) {
-                    console.error("[SignIn OAuth] Error during fetchOrCreateUser:", error);
+                    toast.error('Something went wrong, please try again later.', {
+                        description: (error as Error).message,
+                    });
                     return false;
                 }
             }
@@ -183,7 +186,6 @@ export const authOptions: AuthOptions = {
          */
         async jwt({ token, user, account, profile, trigger, session }) {
 
-
             if (user) {
                 token.id = user.id;
                 token.name = user.name;
@@ -192,26 +194,24 @@ export const authOptions: AuthOptions = {
             }
 
             if (trigger === "update" && token.id) {
-                console.log('user', user);
-                console.log('account', account);
-                console.log('profile', profile);
-                console.log('trigger', trigger);
-                console.log('session', session);
+
                 try {
+
                     const dbUser = await db.user.findUnique({
                         where: { id: token.id },
                         select: { name: true, email: true, image: true }
                     });
-                    console.log("DBUSER", dbUser);
                     if (dbUser) {
                         token.name = dbUser.name;
                         token.email = dbUser.email;
                         token.picture = dbUser.image;
                     } else {
-                        console.error(`[JWT Update] User ID ${token.id} not found in DB.`);
+                        toast.error('Something went wrong, please try again later.');
                     }
                 } catch (error) {
-                    console.error(`[JWT Update] Error fetching user from DB for ID ${token.id}:`, error);
+                    toast.error('Something went wrong, please try again later.', {
+                        description: (error as Error).message,
+                    });
                 }
 
             }
@@ -245,7 +245,7 @@ export const authOptions: AuthOptions = {
                     session.user.image = token.picture;
                 }
             } else {
-                console.error("[Session Callback] Token or token.id missing. Session user might be incomplete.");
+                toast.error("Something went wrong, please try again later.");
                 session.user = { ...session.user, id: undefined, name: null, email: null, image: null };
             }
             return session;

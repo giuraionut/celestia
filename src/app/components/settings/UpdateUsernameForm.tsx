@@ -41,7 +41,6 @@ export default function UpdateUsernameForm({
         toast.error(result?.message || 'Failed to update username.');
       } else {
         toast.success(result.message);
-        console.log("NEW NAME",newName)
         sessionUpdate((data: { user: User }) => ({
           ...data,
           user: { ...data.user, name: newName },
