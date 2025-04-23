@@ -18,6 +18,7 @@ import { ClientSafeProvider, getProviders, signIn } from 'next-auth/react';
 import { startTransition, useEffect, useState } from 'react';
 import ProviderIcon from './ProviderIcon';
 import SolarSystemLoading from '../svgs/SolarSystemLoading';
+import { useRouter } from 'next/navigation';
 
 const FormSchema = z.object({
   email: z
@@ -32,6 +33,8 @@ const FormSchema = z.object({
 });
 
 export default function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -73,7 +76,7 @@ export default function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
           redirect: false,
         });
 
-        console.log('res',res);
+        console.log('res', res);
         if (res?.error) {
           toast.error('Invalid email or password.', {
             description: 'Please check your credentials and try again.',
@@ -85,6 +88,9 @@ export default function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
             toast.success('Login successful');
             onSuccess();
           } else {
+            toast.success('Login successful');
+            router.push('/');
+            router.refresh();
           }
         }
       } catch (error: unknown) {
