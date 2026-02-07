@@ -7,7 +7,7 @@ import { fetchRepliesRecursively, readComment } from "./commentActions";
 import { getSearchSuggestions, searchPosts } from "./postFTS";
 import { PostSuggestion } from "@/types/types";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 export const createPost = async (post: Post): Promise<Post | null> => {
     try {
@@ -15,7 +15,7 @@ export const createPost = async (post: Post): Promise<Post | null> => {
         if (!userId) return null;
         post.authorId = userId;
         delete (post as { id?: string }).id;
-        revalidateTag('posts');
+        updateTag('posts');
         return await db.post.create({ data: post });
     }
     catch (error) {
@@ -75,9 +75,9 @@ export const savePost = async (postId: string): Promise<SavedPost | null> => {
         const userId = await requireSessionUserId('saving post.');
         if (!userId) return null;
 
-        revalidateTag(`post-${postId}`);
-        revalidateTag(`saved-posts-${userId}`);
-        revalidateTag(`posts`);
+        updateTag(`post-${postId}`);
+        updateTag(`saved-posts-${userId}`);
+        updateTag(`posts`);
 
         return await db.savedPost.create({
             data: {
@@ -95,9 +95,9 @@ export const unsavePost = async (postId: string): Promise<SavedPost | null> => {
     try {
         const userId = await requireSessionUserId('unsaving post.');
         if (!userId) return null;
-        revalidateTag(`post-${postId}`);
-        revalidateTag(`saved-posts-${userId}`);
-        revalidateTag(`posts`);
+        updateTag(`post-${postId}`);
+        updateTag(`saved-posts-${userId}`);
+        updateTag(`posts`);
 
         return await db.savedPost.delete({
             where: {
@@ -117,9 +117,9 @@ export const hidePost = async (postId: string): Promise<HiddenPost | null> => {
     try {
         const userId = await requireSessionUserId('hiding post.');
         if (!userId) return null;
-        revalidateTag(`post-${postId}`);
-        revalidateTag(`hidden-posts-${userId}`);
-        revalidateTag(`posts`);
+        updateTag(`post-${postId}`);
+        updateTag(`hidden-posts-${userId}`);
+        updateTag(`posts`);
         return await db.hiddenPost.create({
             data: {
                 user: { connect: { id: userId } },
@@ -136,9 +136,9 @@ export const unhidePost = async (postId: string): Promise<HiddenPost | null> => 
     try {
         const userId = await requireSessionUserId('unhiding post.');
         if (!userId) return null;
-        revalidateTag(`post-${postId}`);
-        revalidateTag(`hidden-posts-${userId}`);
-        revalidateTag(`posts`);
+        updateTag(`post-${postId}`);
+        updateTag(`hidden-posts-${userId}`);
+        updateTag(`posts`);
         return await db.hiddenPost.delete({
             where: {
                 userId_postId: {

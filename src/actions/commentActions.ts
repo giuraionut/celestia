@@ -3,7 +3,7 @@ import db from "@/lib/db";
 import { handleServerError, requireSessionUserId } from "./actionUtils";
 import { Comment, ExtendedComment, Prisma, SavedComment, VoteType } from "@prisma/client"
 import { getTotalCommentDownvotes, getTotalCommentUpvotes } from "./voteUtils";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 
 export const createComment = async (comment: Comment): Promise<ExtendedComment | null> => {
@@ -23,8 +23,8 @@ export const createComment = async (comment: Comment): Promise<ExtendedComment |
 
         await db.post.update({ where: { id: comment.postId }, data: { totalComments: { increment: 1 } } });
 
-        revalidateTag(`comments-${comment.postId}`)
-        revalidateTag(`post-${comment.postId}`);
+        updateTag(`comments-${comment.postId}`)
+        updateTag(`post-${comment.postId}`);
         return newComment;
     }
     catch (error) {
@@ -36,7 +36,7 @@ export const createComment = async (comment: Comment): Promise<ExtendedComment |
 export const addReply = async (reply: Comment, parent: Comment): Promise<ExtendedComment | null> => {
     try {
         const newReply = await createComment(reply);
-        revalidateTag(`replies-${parent.id}`)
+        updateTag(`replies-${parent.id}`)
 
         return newReply;
     }
@@ -56,8 +56,8 @@ export const updateComment = async (comment: Comment): Promise<ExtendedComment |
             },
         });
         updatedComment.replies = await fetchRepliesRecursively(updatedComment.id);
-        revalidateTag(`comments-${comment.postId}`)
-        revalidateTag(`replies-${comment.id}`);
+        updateTag(`comments-${comment.postId}`)
+        updateTag(`replies-${comment.id}`);
 
         return updatedComment;
     }
@@ -351,9 +351,9 @@ export const deleteComment = async (comment: ExtendedComment): Promise<ExtendedC
 
         await db.post.update({ where: { id: comment.postId }, data: { totalComments: { decrement: 1 } } });
 
-        revalidateTag(`comments-${deleted.postId}`)
-        revalidateTag(`replies-${deleted.id}`);
-        revalidateTag(`post-${comment.postId}`);
+        updateTag(`comments-${deleted.postId}`)
+        updateTag(`replies-${deleted.id}`);
+        updateTag(`post-${comment.postId}`);
 
         return deleted;
     }

@@ -4,7 +4,7 @@ import { VoteType, Vote, ExtendedComment } from "@prisma/client";
 import { handleServerError, requireSessionUserId } from "./actionUtils";
 import { readComment, readCommentsByPost, updateCommentVoteCounts, updateCommentVoteScore } from "./commentActions";
 import { findVoteByUserAndTarget, updateVote, createVote, deleteVote } from "./voteUtils";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 export async function voteOnComment(commentId: string, value: VoteType): Promise<Vote | null> {
     try {
@@ -17,13 +17,13 @@ export async function voteOnComment(commentId: string, value: VoteType): Promise
             await updateVote(existingVote.id, value);
             await updateCommentVoteCounts(commentId, existingVote.type, 'decrement');
             await updateCommentVoteCounts(commentId, value, 'increment');
-            revalidateTag(`comment-${commentId}`);
+            updateTag(`comment-${commentId}`);
             await updateCommentVoteScore(commentId);
             return existingVote;
         } else {
             const newVote = await createVote(commentId, userId, value, "commentId");
             await updateCommentVoteCounts(commentId, value, 'increment');
-            revalidateTag(`comment-${commentId}`);
+            updateTag(`comment-${commentId}`);
             await updateCommentVoteScore(commentId);
             return newVote;
         }
@@ -38,7 +38,7 @@ export async function deleteCommentVote(commentId: string, voteId: string): Prom
         const deletedVote = await deleteVote(voteId);
         if (deletedVote?.commentId) {
             await updateCommentVoteCounts(commentId, deletedVote.type, 'decrement');
-            revalidateTag(`comment-${commentId}`);
+            updateTag(`comment-${commentId}`);
             await updateCommentVoteScore(commentId);
         }
         return deletedVote;
