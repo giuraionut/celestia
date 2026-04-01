@@ -66,7 +66,7 @@ export default function SignUpForm() {
         }
       } catch (error: unknown) {
         if (error instanceof z.ZodError) {
-          error.errors.forEach((err) => {
+          error.issues.forEach((err) => {
             toast.error('Input error, verify the data', {
               description: err.message,
             });

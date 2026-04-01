@@ -3,7 +3,7 @@
 import { BannedUserFromCommunity, Community, ExtendedCommunity, RemovedPostFromCommunity, User } from "@prisma/client";
 import { getSessionUserId, handleServerError, requireSessionUserId } from "./actionUtils";
 import db from "@/lib/db";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 
 /**
@@ -17,7 +17,7 @@ export const createCommunity = async (
         const userId = await requireSessionUserId("creating new community");
         if (!userId) return null;
         delete (community as { id?: string }).id;
-        revalidateTag("communities");
+        updateTag("communities");
         return await db.community.create({
             data: {
                 ...community,
@@ -64,7 +64,7 @@ export async function banUser(communityId: string, userIdToBan: string): Promise
                 bannedById: currentUserId,
             }
         });
-        revalidateTag(`community-${community.id}`)
+        updateTag(`community-${community.id}`)
         return bannedUser;
     }
     catch (error) {
@@ -85,7 +85,7 @@ export async function unbanUser(communityId: string, userIdToUnban: string): Pro
                 }
             }
         });
-        revalidateTag(`community-${communityId}`)
+        updateTag(`community-${communityId}`)
         return unbannedUser;
     }
     catch (error) {
@@ -120,7 +120,7 @@ export async function addManager(communityId: string, userIdToAdd: string): Prom
                 }
             }
         });
-        revalidateTag(`community-${community.id}`)
+        updateTag(`community-${community.id}`)
         return updatedCommunity.managers.find((m) => m.id === userIdToAdd) || null;
     }
     catch (error) {
@@ -158,7 +158,7 @@ export async function removeManager(communityId: string, userIdToRemove: string)
                 }
             }
         });
-        revalidateTag(`community-${community.id}`)
+        updateTag(`community-${community.id}`)
         return updatedCommunity.managers.find((m) => m.id === userIdToRemove) || null;
     }
     catch (error) {
@@ -199,7 +199,7 @@ export async function removePostFromCommunity(postId: string, communityId: strin
                 removedById: currentUserId,
             }
         });
-        revalidateTag(`community-${communityId}`)
+        updateTag(`community-${communityId}`)
         return removedPost;
     }
     catch (error) {
@@ -216,7 +216,7 @@ export async function restorePostToCommunity(postId: string, communityId: string
         const removedPost = await db.removedPostFromCommunity.delete({
             where: { postId: postId }
         });
-        revalidateTag(`community-${communityId}`)
+        updateTag(`community-${communityId}`)
         return removedPost
     }
     catch (error) {
@@ -324,7 +324,7 @@ export const joinCommunity = async (
             },
             include: { author: true, posts: true },
         });
-        revalidateTag(`community-${communityId}`);
+        updateTag(`community-${communityId}`);
         return res;
     } catch (error) {
         handleServerError(error, "joining community.");
@@ -346,7 +346,7 @@ export const leaveCommunity = async (
             },
             include: { author: true, posts: true },
         });
-        revalidateTag(`community-${communityId}`);
+        updateTag(`community-${communityId}`);
         return res;
     } catch (error) {
         handleServerError(error, "leaving community.");

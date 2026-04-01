@@ -5,7 +5,7 @@ import { handleServerError, requireSessionUserId } from "./actionUtils";
 import { findVoteByUserAndTarget, updateVote, createVote, deleteVote, getPostVotes } from "./voteUtils";
 import { updatePostVoteCounts, updatePostVoteScore } from "./postActions";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 export async function voteOnPost(postId: string, value: VoteType): Promise<Vote | null> {
   try {
@@ -18,17 +18,17 @@ export async function voteOnPost(postId: string, value: VoteType): Promise<Vote 
       await updateVote(existingVote.id, value);
       await updatePostVoteCounts(postId, existingVote.type, 'decrement');
       await updatePostVoteCounts(postId, value, 'increment');
-      revalidateTag('posts');
-      revalidateTag('fts-posts');
-      revalidateTag(`post-${postId}`);
+      updateTag('posts');
+      updateTag('fts-posts');
+      updateTag(`post-${postId}`);
       await updatePostVoteScore(postId);
       return existingVote;
     } else {
       const newVote = await createVote(postId, userId, value, "postId");
       await updatePostVoteCounts(postId, value, 'increment');
-      revalidateTag('posts');
-      revalidateTag('fts-posts');
-      revalidateTag(`post-${postId}`);
+      updateTag('posts');
+      updateTag('fts-posts');
+      updateTag(`post-${postId}`);
       await updatePostVoteScore(postId);
       return newVote;
     }
@@ -43,8 +43,8 @@ export async function deletePostVote(postId: string, voteId: string): Promise<Vo
     const deletedVote = await deleteVote(voteId);
     if (deletedVote?.postId) {
       await updatePostVoteCounts(postId, deletedVote.type, 'decrement');
-      revalidateTag('posts');
-      revalidateTag(`post-${postId}`);
+      updateTag('posts');
+      updateTag(`post-${postId}`);
       await updatePostVoteScore(postId);
     }
     return deletedVote;
