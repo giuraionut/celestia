@@ -6,22 +6,21 @@ import { getServerSession } from "next-auth";
 
 export const getSessionUserId = async (): Promise<string | null> => {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return null;
-  }
-  return session.user.id;
+  return session?.user?.id ?? null;
 };
+
 export const requireSessionUserId = async (context: string): Promise<string | null> => {
   const userId = await getSessionUserId();
   if (!userId) {
-    console.warn(`User not authenticated for ${context}`);
+    console.warn("User not authenticated for context:", context);
     return null;
   }
   return userId;
 };
 
 export const handleServerError = async (error: unknown, context: string) => {
-  console.error(`Error in ${context}:`, error);
+  console.error("Error in context:", context, error);
+  
   throw new Error(`Something went wrong while ${context}.`);
 };
 
